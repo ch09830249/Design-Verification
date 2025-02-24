@@ -12,6 +12,10 @@ module tb;
 	end
 
 	initial begin
+		$display("%0t: v1 = b%b, v2 = b%b", $time, v1, v2);
+		v1 <= w1;
+		v2 <= w2;
+		$display("%0t: v1 = b%b, v2 = b%b", $time, v1, v2);
 		#0;
 		$display("%0t: v1 = b%b, v2 = b%b", $time, v1, v2);
 		$display("%0t: w1 = b%b, w2 = b%b", $time,  w1, w2);
