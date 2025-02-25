@@ -6,3 +6,7 @@ https://www.dcard.tw/f/nctu/p/235935287
 ## 編譯與執行
 iverilog -o YYY XXX.sv  
 vvp YYY
+## Reference
+路科验证: https://www.bilibili.com/video/BV1k7411H7Jo/  
+https://www.youtube.com/watch?v=_QjZ06eg3cY&list=PL40xmtPvboRs6Ng_1Q_V-1MdJH50A6Ulz&index=4  
+https://www.chipverify.com/systemverilog  
