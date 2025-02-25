@@ -5,6 +5,7 @@ https://www.dcard.tw/f/nctu/p/239947030
 https://www.dcard.tw/f/nctu/p/235935287
 ## 編譯與執行
 iverilog -o YYY XXX.sv  
+iverilog -o YYY -g2005-sv XXX.sv (https://electronics.stackexchange.com/questions/640456/syntax-error-iverilog)  
 vvp YYY
 ## Reference
 路科验证: https://www.bilibili.com/video/BV1k7411H7Jo/  
