@@ -1,9 +1,12 @@
 # Design-Verification
 ![image](https://github.com/user-attachments/assets/ec80103c-f504-4db7-a466-33e12b753d41)
 ## 環境架設
+### Local environment:
 https://ithelp.ithome.com.tw/m/articles/10315791  
 https://www.dcard.tw/f/nctu/p/239947030  
 https://www.dcard.tw/f/nctu/p/235935287
+### Online environment: (強烈建議)
+https://www.youtube.com/watch?v=f9uwtAax4v0
 ## 編譯與執行
 iverilog -o YYY XXX.sv  
 iverilog -o YYY -g2005-sv XXX.sv (https://electronics.stackexchange.com/questions/640456/syntax-error-iverilog)  
