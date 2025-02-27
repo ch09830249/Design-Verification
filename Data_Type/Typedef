@@ -1,0 +1,53 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000002823e013340 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+S_000002823e16b1b0 .scope module, "tb" "tb" 3 21;
+ .timescale 0 0;
+enum000002823e046950 .enum2/s (32)
+   "RED" 0,
+   "YELLOW" 1,
+   "GREEN" 2
+ ;
+S_000002823e012ce0 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 26, 3 26 0, S_000002823e16b1b0;
+ .timescale 0 0;
+v000002823e0135f0_0 .var/2u "cnt", 7 0;
+v000002823e16b340_0 .var/2u "data", 15 0;
+v000002823e012e70_0 .var/2s "light", 31 0;
+    .scope S_000002823e012ce0;
+T_0 ;
+    %pushi/vec4 51966, 0, 16;
+    %store/vec4 v000002823e16b340_0, 0, 16;
+    %pushi/vec4 2, 0, 32;
+    %store/vec4 v000002823e012e70_0, 0, 32;
+    %pushi/vec4 255, 0, 8;
+    %store/vec4 v000002823e0135f0_0, 0, 8;
+    %end;
+    .thread T_0, $init;
+    .scope S_000002823e16b1b0;
+T_1 ;
+    %fork t_1, S_000002823e012ce0;
+    %jmp t_0;
+    .scope S_000002823e012ce0;
+t_1 ;
+    %vpi_func/s 3 31 "$ivl_enum_method$name", enum000002823e046950, v000002823e012e70_0 {0 0 0};
+    %vpi_call/w 3 31 "$display", "light=%s data=0x%0h cnt=%0d", S<0,str>, v000002823e16b340_0, v000002823e0135f0_0 {0 0 1};
+    %end;
+    .scope S_000002823e16b1b0;
+t_0 %join;
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "Typedef.sv";
