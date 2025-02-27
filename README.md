@@ -8,9 +8,11 @@
   - **編譯與執行**
   ```
   iverilog -o YYY XXX.sv  
-  iverilog -o YYY -g2005-sv XXX.sv (https://electronics.stackexchange.com/questions/640456/syntax-error-iverilog)  
+  iverilog -o YYY -g2012 XXX.sv or iverilog -o YYY -g2005-sv XXX.sv (https://electronics.stackexchange.com/questions/640456/syntax-error-iverilog)
   vvp YYY
   ```
+  - Current supported generations  
+  ![image](https://github.com/user-attachments/assets/ce38d515-bda4-4869-b639-a58ed86026a8)
 - **Online environment(強烈建議):**
   ![image](https://github.com/user-attachments/assets/bad19595-3b14-490b-935c-6a4cfa8c5e65)
   https://www.youtube.com/watch?v=f9uwtAax4v0
