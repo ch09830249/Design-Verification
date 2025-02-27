@@ -3,8 +3,9 @@
   Static arrays are further categorized into
     -- Packed array
     -- Unpacked array
+
     EX:
-      bit [3:0] 	data; 			// Packed array or vector
+      bit [3:0] 	data; 			// Packed array or vector   PS: 左邊都是 Packed
       logic 		queue [9:0]; 	// Unpacked array
 */
 
