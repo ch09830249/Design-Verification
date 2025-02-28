@@ -1,12 +1,20 @@
+/*
+   fork
+      // Thread 1
+      // Thread 2
+      // ...
+      // Thread 3
+   join
+*/
 module tb_top;
    initial begin
 
-   	  #1 $display ("[%0t ns] Start fork ...", $time);
+      #1 $display ("[%0t ns] Start fork ...", $time);
 
-   	  // Main Process: Fork these processes in parallel and wait untill all
-   	  // of them finish
+      // Main Process: Fork these processes in parallel and wait untill all
+      // of them finish
       fork
-      	 // Thread1 : Print this statement after 5ns from start of fork
+         // Thread1 : Print this statement after 5ns from start of fork
          #5 $display ("[%0t ns] Thread1: Orange is named after orange", $time);
 
          // Thread2 : Print these two statements after the given delay from start of fork
@@ -23,3 +31,12 @@ module tb_top;
       $display ("[%0t ns] After Fork-Join", $time);
    end
 endmodule
+
+/*
+   [1 ns] Start fork ...
+   [3 ns] Thread2: Apple keeps the doctor away
+   [6 ns] Thread1: Orange is named after orange
+   [7 ns] Thread2: But not anymore
+   [11 ns] Thread3: Banana is a good fruit
+   [11 ns] After Fork-Join
+*/
