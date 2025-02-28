@@ -1,0 +1,63 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000002346fb7b2d0 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+enum000002346fab6f30 .enum2/s (32)
+   "GREEN" 0,
+   "YELLOW" 1,
+   "RED" 2,
+   "BLUE" 3
+ ;
+S_000002346fa82f60 .scope module, "tb" "tb" 3 13;
+ .timescale 0 0;
+S_000002346fa830f0 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 14, 3 14 0, S_000002346fa82f60;
+ .timescale 0 0;
+v000002346fb7b460_0 .var/2s "color", 31 0;
+    .scope S_000002346fa82f60;
+T_0 ;
+    %fork t_1, S_000002346fa830f0;
+    %jmp t_0;
+    .scope S_000002346fa830f0;
+t_1 ;
+    %pushi/vec4 1, 0, 32;
+    %store/vec4 v000002346fb7b460_0, 0, 32;
+    %vpi_call/w 3 20 "$display", "color.first() = %0d", 32'sb00000000000000000000000000000000 {0 0 0};
+    %vpi_call/w 3 21 "$display", "color.last()  = %0d", 32'sb00000000000000000000000000000011 {0 0 0};
+    %vpi_func 3 22 "$ivl_enum_method$next" 32, enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 22 "$display", "color.next()  = %0d", S<0,vec4,s32> {1 0 0};
+    %vpi_func 3 23 "$ivl_enum_method$prev" 32, enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 23 "$display", "color.prev()  = %0d", S<0,vec4,s32> {1 0 0};
+    %vpi_call/w 3 24 "$display", "color.num()   = %0d", 32'sb00000000000000000000000000000100 {0 0 0};
+    %vpi_func/s 3 25 "$ivl_enum_method$name", enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 25 "$display", "color.name()  = %s", S<0,str> {0 0 1};
+    %pushi/vec4 0, 0, 32;
+    %store/vec4 v000002346fb7b460_0, 0, 32;
+    %vpi_func/s 3 28 "$ivl_enum_method$name", enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 28 "$display", "color.name()  = %s", S<0,str> {0 0 1};
+    %vpi_func 3 29 "$ivl_enum_method$prev" 32, enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 29 "$display", "color.prev()  = %0d", S<0,vec4,s32> {1 0 0};
+    %pushi/vec4 3, 0, 32;
+    %store/vec4 v000002346fb7b460_0, 0, 32;
+    %vpi_func/s 3 32 "$ivl_enum_method$name", enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 32 "$display", "color.name()  = %s", S<0,str> {0 0 1};
+    %vpi_func 3 33 "$ivl_enum_method$next" 32, enum000002346fab6f30, v000002346fb7b460_0 {0 0 0};
+    %vpi_call/w 3 33 "$display", "color.next()  = %0d", S<0,vec4,s32> {1 0 0};
+    %end;
+    .scope S_000002346fa82f60;
+t_0 %join;
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "EnumMethod.sv";

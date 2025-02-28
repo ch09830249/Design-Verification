@@ -8,20 +8,20 @@
 :vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
 :vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
 :vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
-S_000001dd237a2df0 .scope package, "$unit" "$unit" 2 1;
+S_0000015d33282df0 .scope package, "$unit" "$unit" 2 1;
  .timescale 0 0;
-S_000001dd237a2f80 .scope module, "tb" "tb" 3 1;
+S_0000015d33282f80 .scope module, "tb" "tb" 3 5;
  .timescale 0 0;
-v000001dd238f9b90_0 .var/str "dialog";
-    .scope S_000001dd237a2f80;
+v0000015d333c9b90_0 .var/str "dialog";
+    .scope S_0000015d33282f80;
 T_0 ;
     %pushi/str "Hello!";
-    %store/str v000001dd238f9b90_0;
+    %store/str v0000015d333c9b90_0;
     %end;
     .thread T_0, $init;
-    .scope S_000001dd237a2f80;
+    .scope S_0000015d33282f80;
 T_1 ;
-    %vpi_call/w 3 8 "$display", "%s", v000001dd238f9b90_0 {0 0 0};
+    %vpi_call/w 3 12 "$display", "%s", v0000015d333c9b90_0 {0 0 0};
     %end;
     .thread T_1;
 # The file index is used to find the file name in the following table.
