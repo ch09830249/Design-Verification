@@ -23,3 +23,12 @@ module tb_top;
       $display ("[%0t ns] After Fork-Join", $time);
    end
 endmodule
+
+/*
+   [1 ns] Start fork ...
+   [3 ns] Thread2: Apple keeps the doctor away
+   [6 ns] Thread1: Orange is named after orange
+   [6 ns] After Fork-Join  => Main thread 就執行了!!
+   [7 ns] Thread2: But not anymore
+   [11 ns] Thread3: Banana is a good fruit
+*/
