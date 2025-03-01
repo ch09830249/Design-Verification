@@ -46,7 +46,7 @@ module tb;
       unique if (x == 4)
         $display ("1. x is %0d", x);  // 滿足
       else if (x == 4)
-        $display ("2. x is %0d", x);  // 滿足
+        $display ("2. x is %0d", x);  // 滿足 => 因為平行運算, 所以檢查到後面的 condition 也有滿足
       else
         $display ("x is not 4");
   	end
