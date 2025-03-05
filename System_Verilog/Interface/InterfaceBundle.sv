@@ -31,7 +31,7 @@ endmodule
   Using a genric bundle
 */
 
-module myDesign  ( interface  a,
+module myDesign  ( interface  	a,
                    input logic  clk);
 
 	always @ (posedge clk)
@@ -53,6 +53,8 @@ module tb;
 	myInterface  _if;
 
 	myDesign 	md0 ( .*, .a(_if));   // use partial implicit port connections  => 怪怪的 Weird
+	myDesign 	md0 ( .a(_if), clk);  // 這樣才對?
 	yourDesign	yd0 ( .*, .b(_if));
+	yourDesign	yd0 ( .b(_if), clk);  // 這樣才對?
 
 endmodule

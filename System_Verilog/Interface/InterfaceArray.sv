@@ -51,6 +51,3 @@ module tb;
 	myDesign 	md3 (wb_if[3], clk);
 
 endmodule
-
-/*
-*/
