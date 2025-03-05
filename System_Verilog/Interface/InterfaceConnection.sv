@@ -20,32 +20,32 @@ module counter_ud
   );
 
   always @ (posedge clk or negedge rstn) begin
-    if (!rstn)
+    if (!rstn)    // rstn == 0 => count 設為 0
    		count <= 0;
     else
-      if (load_en)
+      if (load_en)  // load_en == 1 => 從 load 載入值
         count <= load;
       else begin
-      	if (down)
+      	if (down)   // down == 1 => count down
         	count <= count - 1;
       	else
-        	count <= count + 1;
+        	count <= count + 1; // down == 0 => count up
       end
   end
 
-  assign rollover = &count;
+  assign rollover = &count; // 如果每個 bit 為 1 => 代表之後要 rollover
 endmodule
 
 /*
   這裡定義一個 interface
 */
 interface cnt_if #(parameter WIDTH = 4) (input bit clk);
-  logic 			rstn;
-  logic 			load_en;
-  logic [WIDTH-1:0] load;
-  logic [WIDTH-1:0] count;
-  logic 			down;
-  logic 			rollover;
+  logic 			        rstn;
+  logic 			        load_en;
+  logic [WIDTH-1:0]   load;
+  logic [WIDTH-1:0]   count;
+  logic 			        down;
+  logic 			        rollover;
 endinterface
 
 module tb;
@@ -57,13 +57,13 @@ module tb;
 
   cnt_if 	  cnt_if0 (clk);  // 例化一個 interface
 
-  counter_ud  c0 ( 	.clk 		(cnt_if0.clk),    // 例化一個 DUT 同時連接 interface 中的每個 signals, 這段後續可以在優化 (要改 DUT 的 input)
-                  	.rstn 		(cnt_if0.rstn),
-                  	.load 		(cnt_if0.load),
-                  	.load_en 	(cnt_if0.load_en),
-                  	.down 		(cnt_if0.down),
+  counter_ud  c0 ( 	.clk 		    (cnt_if0.clk),    // 例化一個 DUT 同時連接 interface 中的每個 signals, 這段後續可以在優化 (要改 DUT 的 input)
+                  	.rstn 		  (cnt_if0.rstn),
+                  	.load 		  (cnt_if0.load),
+                  	.load_en 	  (cnt_if0.load_en),
+                  	.down 		  (cnt_if0.down),
                   	.rollover 	(cnt_if0.rollover),
-                  	.count 		(cnt_if0.count));
+                  	.count 		  (cnt_if0.count));
 
   initial begin
     bit load_en, down;

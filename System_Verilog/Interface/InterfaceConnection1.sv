@@ -10,7 +10,7 @@
 // This module accepts an interface object as the port list
 module counter_ud  #(parameter WIDTH = 4) (cnt_if _if);   // 這裡 DUT 的輸入從各個 signals 改成接收 interface
   always @ (posedge _if.clk or negedge _if.rstn) begin
-    if (!_if.rstn)
+    if (!_if.rstn)      // module 取信號也是透過 interface 取信號
    		_if.count <= 0;
     else
       if (_if.load_en)
