@@ -61,15 +61,15 @@ interface _if (input bit clk);
   logic req;
 
   clocking cb_0 @(posedge clk);
-    output #0  req;
+    output #0  req;  // 不延遲輸出給 module
   endclocking
 
   clocking cb_1 @(posedge clk);
-    output #2 req;
+    output #2 req;  // 延遲 2ns 輸出給 module
   endclocking
 
   clocking cb_2 @(posedge clk);
-    output #5 req;
+    output #5 req;  // 延遲 5ns 輸出給 module
   endclocking
 endinterface
 
@@ -79,14 +79,14 @@ module tb;
   // Drive stimulus
   initial begin
     for (int i = 0; i < 3; i++) begin
-      repeat (2) @(if0.cb_0);
+      repeat (2) @(if0.cb_0);  // delay 兩個 posedge
       case (i)
-      	0 : if0.cb_0.req <= 1;
-        1 : if0.cb_1.req <= 1;
-        2 : if0.cb_2.req <= 1;
+      	0 : if0.cb_0.req <= 1;  // Loop 0 不 delay
+        1 : if0.cb_1.req <= 1;  // Loop 1 delay 2 ns
+        2 : if0.cb_2.req <= 1;  // Loop 2 delay 5 ns
       endcase
-      repeat (2) @ (if0.cb_0);
-      if0.req <= 0;
+      repeat (2) @ (if0.cb_0);  // 每個 Loop 再 delay 2 ns
+      if0.req <= 0;  // 然後歸零 req
     end
     #20 $finish;
   end
@@ -94,6 +94,8 @@ module tb;
 endmodule
 ```
 ![image](https://github.com/user-attachments/assets/0354852b-7cf3-48f0-8e80-d28b60b9010e)
+![image](https://github.com/user-attachments/assets/c9eb5eaa-d667-4b53-aa1b-62097b02e9e2)
+
 
 
 # Input skew
