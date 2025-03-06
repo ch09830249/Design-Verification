@@ -100,5 +100,68 @@ endmodule
 
 # Input skew
 ```
+module des (output reg[3:0] gnt);
+  always #1 gnt <= $random;
+endmodule
 
+interface _if (input bit clk);
+  logic [3:0] gnt;
+
+  clocking cb_0 @(posedge clk);
+    input #0  gnt;
+  endclocking
+
+  clocking cb_1 @(posedge clk);
+    input #1step gnt;
+  endclocking
+
+  clocking cb_2 @(posedge clk);
+    input #1 gnt;
+  endclocking
+
+  clocking cb_3 @(posedge clk);
+    input #2 gnt;
+  endclocking
+endinterface
+
+module tb;
+  bit clk;
+
+  always #5 clk = ~clk;
+  initial   clk <= 0;
+
+  _if if0 (.clk (clk));
+  des d0  (.gnt (if0.gnt));
+
+  initial begin
+    fork
+      begin
+        @(if0.cb_0);
+        $display ("cb_0.gnt = 0x%0h", if0.cb_0.gnt);
+      end
+      begin
+        @(if0.cb_1);
+        $display ("cb_1.gnt = 0x%0h", if0.cb_1.gnt);
+      end
+      begin
+        @(if0.cb_2);
+        $display ("cb_2.gnt = 0x%0h", if0.cb_2.gnt);
+      end
+      begin
+        @(if0.cb_3);
+        $display ("cb_3.gnt = 0x%0h", if0.cb_3.gnt);
+      end
+    join
+    #10 $finish;
+  end
+
+endmodule
 ```
+![image](https://github.com/user-attachments/assets/4ba37170-4e68-4445-98ae-ea8e57116ffe)
+ncsim> run  
+cb_3.gnt = 0x9  
+cb_2.gnt = 0x3  
+cb_1.gnt = 0x3  
+cb_0.gnt = 0xd  
+Simulation complete via $finish(1) at time 15 NS + 0  
+
