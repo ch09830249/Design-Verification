@@ -1,8 +1,8 @@
 # Example
 ```
 module des (input req, clk, output reg gnt);
-  always @ (posedge clk)
-    if (req) // 當 req == 1 => gnt = 1, 否則為
+  always @ (posedge clk)  // 當 clk posedge 去檢查 req
+    if (req) // 看 req == 1 => gnt = 1, 否則 gnt = 0
       gnt <= 1;
   	else
       gnt <= 0;
@@ -13,16 +13,18 @@ interface _if (input bit clk);
   logic req;
 
   clocking cb @(posedge clk);
-    input #1ns gnt;
-    output #5  req;
+    input #1ns gnt;  // 這裡 gnt 會在 posedge 前 1 ns 取值接收來自 module 的輸出
+    output #5  req;  // 這裡 req 會在 posedge 後 5 time units 輸出給 module (timescale 應該是 1 ns)
   endclocking
 endinterface
 
 module tb;
   bit clk;
 
-  // Create a clock and initialize input signal
-  always #10 clk = ~clk;
+  // Create a clock
+  always #10 clk = ~clk;  // 10 ns
+
+  // Initialize clk and req into 0
   initial begin
     clk <= 0;
     if0.cb.req <= 0;
@@ -39,9 +41,9 @@ module tb;
   // Drive stimulus
   initial begin
     for (int i = 0; i < 10; i++) begin
-      bit[3:0] delay = $random;
-      repeat (delay) @(posedge if0.clk);
-      if0.cb.req <= ~ if0.cb.req;
+      bit[3:0] delay = $random;  // random 一個 delay (0~16)
+      repeat (delay) @(posedge if0.clk);  // 延遲 delay 個時鐘週期
+      if0.cb.req <= ~ if0.cb.req;  // 延遲完設定 req
     end
     #20 $finish;
   end
@@ -49,6 +51,8 @@ endmodule
 ```
 **req is driven #5ns after the clock edge.**
 ![image](https://github.com/user-attachments/assets/f0395ddd-4f99-4d86-b20f-4a8a9c7f1c8d)
+![image](https://github.com/user-attachments/assets/d935b4c3-e8ff-4f3b-90ff-6416ba698b72)
+
 
 # Output skew
 ```
