@@ -5,7 +5,7 @@
 
 /*
   Note that there are two initial blocks which are executed in parallel when simulation starts. 
-  Statements are executed sequentially in each block and both blocks finish at time 0ns. 
+  Statements are executed sequentially in each block and both blocks finish at time 0ns.   都在 0 ns 時執行完所有 statements
   To be more specific, variable a gets assigned first, followed by the display statement which is then followed by all other statements. 
   This is visible in the output where variable b and c are 8'hxx in the first display statement. 
   This is because variable b and c assignments have not been executed yet when the first $display is called.

@@ -1,12 +1,12 @@
 /*
-  Non-blocking assignment allows assignments to be scheduled without blocking the execution of following statements and is specified by a <= symbol.  一起 assign, 沒有先後
-  It's interesting to note that the same symbol is used as a relational operator in expressions, and as an assignment operator in the context of a non-blocking assignment. 
-  If we take the first example from above, replace all = symobls with a non-blocking assignment operator <=, we'll see some difference in the output.
+  Non-blocking assignment allows assignments to be scheduled without blocking the execution of following statements and is specified by a <= symbol.  non-blocking 就是不會阻擋下一個 statement 執行的 (不需等 assign 做完, 可以直接做下一個 statement)
+  It's interesting to note that the same symbol is used as a relational operator in expressions (SVA), 
+  and as an assignment operator in the context of a non-blocking assignment. 
 */
 /*
   See that all the $display statements printed 'h'x. The reason for this behavior lies in the way non-blocking assignments are executed. 
   The RHS of every non-blocking statement of a particular time-step is captured, and moves onto the next statement. 
-  The captured RHS value is assigned to the LHS variable only at the end of the time-step.
+  The captured RHS value is assigned to the LHS variable only at the end of the time-step.  // 只有在當前 timestep 的最後, 才會去取值
 */
 module tb;
   reg [7:0] a, b, c, d, e;
@@ -38,13 +38,13 @@ endmodule
 
 /*
 |__ Spawn Block1: initial
-|      |___ Time #0ns : a <= 8'DA, is non-blocking so note value of RHS (8'hDA) and execute next step
+|      |___ Time #0ns : a <= 8'DA, is non-blocking so note value of RHS (8'hDA) and execute next step     (因為 non-blocking, 所以先執行下一個 statement)
 |      |___ Time #0ns : $display() is blocking, so execute this statement: But a hasn't received new values so a=8'hx
 |      |___ Time #0ns : b <= 8'F1, is non-blocking so note value of RHS (8'hF1) and execute next step
 |      |___ Time #0ns : $display() is blocking, so execute this statement. But b hasn't received new values so b=8'hx
 |      |___ Time #0ns : c <= 8'30, is non-blocking so note value of RHS (8'h30) and execute next step
 |      |___ Time #0ns : $display() is blocking, so execute this statement. But c hasn't received new values so c=8'hx
-|      |___ End of time-step and initial block, assign captured values into variables a, b, c   => timestep 0ns 的最後 assign a, b, c value
+|      |___ End of time-step and initial block, assign captured values into variables a, b, c   在 timestep 最後, 去取 a, b, c 的值
 |
 |__ Spawn Block2: initial
 |      |___ Time #0ns : d <= 8'AA, is non-blocking so note value of RHS (8'hAA) and execute next step
