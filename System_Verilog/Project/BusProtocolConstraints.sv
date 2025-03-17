@@ -6,7 +6,7 @@
 class BusTransaction;
   rand int 			m_addr;
   rand bit [31:0]	m_data;
-  rand bit [1:0] 	m_burst; 	// Size of a single transaction in bytes (4 bytes max)
+  rand bit [1:0] 	m_burst; 	  // Size of a single transaction in bytes (4 bytes max)
   rand bit [2:0] 	m_length; 	// Total number of transactions
 
   constraint c_addr { m_addr % 4 == 0; } // Always aligned to 4-byte boundary

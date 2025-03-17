@@ -16,7 +16,7 @@ interface axi_if(input logic clk);
     
 endinterface
 
-// UVM transaction。描述AXI傳輸一次的訊息
+// UVM transaction。描述 AXI 傳輸一次的訊息
 class axi_transaction extends uvm_sequence_item;
 
     rand bit [31:0] addr;
@@ -58,7 +58,6 @@ class axi_sequence extends uvm_sequence #(axi_transaction); //這個axi_sequence
 endclass
 
 // axi_driver繼承自uvm_driver，用於將AXI事務轉換為DUT訊號
-
 class axi_driver extends uvm_driver #(axi_transaction);
 
     `uvm_component_utils(axi_driver)
