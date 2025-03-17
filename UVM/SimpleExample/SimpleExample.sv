@@ -5,22 +5,17 @@ import uvm_pkg::*;
 interface axi_if(input logic clk);
 
     logic [31:0] addr;
-
     logic [31:0] data;
-
     logic valid;
-
     logic ready;
 
     modport drv (output addr, data, valid, input ready);
-    
 endinterface
 
 // UVM transaction。描述 AXI 傳輸一次的訊息
 class axi_transaction extends uvm_sequence_item;
 
     rand bit [31:0] addr;
-
     rand bit [31:0] data;
 
     `uvm_object_utils(axi_transaction) // 啟用factory機制，讓後續子類可以使用object的功能
@@ -110,9 +105,7 @@ class axi_env extends uvm_env;
     `uvm_component_utils(axi_env)
 
     axi_driver drv;
-
-    axi_sequencer seqr;  // **加入 sequencer**
-
+    axi_sequecer seqr;  // **加入 sequencer**
     axi_sequence seq;
 
     function new(string name = "axi_env", uvm_component parent);
