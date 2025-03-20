@@ -34,15 +34,16 @@ class axi_sequence extends uvm_sequence #(axi_transaction); //這個axi_sequence
         super.new(name);
     endfunction
 
-    task body();                //定義了如何傳transaction到sequencer
-        axi_transaction txn;    //定義了事務對象txn
-        repeat (5) begin        //循環5次
-            txn = axi_transaction::type_id::create("txn");
+    task body();                // 定義了如何產生並且傳送 transaction => sequencer => driver
+        axi_transaction txn;    // 建立一個 transaction 的 handle
+        repeat (5) begin        // loop 5 次 (產生+傳送)
+            // `uvm_do(req);
+            txn = axi_transaction::type_id::create("txn");  // 透過 factory 機制實例化 transaction
             `uvm_info("SEQ", $sformatf("Sending addr=%h, data=%h", txn.addr, txn.data), UVM_MEDIUM)     // 這裡只是印出資訊
             // start_item, randomize, finish_item
-            // start_item把sequence_item, sequence, sequencer連接起來
-            // randomize做出實例
-            // finish_item把sequence_item發送出去
+            // start_item: 對 transaction 做設定, 把 sequence_item, sequence, sequencer 連接起來
+            // randomize: 隨機化 transaciton
+            // finish_item: 把 sequence_item 發送出去
             start_item(txn);
             if(!txn.randomize())
                 `uvm_error("", "Randomize failed")
@@ -66,19 +67,19 @@ class axi_driver extends uvm_driver #(axi_transaction);
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         if (!uvm_config_db#(virtual axi_if.drv)::get(this, "", "vif", vif))
-            `uvm_fatal("DRIVER", "Virtual interface not found!")//從UVM配置數據庫中找vif，最後丟到vif變數中。
+            `uvm_fatal("DRIVER", "Virtual interface not found!")        //從 UVM 配置數據庫中找 vif，最後丟到 vif 變數中。
     endfunction
 
     task run_phase(uvm_phase phase);
         axi_transaction txn;
         forever begin
-            seq_item_port.get_next_item(txn); //獲得sequence發送的transaction
+            seq_item_port.get_next_item(txn); // 獲得 sequence 發送的transaction
             vif.addr  = txn.addr;
             vif.data  = txn.data;
             vif.valid = 1'b1;
-            wait (vif.ready); //等待DUT ready信號
+            wait (vif.ready);                 // 等待 DUT ready 信號
             vif.valid = 1'b0;
-            seq_item_port.item_done();  //告知Sequencer完成transaction處理
+            seq_item_port.item_done();        // 告知 Sequencer 完成 transaction 處理
             `uvm_info("DRV", $sformatf("Sent addr=%h, data=%h", txn.addr, txn.data), UVM_MEDIUM)
         end
     endtask
@@ -143,6 +144,7 @@ class axi_test extends uvm_test;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         env = axi_env::type_id::create("env", this);
+        
     endfunction
 
 endclass
@@ -158,7 +160,7 @@ module top;
     axi_if axi(clk);
 
     initial begin
-        uvm_config_db#(virtual axi_if.drv)::set(null, "uvm_test_top.env.drv", "vif", axi);
+        uvm_config_db#(virtual axi_if.drv)::set(null, "uvm_test_top.env.drv", "vif", axi);      // 在 UVM 配置數據庫設置 vif 其值為 axi interface
         run_test("axi_test");
     end
 
