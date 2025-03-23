@@ -1,0 +1,64 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000001773ce55d00 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C000001773cbe7d90  .class "Packet" [1]
+   0: "addr", "sb32"
+ ;
+C000001773cbe87e0  .class "extPacket" [1]
+   0: "addr", "sb32"
+ ;
+S_000001773ce51a00 .scope class, "Packet" "Packet" 3 7, 3 7 0, S_000001773ce55d00;
+ .timescale 0 0;
+S_000001773ce51b90 .scope autofunction.void, "display" "display" 3 9, 3 9 0, S_000001773ce51a00;
+ .timescale 0 0;
+v000001773ce51d20_0 .var/cobj "@";
+TD_$unit.Packet.display ;
+    %load/obj v000001773ce51d20_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 10 "$display", "[Base] addr=0x%0h", S<0,vec4,s32> {1 0 0};
+    %end;
+S_000001773ce51dc0 .scope class, "extPacket" "extPacket" 3 14, 3 14 0, S_000001773ce55d00;
+ .timescale 0 0;
+S_000001773ce51f50 .scope autofunction.obj, "new" "new" 3 15, 3 15 0, S_000001773ce51dc0;
+ .timescale 0 0;
+v000001773ce520e0_0 .var/cobj "@";
+TD_$unit.extPacket.new ;
+    %end;
+S_000001773ce55e90 .scope module, "tb" "tb" 3 20;
+ .timescale 0 0;
+v000001773ce52180_0 .var/cobj "ep";
+v000001773ce52220_0 .var/cobj "p";
+    .scope S_000001773ce55e90;
+T_2 ;
+    %alloc S_000001773ce51f50;
+    %new/cobj C000001773cbe87e0;
+    %store/obj v000001773ce520e0_0;
+    %callf/obj TD_$unit.extPacket.new, S_000001773ce51f50;
+    %load/obj v000001773ce520e0_0;
+    %free S_000001773ce51f50;
+    %store/obj v000001773ce52180_0;
+    %new/cobj C000001773cbe7d90;
+    %store/obj v000001773ce52220_0;
+    %alloc S_000001773ce51b90;
+    %load/obj v000001773ce52220_0;
+    %store/obj v000001773ce51d20_0;
+    %callf/void TD_$unit.Packet.display, S_000001773ce51b90;
+    %free S_000001773ce51b90;
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "Super1.sv";
