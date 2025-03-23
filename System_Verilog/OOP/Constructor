@@ -1,0 +1,63 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_00000288c9dd4e40 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C00000288c9dd6810  .class "Packet" [1]
+   0: "addr", "b32"
+ ;
+S_00000288c9f3e8f0 .scope class, "Packet" "Packet" 3 3, 3 3 0, S_00000288c9dd4e40;
+ .timescale 0 0;
+S_00000288c9f3ea80 .scope autofunction.obj, "new" "new" 3 6, 3 6 0, S_00000288c9f3e8f0;
+ .timescale 0 0;
+v00000288c9f3ec10_0 .var/cobj "@";
+TD_$unit.Packet.new ;
+    %pushi/vec4 4208904958, 0, 32;
+    %load/obj v00000288c9f3ec10_0;
+    %store/prop/v 0, 32; Store in bool property addr
+    %pop/obj 1, 0;
+    %end;
+S_00000288c9dd4fd0 .scope module, "tb" "tb" 3 11;
+ .timescale 0 0;
+S_00000288c9f3ecb0 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 14, 3 14 0, S_00000288c9dd4fd0;
+ .timescale 0 0;
+v00000288c9f3ee40_0 .var/cobj "pkt";
+    .scope S_00000288c9f3ecb0;
+T_1 ;
+    %alloc S_00000288c9f3ea80;
+    %new/cobj C00000288c9dd6810;
+    %store/obj v00000288c9f3ec10_0;
+    %callf/obj TD_$unit.Packet.new, S_00000288c9f3ea80;
+    %load/obj v00000288c9f3ec10_0;
+    %free S_00000288c9f3ea80;
+    %store/obj v00000288c9f3ee40_0;
+    %end;
+    .thread T_1, $init;
+    .scope S_00000288c9dd4fd0;
+T_2 ;
+    %fork t_1, S_00000288c9f3ecb0;
+    %jmp t_0;
+    .scope S_00000288c9f3ecb0;
+t_1 ;
+    %load/obj v00000288c9f3ee40_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 20 "$display", "addr=0x%0h", S<0,vec4,u32> {1 0 0};
+    %end;
+    .scope S_00000288c9dd4fd0;
+t_0 %join;
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "Constructor.sv";

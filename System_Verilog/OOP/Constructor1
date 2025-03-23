@@ -1,0 +1,49 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_0000020458d72d00 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C0000020458da62e0  .class "Packet" [1]
+   0: "addr", "b32"
+ ;
+S_0000020458f18750 .scope class, "Packet" "Packet" 3 3, 3 3 0, S_0000020458d72d00;
+ .timescale 0 0;
+S_0000020458d72e90 .scope module, "tb" "tb" 3 7;
+ .timescale 0 0;
+S_0000020458f188e0 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 11, 3 11 0, S_0000020458d72e90;
+ .timescale 0 0;
+v0000020458da6d30_0 .var/cobj "pkt";
+    .scope S_0000020458f188e0;
+T_0 ;
+    %new/cobj C0000020458da62e0;
+    %store/obj v0000020458da6d30_0;
+    %end;
+    .thread T_0, $init;
+    .scope S_0000020458d72e90;
+T_1 ;
+    %fork t_1, S_0000020458f188e0;
+    %jmp t_0;
+    .scope S_0000020458f188e0;
+t_1 ;
+    %load/obj v0000020458da6d30_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 13 "$display", "addr=0x%0h", S<0,vec4,u32> {1 0 0};
+    %end;
+    .scope S_0000020458d72e90;
+t_0 %join;
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "Constructor1.sv";
