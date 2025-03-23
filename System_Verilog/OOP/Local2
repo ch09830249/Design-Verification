@@ -1,0 +1,64 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_00000191173a5490 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C00000191173a6b40  .class "ABC" [1]
+   0: "local_var", "sb8"
+ ;
+C00000191173a6f40  .class "DEF" [1]
+   0: "local_var", "sb8"
+ ;
+S_000001911735d440 .scope class, "ABC" "ABC" 3 2, 3 2 0, S_00000191173a5490;
+ .timescale 0 0;
+S_000001911735d5d0 .scope class, "DEF" "DEF" 3 8, 3 8 0, S_00000191173a5490;
+ .timescale 0 0;
+S_000001911735d760 .scope autofunction.void, "show" "show" 3 9, 3 9 0, S_000001911735d5d0;
+ .timescale 0 0;
+v000001911735d8f0_0 .var/cobj "@";
+TD_$unit.DEF.show ;
+    %load/obj v000001911735d8f0_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 10 "$display", "local_var = 0x%0h", S<0,vec4,s8> {1 0 0};
+    %end;
+S_00000191173a5620 .scope module, "tb" "tb" 3 14;
+ .timescale 0 0;
+S_000001911735d990 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 15, 3 15 0, S_00000191173a5620;
+ .timescale 0 0;
+v000001911735db20_0 .var/cobj "def";
+    .scope S_000001911735d990;
+T_1 ;
+    %new/cobj C00000191173a6f40;
+    %store/obj v000001911735db20_0;
+    %end;
+    .thread T_1, $init;
+    .scope S_00000191173a5620;
+T_2 ;
+    %fork t_1, S_000001911735d990;
+    %jmp t_0;
+    .scope S_000001911735d990;
+t_1 ;
+    %alloc S_000001911735d760;
+    %load/obj v000001911735db20_0;
+    %store/obj v000001911735d8f0_0;
+    %callf/void TD_$unit.DEF.show, S_000001911735d760;
+    %free S_000001911735d760;
+    %end;
+    .scope S_00000191173a5620;
+t_0 %join;
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "Local2.sv";
