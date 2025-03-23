@@ -1,0 +1,50 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000001d6c5fc8c20 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C000001d6c6016610  .class "BaseClass" [1]
+   0: "data", "sb32"
+ ;
+S_000001d6c5fceb80 .scope class, "BaseClass" "BaseClass" 3 2, 3 2 0, S_000001d6c5fc8c20;
+ .timescale 0 0;
+S_000001d6c5fced10 .scope autofunction.obj, "new" "new" 3 5, 3 5 0, S_000001d6c5fceb80;
+ .timescale 0 0;
+v000001d6c5fceea0_0 .var/cobj "@";
+TD_$unit.BaseClass.new ;
+    %pushi/vec4 3235823838, 0, 32;
+    %load/obj v000001d6c5fceea0_0;
+    %store/prop/v 0, 32; Store in bool property data
+    %pop/obj 1, 0;
+    %end;
+S_000001d6c5fc8db0 .scope module, "tb" "tb" 3 10;
+ .timescale 0 0;
+v000001d6c6012940_0 .var/cobj "base";
+    .scope S_000001d6c5fc8db0;
+T_1 ;
+    %alloc S_000001d6c5fced10;
+    %new/cobj C000001d6c6016610;
+    %store/obj v000001d6c5fceea0_0;
+    %callf/obj TD_$unit.BaseClass.new, S_000001d6c5fced10;
+    %load/obj v000001d6c5fceea0_0;
+    %free S_000001d6c5fced10;
+    %store/obj v000001d6c6012940_0;
+    %load/obj v000001d6c6012940_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 14 "$display", "data=0x%0h", S<0,vec4,s32> {1 0 0};
+    %end;
+    .thread T_1;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "AbstractClass.sv";

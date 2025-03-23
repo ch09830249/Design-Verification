@@ -1,0 +1,71 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_0000023bb9445e40 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C0000023bb9446f30  .class "BaseClass" [1]
+   0: "data", "sb32"
+ ;
+C0000023bb93f87f0  .class "ChildClass" [1]
+   0: "data", "sb32"
+ ;
+S_0000023bb9441ae0 .scope class, "BaseClass" "BaseClass" 3 1, 3 1 0, S_0000023bb9445e40;
+ .timescale 0 0;
+S_0000023bb9441c70 .scope autofunction.obj, "new" "new" 3 4, 3 4 0, S_0000023bb9441ae0;
+ .timescale 0 0;
+v0000023bb9441e00_0 .var/cobj "@";
+TD_$unit.BaseClass.new ;
+    %pushi/vec4 3235823838, 0, 32;
+    %load/obj v0000023bb9441e00_0;
+    %store/prop/v 0, 32; Store in bool property data
+    %pop/obj 1, 0;
+    %end;
+S_0000023bb9441ea0 .scope class, "ChildClass" "ChildClass" 3 9, 3 9 0, S_0000023bb9445e40;
+ .timescale 0 0;
+S_0000023bb9442030 .scope autofunction.obj, "new" "new" 3 10, 3 10 0, S_0000023bb9441ea0;
+ .timescale 0 0;
+v0000023bb94421c0_0 .var/cobj "@";
+TD_$unit.ChildClass.new ;
+    %alloc S_0000023bb9441c70;
+    %load/obj v0000023bb94421c0_0;
+    %store/obj v0000023bb9441e00_0;
+    %callf/obj TD_$unit.BaseClass.new, S_0000023bb9441c70;
+    %load/obj v0000023bb9441e00_0;
+    %free S_0000023bb9441c70;
+    %store/obj v0000023bb94421c0_0;
+    %pushi/vec4 4208917214, 0, 32;
+    %load/obj v0000023bb94421c0_0;
+    %store/prop/v 0, 32; Store in bool property data
+    %pop/obj 1, 0;
+    %end;
+S_0000023bb9445fd0 .scope module, "tb" "tb" 3 15;
+ .timescale 0 0;
+v0000023bb9442260_0 .var/cobj "child";
+    .scope S_0000023bb9445fd0;
+T_2 ;
+    %alloc S_0000023bb9442030;
+    %new/cobj C0000023bb93f87f0;
+    %store/obj v0000023bb94421c0_0;
+    %callf/obj TD_$unit.ChildClass.new, S_0000023bb9442030;
+    %load/obj v0000023bb94421c0_0;
+    %free S_0000023bb9442030;
+    %store/obj v0000023bb9442260_0;
+    %load/obj v0000023bb9442260_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 19 "$display", "data=0x%0h", S<0,vec4,s32> {1 0 0};
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "AbstractClass1.sv";
