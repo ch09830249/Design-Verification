@@ -1,0 +1,123 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_00000249a833bc20 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C00000249a833eed0  .class "Packet" [4]
+   0: "addr", "b16"
+   1: "ctr", "sb32"
+   2: "data", "b8"
+   3: "static_ctr", "sb32"
+ ;
+S_00000249a8539d90 .scope class, "Packet" "Packet" 3 1, 3 1 0, S_00000249a833bc20;
+ .timescale 0 0;
+v00000249a84f3790_0 .var/2s "static_ctr", 31 0;
+S_00000249a84f34c0 .scope autofunction.obj, "new" "new" 3 7, 3 7 0, S_00000249a8539d90;
+ .timescale 0 0;
+v00000249a8539f20_0 .var/cobj "@";
+v00000249a84f3650_0 .var/2u "ad", 15 0;
+v00000249a84f36f0_0 .var/2u "d", 7 0;
+TD_$unit.Packet.new ;
+    %pushi/vec4 0, 0, 32;
+    %load/obj v00000249a8539f20_0;
+    %store/prop/v 1, 32; Store in bool property ctr
+    %pop/obj 1, 0;
+    %load/vec4 v00000249a84f3650_0;
+    %load/obj v00000249a8539f20_0;
+    %store/prop/v 0, 16; Store in bool property addr
+    %pop/obj 1, 0;
+    %load/vec4 v00000249a84f36f0_0;
+    %load/obj v00000249a8539f20_0;
+    %store/prop/v 2, 8; Store in bool property data
+    %pop/obj 1, 0;
+    ; show_stmt_assign_vector: Get l-value for compressed += operand
+    %load/vec4 v00000249a84f3790_0;
+    %pushi/vec4 1, 0, 32;
+    %add;
+    %cast2;
+    %store/vec4 v00000249a84f3790_0, 0, 32;
+    %pushi/vec4 1, 0, 32;
+    %load/obj v00000249a8539f20_0;
+    %store/prop/v 1, 32; Store in bool property ctr
+    %pop/obj 1, 0;
+    %load/obj v00000249a8539f20_0;
+    %prop/v 1;
+    %pop/obj 1, 0;
+    %load/obj v00000249a8539f20_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %load/obj v00000249a8539f20_0;
+    %prop/v 2;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 12 "$display", "static_ctr=%0d ctr=%0d addr=0x%0h data=0x%0h", v00000249a84f3790_0, S<2,vec4,s32>, S<1,vec4,u16>, S<0,vec4,u8> {3 0 0};
+    %end;
+S_00000249a84f6650 .scope module, "tb" "tb" 3 16;
+ .timescale 0 0;
+S_00000249a84f3830 .scope begin, "$unm_blk_1" "$unm_blk_1" 3 17, 3 17 0, S_00000249a84f6650;
+ .timescale 0 0;
+v00000249a84f39c0_0 .var/cobj "p1";
+v00000249a84f3a60_0 .var/cobj "p2";
+v00000249a84f3b00_0 .var/cobj "p3";
+    .scope S_00000249a8539d90;
+T_1 ;
+    %pushi/vec4 0, 0, 32;
+    %store/vec4 v00000249a84f3790_0, 0, 32;
+    %end;
+    .thread T_1;
+    .scope S_00000249a84f6650;
+T_2 ;
+    %fork t_1, S_00000249a84f3830;
+    %jmp t_0;
+    .scope S_00000249a84f3830;
+t_1 ;
+    %alloc S_00000249a84f34c0;
+    %new/cobj C00000249a833eed0;
+    %pushi/vec4 57005, 0, 16;
+    %pushi/vec4 18, 0, 8;
+    %store/vec4 v00000249a84f36f0_0, 0, 8;
+    %store/vec4 v00000249a84f3650_0, 0, 16;
+    %store/obj v00000249a8539f20_0;
+    %callf/obj TD_$unit.Packet.new, S_00000249a84f34c0;
+    %load/obj v00000249a8539f20_0;
+    %free S_00000249a84f34c0;
+    %store/obj v00000249a84f39c0_0;
+    %alloc S_00000249a84f34c0;
+    %new/cobj C00000249a833eed0;
+    %pushi/vec4 64206, 0, 16;
+    %pushi/vec4 171, 0, 8;
+    %store/vec4 v00000249a84f36f0_0, 0, 8;
+    %store/vec4 v00000249a84f3650_0, 0, 16;
+    %store/obj v00000249a8539f20_0;
+    %callf/obj TD_$unit.Packet.new, S_00000249a84f34c0;
+    %load/obj v00000249a8539f20_0;
+    %free S_00000249a84f34c0;
+    %store/obj v00000249a84f3a60_0;
+    %alloc S_00000249a84f34c0;
+    %new/cobj C00000249a833eed0;
+    %pushi/vec4 51966, 0, 16;
+    %pushi/vec4 252, 0, 8;
+    %store/vec4 v00000249a84f36f0_0, 0, 8;
+    %store/vec4 v00000249a84f3650_0, 0, 16;
+    %store/obj v00000249a8539f20_0;
+    %callf/obj TD_$unit.Packet.new, S_00000249a84f34c0;
+    %load/obj v00000249a8539f20_0;
+    %free S_00000249a84f34c0;
+    %store/obj v00000249a84f3b00_0;
+    %end;
+    .scope S_00000249a84f6650;
+t_0 %join;
+    %end;
+    .thread T_2;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "StaticVariables.sv";
