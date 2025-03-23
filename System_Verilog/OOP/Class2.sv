@@ -18,19 +18,34 @@ class myPacket;
 	endfunction
 endclass
 
+class networkPkt extends myPacket;
+	bit        parity;
+	bit [1:0]  crc;
+
+	function new ();
+		super.new();			// To call the functions of base class (myPacket), use super keyword.
+		this.parity = 1;
+		this.crc = 3;
+	endfunction
+
+	function display();
+		super.display();
+		$display ("Parity = %0b, CRC = 0x%0h", this.parity, this.crc);
+	endfunction
+endclass
+
 module tb_top;
-	myPacket pkt0, pkt1;
+	networkPkt pkt0;
 
 	initial begin
-		pkt0 = new (3'h2, 2'h3);
-		pkt0.display();
 
-		pkt1 = new();
-		pkt1.display();
-	end
+		pkt0 = new();
+		pkt0.display();
+   	end
 endmodule
 
 /*
-	Header = 0x2, Encode = 0, Mode = 0x3, Stop = 1
+	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
+	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
 	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
 */

@@ -19,18 +19,18 @@ class myPacket;
 endclass
 
 module tb_top;
-	myPacket pkt0, pkt1;
+	myPacket pkt0 [3];
 
 	initial begin
-		pkt0 = new (3'h2, 2'h3);
-		pkt0.display();
-
-		pkt1 = new();
-		pkt1.display();
-	end
+    	for(int i = 0; i < $size (pkt0); i++) begin
+   	   		pkt0[i] = new ();
+       		pkt0[i].display ();
+   		end
+   	end
 endmodule
 
 /*
-	Header = 0x2, Encode = 0, Mode = 0x3, Stop = 1
+	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
+	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
 	Header = 0x1, Encode = 0, Mode = 0x5, Stop = 1
 */

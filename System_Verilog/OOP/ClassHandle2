@@ -1,0 +1,47 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000002659c052af0 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C000002659c0864e0  .class "Packet" [1]
+   0: "count", "sb32"
+ ;
+S_000002659c158c50 .scope class, "Packet" "Packet" 3 3, 3 3 0, S_000002659c052af0;
+ .timescale 0 0;
+S_000002659c052c80 .scope module, "tb" "tb" 3 7;
+ .timescale 0 0;
+v000002659c086eb0_0 .var/cobj "pkt";
+v000002659c052e10_0 .var/cobj "pkt2";
+    .scope S_000002659c052c80;
+T_0 ;
+    %new/cobj C000002659c0864e0;
+    %store/obj v000002659c086eb0_0;
+    %pushi/vec4 43981, 0, 32;
+    %load/obj v000002659c086eb0_0;
+    %store/prop/v 0, 32; Store in bool property count
+    %pop/obj 1, 0;
+    %load/obj v000002659c086eb0_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 21 "$display", "[pkt] count = 0x%0h", S<0,vec4,s32> {1 0 0};
+    %load/obj v000002659c086eb0_0;
+    %store/obj v000002659c052e10_0;
+    %load/obj v000002659c052e10_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 25 "$display", "[pkt2] count = 0x%0h", S<0,vec4,s32> {1 0 0};
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "ClassHandle2.sv";

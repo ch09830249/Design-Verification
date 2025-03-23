@@ -1,0 +1,40 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "D:\iverilog\lib\ivl\system.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "D:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "D:\iverilog\lib\ivl\v2009.vpi";
+S_000001dd75f92af0 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+C000001dd75fc6100  .class "Packet" [1]
+   0: "count", "sb32"
+ ;
+S_000001dd75f78750 .scope class, "Packet" "Packet" 3 3, 3 3 0, S_000001dd75f92af0;
+ .timescale 0 0;
+S_000001dd75f92c80 .scope module, "tb" "tb" 3 7;
+ .timescale 0 0;
+v000001dd75fc6940_0 .var/cobj "pkt";
+    .scope S_000001dd75f92c80;
+T_0 ;
+    %test_nul v000001dd75fc6940_0;
+    %flag_get/vec4 4;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_0.0, 8;
+    %vpi_call/w 3 15 "$display", "Packet handle 'pkt' is null" {0 0 0};
+T_0.0 ;
+    %load/obj v000001dd75fc6940_0;
+    %prop/v 0;
+    %pop/obj 1, 0;
+    %vpi_call/w 3 21 "$display", "count = %0d", S<0,vec4,s32> {1 0 0};
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "ClassHandle.sv";
