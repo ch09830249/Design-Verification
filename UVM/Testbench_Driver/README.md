@@ -44,10 +44,7 @@ endtask
 ```
 ![image](https://github.com/user-attachments/assets/831d28f9-2160-4fbb-a330-93c5206b4b24)
 # Driver-Sequencer Handshaking
-Method Name	Description
-get_next_item	Blocks until a request item is available from the sequencer. This should be followed by item_done call to complete the handshake.
-try_next_item	Non-blocking method which will return null if a request object is not available from the sequencer. Else it returns a pointer to the object.
-item_done	Non-blocking method which completes the driver-sequencer handshake. This should be called after get_next_item or a successful try_next_item call.
+
 | Method Name | Description |
 | :-----| :---- |
 | get_next_item | Blocks until a request item is available from the sequencer. This should be followed by item_done call to complete the handshake. |
