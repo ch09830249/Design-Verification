@@ -1,5 +1,6 @@
 # UVM Driver
-* 
+* UVM Driver 知道如何將訊號透過 interface 來驅動 design。所有 Driver 程式類別都應該從 uvm_driver 擴展，無論是直接還是間接。
+交易級物件從序列器獲得，UVM 驅動程式透過介面句柄將它們驅動到設計中。
 # Class Hierarchy  
 ![image](https://github.com/user-attachments/assets/9715f947-fdff-45c9-ab61-adcf041694e2)
 # 建立 UVM Driver 的步驟
@@ -37,14 +38,14 @@ endfunction
 // transaction level objects into pin wiggles at the DUT interface
 virtual task run_phase (uvm_phase phase);
 	// Loop the following steps
-	// 1. Get next item from the sequencer
-	// 2. Assign data from the received item into DUT interface
+	// 1. Get next item from the sequencer				// 從 sequencer 取出下一筆 transaction
+	// 2. Assign data from the received item into DUT interface	// 從 transaction 取出 data 並指定給 DUT interface
 	// 3. Finish driving transaction
 endtask
 ```
 ![image](https://github.com/user-attachments/assets/831d28f9-2160-4fbb-a330-93c5206b4b24)
 # Driver-Sequencer Handshaking
-
+* UVM Driver 是一個參數化的類別，可以驅動特定類型的事務物件。Driver 有一個 TLM port 叫 uvm_seq_item_pull_port，可以接受來自 uvm_sequencer 的參數化請求物件。它還可以向 sequencer 傳回一個回應對象，並且通常請求和回應項的類別類型是相同的。但是，如果明確指定，它們可以不同。
 | Method Name | Description |
 | :-----| :---- |
 | get_next_item | Blocks until a request item is available from the sequencer. This should be followed by item_done call to complete the handshake. |
