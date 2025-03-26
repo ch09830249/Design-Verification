@@ -17,12 +17,10 @@
                        創一個 placeholder (運用父類 handle 可以指向一個子類 handle 的特性, 後續實作的子類, 都可以用父類的 handle 去接)
 */
 
-class MyCallback;           // 可以看作是一個 prototype
-
-  virtual function void callback_function();
+class MyCallback;                                 // 可以看作是一個 prototype
+  virtual function void callback_function();      // 這裡要是用 virtual 的用意是, 到時候呼叫該 func 會強制呼叫子類的 func, 而非父類的
     // Default implementation (optional)
   endfunction
-
 endclass
 
 /*
@@ -32,14 +30,13 @@ endclass
 */
 
 class MyTest;
-  MyCallback cb; // 相較 C 用 func ptr 傳入 func, 這裡是傳入繼承 MyCallback 的子類所建立的 instance, 再透過該 instance 呼叫 callback
-
+  MyCallback cb;    // 相較 C 用 func ptr 傳入 func, 這裡是傳入繼承 MyCallback 的子類 handle, 這個 handle 會去接子類的 object
   // 2. Registration of callback
   function void register_callback(MyCallback callback); // 在 class MyTest 透過 MyCallback 的 handle 接它的子類物件
     cb = callback;
   endfunction
 
-  function void execute();  // 在看何時透過該 MyCallback 的 handle 去互叫 callback function
+  function void execute();  // 在看何時透過該 MyCallback 的 handle 去呼叫 callback function (正因為父類 func 為 virtual, 所以用 MyCallback 的 handle 會呼叫到子類的該方法)
     if (cb != null) begin
       cb.callback_function();
     end
@@ -53,11 +50,9 @@ endclass
 
 // 3. Callback implementation
 class UserCallback extends MyCallback;      // 這裡就是繼承 MyCallback 的子類去實作 callback func, 每個子 class 有不同的實作
-
   function void callback_function();
     $display("User-defined callback called!");
   endfunction
-
 endclass
 
 /*
@@ -69,7 +64,7 @@ module tb;
 
   initial begin
     MyTest        test;
-    UserCallback  user_cb;
+    UserCallback  user_cb;            // Callback function 可以根據需求有不同實作
 
     test    = new;
     user_cb = new;
