@@ -1,43 +1,59 @@
-# UVM Testbench Top
-![image](https://github.com/user-attachments/assets/adee9b11-c376-4b1c-94a3-b90b261e8178)  
-* 所有驗證所需的 components、interfaces 和 DUT 均在 testbench 這樣頂層的模組中實例化。是一個靜態容器，用於保存需要模擬的所有內容，並成為層次結構中的根節點。儘管它可以採用任何其他名稱，但通常命名為 tb 或 tb_top。  
-## Testbench Top Example
+# UVM Sequence
+![image](https://github.com/user-attachments/assets/3db6645d-a859-4f38-8dbe-eeaa01cf2e6b)
+* UVM sequences are made up of several data items which can be put together in different ways to create interesting scenarios. They are executed by an assigned sequencer which then sends data items to the driver. Hence, sequences make up the core stimuli of any verification plan.
+# Class Hierarchy
+![image](https://github.com/user-attachments/assets/1e59aff5-38d4-4bf0-afbc-cc9f78c48958)
+# 建立 UVM Sequence 的步驟
+* Create a user-defined class inherited from **uvm_sequence**, register with factory and call new
 ```
-module tb_top;
-   import uvm_pkg::*;    // 需要 import uvm_pkg 以使用 UVM constructs
+// my_sequence is user-given name for this class that has been derived from "uvm_sequence"
+class my_sequence extends uvm_sequence;
 
-   // Complex testbenches will have multiple clocks and hence multiple clock
-   // generator modules that will be instantiated elsewhere
-   // For simple designs, it can be put into testbench top
-   bit clk;    // 產生 module 所需的 clk
-   always #10 clk <= ~clk; 
+	// [Recommended] Makes this sequence reusable. Note that we are calling
+	// `uvm_object_utils instead of `uvm_component_utils because sequence is a uvm_transaction object
+	`uvm_object_utils (my_sequence)      // 注意這邊是 uvm_object_utils
 
+	// This is standard code for all components
+    function new (string name = "my_sequence");
+    	super.new (name);
+    endfunction
+endclass
+```
+* Declare the default sequencer to execute this sequence
+```
+// [Optional] my_sequencer is a pre-defined custom sequencer before this sequence definition
+`uvm_declare_p_sequencer (my_sequencer)
+```
+* Define the body method
+```
+// [Recommended] Make this task "virtual" so that child classes can override this task definition
+virtual task body ();
+	// Stimulus for this sequence comes here
+endtask
+```
+# UVM Sequence Example
+* `uvm_do macro will **allocate an object of type my_data to pkt**, **randomize it** and **send it to the default sequencer** associated to execute this sequence. Use of this macro simply reduces the code required to achieve the objectives mentioned before.
+```
+class my_sequence extends uvm_sequence;
+	`uvm_object_utils (my_sequence)
 
-   // Instantiate the Interface and pass it to Design
-   dut_if         dut_if1  (clk);    // 實例化 interface 和 module, 並將 interface 物件傳給 module
-   dut_wrapper    dut_wr0  (._if (dut_if1));
+	function new (string name = "my_sequence");
+		super.new (name);
+	endfunction
 
+	// Called before the body() task
+	task pre_body ();
+		...
+	endtask
 
-   // At start of simulation, set the interface handle as a config object in UVM
-   // database. This IF handle can be retrieved in the test using the get() method
-   // run_test () accepts the test name as argument. In this case, base_test will
-   // be run for simulation
-   initial begin
-      // 將該 interface handle 設置於 configuration table, 要使用該 handle 都可以透過 get() 方法去取用
-      uvm_config_db #(virtual dut_if)::set (null, "uvm_test_top", "dut_if", dut_if1);
-      // run simulation 名為 base_test
-      run_test ("base_test");
-   end
+	task body ();
+		my_data pkt;
+		`uvm_do (pkt);   // 這 macro 就是直接產生 transaction 和送出去
+	endtask
 
-   // Multiple EDA tools have different system task calls to specify and dump waveform
-   // in a given format or path. Some do not need anything to be placed in the testbench
-   // top module. Lets just dump a very generic waveform dump file in *.vcd format
-   initial begin
-      // Dump wave
-      $dumpvars;
-      // 存成 .vcd 檔
-      $dumpfile("dump.vcd");
-   end
-
-endmodule
+	// Called after the body() task
+	task post_body();
+		...
+	endtask
+endclass
 ```
