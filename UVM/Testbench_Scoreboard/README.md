@@ -1,43 +1,98 @@
-# UVM Testbench Top
-![image](https://github.com/user-attachments/assets/adee9b11-c376-4b1c-94a3-b90b261e8178)  
-* 所有驗證所需的 components、interfaces 和 DUT 均在 testbench 這樣頂層的模組中實例化。是一個靜態容器，用於保存需要模擬的所有內容，並成為層次結構中的根節點。儘管它可以採用任何其他名稱，但通常命名為 tb 或 tb_top。  
-## Testbench Top Example
+# UVM Scoreboard
+![image](https://github.com/user-attachments/assets/e0de14ff-2270-4605-b429-9c10e7e9c06b)
+* UVM scoreboard is a verification component that contains checkers and verifies the functionality of a design. It usually receives transaction level objects captured from the interfaces of a DUT via TLM Analysis Ports. (Monitor)
+* Reference Model:
+   * After receiving data objects, it can either perform calculations and predict the expected value or send it to a reference model to get expected values. The reference model is also called a predictor and would mimic the functionality of the design. The final task is to compare expected results with the actual output data from DUT.
+
+**PS**: It is recommended to inherit from **uvm_scoreboard** than **uvm_component** so that any additions to uvm_scoreboard class in a future release of UVM will automatically be included in the custom UVM scoreboard when you switch to the newer version.
+# 建立 UVM Scoreboard 的步驟
+* Create a custom class inherited from uvm_scoreboard, register with factory and call function new
 ```
-module tb_top;
-   import uvm_pkg::*;    // 需要 import uvm_pkg 以使用 UVM constructs
+// my_scoreboard is user-given name for this class that has been derived from "uvm_scoreboard"
+class my_scoreboard extends uvm_scoreboard;   // 新版 UVM 未來會有 uvm_scoreboard
 
-   // Complex testbenches will have multiple clocks and hence multiple clock
-   // generator modules that will be instantiated elsewhere
-   // For simple designs, it can be put into testbench top
-   bit clk;    // 產生 module 所需的 clk
-   always #10 clk <= ~clk; 
+    // [Recommended] Makes this scoreboard more re-usable
+    `uvm_component_utils (my_scoreboard)
 
+    // This is standard code for all components
+    function new (string name = "my_scoreboard", uvm_component parent = null);
+      super.new (name, parent);
+    endfunction
 
-   // Instantiate the Interface and pass it to Design
-   dut_if         dut_if1  (clk);    // 實例化 interface 和 module, 並將 interface 物件傳給 module
-   dut_wrapper    dut_wr0  (._if (dut_if1));
+    // Code for rest of the steps come here
+endclass
+```
+* Add necessary TLM exports to receive transactions from other components and instantiat them in build_phase
+```
+// Step2: Declare and create a TLM Analysis Port to receive data objects from other TB components
+uvm_analysis_imp #(apb_pkt, my_scoreboard) ap_imp;   // 宣告一個 import handle, 以接收來自其他 components 傳來的資料
 
+// Instantiate the analysis port, because afterall, its a class object
+function void build_phase (uvm_phase phase);   // 並在 build phase 實例化
+	ap_imp = new ("ap_imp", this);
+endfunction
+```
+* Define the action to be taken when data is received from the analysis port
+```
+// Step3: Define action to be taken when a packet is received via the declared analysis port
+virtual function void write (apb_pkt data);
+	// What should be done with the data packet received comes here - let's display it
+	`uvm_info ("write", $sformatf("Data received = 0x%0h", data), UVM_MEDIUM)
+endfunction
+```
+* Perform checks
+```
+// Step4: [Optional] Perform any remaining comparisons or checks before end of simulation
+virtual function void check_phase (uvm_phase phase);
+	...
+endfunction
+```
+* Connect Analysis ports of scoreboard with other components in the environment
+```
+class my_env extends uvm_env;
+	...
 
-   // At start of simulation, set the interface handle as a config object in UVM
-   // database. This IF handle can be retrieved in the test using the get() method
-   // run_test () accepts the test name as argument. In this case, base_test will
-   // be run for simulation
-   initial begin
-      // 將該 interface handle 設置於 configuration table, 要使用該 handle 都可以透過 get() 方法去取用
-      uvm_config_db #(virtual dut_if)::set (null, "uvm_test_top", "dut_if", dut_if1);
-      // run simulation 名為 base_test
-      run_test ("base_test");
-   end
+	// Step5: Connect the analysis port of the scoreboard with the monitor so that
+	// the scoreboard gets data whenever monitor broadcasts the data.
+	virtual function void connect_phase (uvm_phase phase);
+		super.connect_phase (phase);
+		m_apb_agent.m_apb_mon.analysis_port.connect (m_scbd.ap_imp);
+	endfunction
+endclass
+```
+# UVM Scoreboard Example
+```
+// Step1 : Create a new class that extends from uvm_scoreboard
+class my_scoreboard extends uvm_scoreboard;
+	`uvm_component_utils (my_scoreboard)
 
-   // Multiple EDA tools have different system task calls to specify and dump waveform
-   // in a given format or path. Some do not need anything to be placed in the testbench
-   // top module. Lets just dump a very generic waveform dump file in *.vcd format
-   initial begin
-      // Dump wave
-      $dumpvars;
-      // 存成 .vcd 檔
-      $dumpfile("dump.vcd");
-   end
+	function new (string name = "my_scoreboard", uvm_component parent);
+		super.new (name, parent);
+	endfunction
 
-endmodule
+	// Step2a: Declare and create a TLM Analysis Port to receive data objects from other TB components
+	uvm_analysis_imp #(apb_pkt, my_scoreboard) ap_imp;
+
+	// Step2b: Instantiate the analysis port, because afterall, its a class object
+	function void build_phase (uvm_phase phase);
+		ap_imp = new ("ap_imp", this);
+	endfunction
+
+	// Step3: Define action to be taken when a packet is received via the declared analysis port
+	virtual function void write (apb_pkt data);
+		// What should be done with the data packet received comes here - let's display it
+		`uvm_info ("write", $sformatf("Data received = 0x%0h", data), UVM_MEDIUM)
+	endfunction
+
+	// Step3: Define other functions and tasks that operate on the data and call them
+	// Remember, this is the main task that consumes simulation time in UVM
+	virtual task run_phase (uvm_phase phase);
+		...
+	endtask
+
+	// Step4: [Optional] Perform any remaining comparisons or checks before end of simulation
+	virtual function void check_phase (uvm_phase phase);
+		...
+	endfunction
+endclass
 ```
