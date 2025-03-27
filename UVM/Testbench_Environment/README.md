@@ -1,16 +1,17 @@
 # UVM Environment
 ![image](https://github.com/user-attachments/assets/f36823ec-b2d5-4d66-aa23-011288643e38)
-* A UVM environment 包含多個 agents for different interfaces, scoreboard, functional coverage collector 和 additional checkers
+* A UVM environment contains **multiple, reusable verification components** and defines their default configuration as required by the application.
+  * For example, a UVM environment may have **multiple agents for different interfaces**, **a common scoreboard,** **a functional coverage collector**, and **additional checkers**.
 # Class Hierarchy
 ![image](https://github.com/user-attachments/assets/9d90374a-75e1-406c-b0f3-72123bfb24cc)
 # 建立 UVM Env 的步驟
-* Create a custom class inherited from uvm_env, register with factory, and callnew
+* Create a custom class inherited from **uvm_env**, register with factory, and call new (跟前面一樣)
 ```
   // my_env is user-given name for this class that has been derived from "uvm_env"
 class my_env extends uvm_env;   // 繼承 uvm_env
 
     // [Recommended] Makes this driver more re-usable
-    `uvm_component_utils (my_env)   // 註冊該類別
+    `uvm_component_utils (my_env)   // 向 factory 註冊該類別
 
     // This is standard code for all components
     function new (string name = "my_env", uvm_component parent = null);
@@ -37,7 +38,7 @@ virtual function void build_phase (uvm_phase phase);      // 在 build phase 透
 
 	// [Optional] Collect configuration objects from the test class if applicable
 	if (uvm_config_db #(env_cfg)::get(this, "", "env_cfg", m_env_cfg))      // 這裡是將之前在上一層 test 對此 env 的 configuration object 取出, 用我們 handle 去接 
-		`uvm_fatal ("build_phase", "Did not get a configuration object for env")
+		`uvm_fatal ("build_phase", "Did not get a configuration object for env")  // 然後根據該 env configuration 對其他 component 去做設定
 
 	// [Optional] Pass other configuration objects to sub-components via uvm_config_db
 endfunction
@@ -79,6 +80,9 @@ class my_env extends uvm_env ;
 endclass
 ```
 # UVM Environment Example
+* This environment has **2 agents**, **3 sub-environments** and **a scoreboard** as represented in the block diagram shown above.
+* **Nested env**
+  * env_analog or env_register environments can have other nested environments and agents within it.
 ```
 class my_top_env extends uvm_env;
    `uvm_component_utils (my_env)
