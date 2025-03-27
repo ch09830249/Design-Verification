@@ -1,7 +1,7 @@
 # UVM Testbench Top
 ![image](https://github.com/user-attachments/assets/adee9b11-c376-4b1c-94a3-b90b261e8178)  
-* 所有驗證所需的 components、interfaces 和 DUT 均在 testbench 這樣頂層的模組中實例化。是一個靜態容器，用於保存需要模擬的所有內容，並成為層次結構中的根節點。儘管它可以採用任何其他名稱，但通常命名為 tb 或 tb_top。  
-## Testbench Top Example
+* All verification **components**, **interfaces** and **DUT** are instantiated in a top level module called testbench. It is a static container to hold everything required to be simulated and becomes the root node in the hierarchy. This is usually named **tb** or **tb_top** although it can assume any other name.
+# Testbench Top Example
 ```
 module tb_top;
    import uvm_pkg::*;    // 需要 import uvm_pkg 以使用 UVM constructs
@@ -14,8 +14,8 @@ module tb_top;
 
 
    // Instantiate the Interface and pass it to Design
-   dut_if         dut_if1  (clk);    // 實例化 interface 和 module, 並將 interface 物件傳給 module
-   dut_wrapper    dut_wr0  (._if (dut_if1));
+   dut_if         dut_if1  (clk);               // 實例化 interface 和 module, 先將 clock 傳入 interface
+   dut_wrapper    dut_wr0  (._if (dut_if1));    // 將 interface 物件傳給 module
 
 
    // At start of simulation, set the interface handle as a config object in UVM
