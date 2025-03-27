@@ -1,43 +1,64 @@
-# UVM Testbench Top
-![image](https://github.com/user-attachments/assets/adee9b11-c376-4b1c-94a3-b90b261e8178)  
-* 所有驗證所需的 components、interfaces 和 DUT 均在 testbench 這樣頂層的模組中實例化。是一個靜態容器，用於保存需要模擬的所有內容，並成為層次結構中的根節點。儘管它可以採用任何其他名稱，但通常命名為 tb 或 tb_top。  
-## Testbench Top Example
+# UVM Agent
+![image](https://github.com/user-attachments/assets/3f1a44ce-0c99-44cf-90d3-cee6806a1fb2)
+* An **agent** encapsulates a **Sequencer**, **Driver** and **Monitor** into a single entity by **instantiating** and **connecting the components together** via TLM interfaces. An agent can also have configuration options like the type of UVM agent (active/passive), knobs to turn on features such as functional coverage, and other similar parameters.
+* Types of Agents   (可以透過 get_is_active() 得知)
+   * Active:
+      * Instantiates all three components [Sequencer, Driver, Monitor]
+      * **Enables data to be driven to DUT via driver**
+   * Passive:
+      * Only instantiate the monitor  Used for checking and coverage only
+      * **Useful when there's no data item to be driven to DUT**
+# Class Hierarchy
+![image](https://github.com/user-attachments/assets/5e4c4977-5201-4527-bb3b-6aaa3644e6fd)
+# 建立 UVM Agent 的步驟
+* Create a custom class inherited from uvm_agent, register with factory and call new
 ```
-module tb_top;
-   import uvm_pkg::*;    // 需要 import uvm_pkg 以使用 UVM constructs
+// my_agent is user-given name for this class that has been derived from "uvm_agent"
+class my_agent extends uvm_agent;
 
-   // Complex testbenches will have multiple clocks and hence multiple clock
-   // generator modules that will be instantiated elsewhere
-   // For simple designs, it can be put into testbench top
-   bit clk;    // 產生 module 所需的 clk
-   always #10 clk <= ~clk; 
+    // [Recommended] Makes this agent more re-usable
+    `uvm_component_utils (my_agent)
 
+    // This is standard code for all components
+    function new (string name = "my_agent", uvm_component parent = null);
+      super.new (name, parent);
+    endfunction
 
-   // Instantiate the Interface and pass it to Design
-   dut_if         dut_if1  (clk);    // 實例化 interface 和 module, 並將 interface 物件傳給 module
-   dut_wrapper    dut_wr0  (._if (dut_if1));
+    // Code for rest of the steps come here
+endclass
+```
+* Instantiate agent components
+```
+// Create handles to all agent components like driver, monitor and sequencer
+// my_driver, my_monitor and agent_cfg are custom classes assumed to be defined
+// Agents can be configured via a configuration object that can be passed in from the test
+   my_driver                  m_drv0;
+   my_monitor                 m_mon0;
+   uvm_sequencer #(my_data)   m_seqr0;
+   agent_cfg                  m_agt_cfg;
+```
+* Instantiate and build components
+```
+virtual function void build_phase (uvm_phase phase);
+// 這裡特別針對 active 有不同的處理
+// If this UVM agent is active, then build driver, and sequencer
+         if (get_is_active()) begin
+            m_seqr0 = uvm_sequencer#(my_data)::type_id::create ("m_seqr0", this);   // 只有 Active agent 需要驅動 DUT, 所以需要 sequencer 和 driver
+            m_drv0 = my_driver::type_id::create ("m_drv0", this);
+         end
 
+         // Both active and passive agents need a monitor
+         m_mon0 = my_monitor::type_id::create ("m_mon0", this);   // monitor 都要
 
-   // At start of simulation, set the interface handle as a config object in UVM
-   // database. This IF handle can be retrieved in the test using the get() method
-   // run_test () accepts the test name as argument. In this case, base_test will
-   // be run for simulation
-   initial begin
-      // 將該 interface handle 設置於 configuration table, 要使用該 handle 都可以透過 get() 方法去取用
-      uvm_config_db #(virtual dut_if)::set (null, "uvm_test_top", "dut_if", dut_if1);
-      // run simulation 名為 base_test
-      run_test ("base_test");
-   end
+         //[Optional] Get any agent configuration objects from uvm_config_db
+      endfunction
+```
+* Connect agent components together
+```
+virtual function void connect_phase (uvm_phase phase);
 
-   // Multiple EDA tools have different system task calls to specify and dump waveform
-   // in a given format or path. Some do not need anything to be placed in the testbench
-   // top module. Lets just dump a very generic waveform dump file in *.vcd format
-   initial begin
-      // Dump wave
-      $dumpvars;
-      // 存成 .vcd 檔
-      $dumpfile("dump.vcd");
-   end
-
-endmodule
+// Connect the driver to the sequencer if this agent is Active
+         if (get_is_active())
+            m_drv0.seq_item_port.connect (m_seqr0.seq_item_export);      // 如果是 active, driver 就要接收來自 sequencer 的 transaction 所以要連接
+      endfunction
 ```
