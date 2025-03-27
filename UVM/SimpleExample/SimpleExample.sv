@@ -18,9 +18,9 @@ class axi_transaction extends uvm_sequence_item;
     rand bit [31:0] addr;
     rand bit [31:0] data;
 
-    `uvm_object_utils(axi_transaction) // 啟用factory機制，讓後續子類可以使用object的功能
+    `uvm_object_utils(axi_transaction) // 透過 uvm_object_utils 向 factory 註冊該 class (uvm_object 的子類都要)
 
-    function new(string name = "axi_transaction");
+    function new(string name = "axi_transaction");  // PS: 一定要再定義一個以 name 為參數的 constructor
         super.new(name);
     endfunction
 
@@ -56,11 +56,11 @@ endclass
 // axi_driver繼承自uvm_driver，用於將AXI事務轉換為DUT訊號
 class axi_driver extends uvm_driver #(axi_transaction);
 
-    `uvm_component_utils(axi_driver)
+    `uvm_component_utils(axi_driver)    // 透過 uvm_component_utils 向 factory 註冊該 class (uvm_component 的子類都要)
 
     virtual axi_if.drv vif;
 
-    function new(string name = "axi_driver", uvm_component parent);
+    function new(string name = "axi_driver", uvm_component parent); // PS: 這裡多了一個 parent class 要傳遞, 以供環境要查找 Func 用
         super.new(name, parent);
     endfunction
 
