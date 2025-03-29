@@ -1,69 +1,135 @@
-# 甚麼是 Semaphore 且何時需要使用它?
-  Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
+# What is `timescale?
+The `timescale directive is used to set the time units and precision for a design. It specifies the time scale used in the simulation and the unit of time for delays and times associated with signal assignments and other operations.
+```
+`timescale <time_unit>/<time_precision>
 
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
-Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
-package ahb_pkg;
-	typedef enum {READ, WRITE} e_access;
-endpackage
-package wishbone_pkg;
-	typedef enum {WRITE, READ} e_access;
-endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
+// Example
+`timescale 1ns/1ps
+`timescale 10us/100ns
+`timescale 10ns/1ns
+```
 
-# 如何使用 randc in SV?
+# What are the basic testbench components?
+A basic testbench consists of the following components:
 
-The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
-Here's an example :
-class ABC;
-	rand 	bit [1:0] 	x; 		// randomization can give x = 3, 1, 1, 0, 3, 0, 2, 2
-	randc 	bit [1:0] 	y; 		// randomization can give y = 1, 3, 0, 2, 3, 1, 2, 0
+Stimulus generation: Stimulus generation involves creating test vectors or other input signals that will be applied to the inputs of the design under test (DUT).
+Interface: The interface provides the communication between the testbench and the DUT. It includes input and output ports, which are connected to the corresponding signals in the DUT.
+Driver: The driver is responsible for converting stimulus into pin toggles appropriate to the bus protocol used by the DUT.
+Monitor: The monitor observes the output signals of the DUT and produces a stream of data that the testbench can analyze.
+Scoreboard: The scoreboard compares the output of the DUT with the expected output, and generates an error message or other notification if there is a mismatch.
+Coverage analysis: Coverage analysis measures how much of the design has been exercised during simulation, and helps identify parts of the design that may not have been tested thoroughly.
+
+# What is circular dependency?
+Circular dependency is a situation in which two or more components or entities of a system depend on each other in a circular way, creating a cycle. It can occur between modules, functions, or libraries that depend on each other in a way that creates a loop. This can lead to issues when trying to compile or link the code, as the dependencies cannot be resolved. This can be solved with forward declaration by typedef.
+```
+// Declaration beforehand that a class called B will be
+// defined somewhere later in the same file
+typedef class B;
+
+class A;
+	B 	b;
+
+	...
 endclass
 
-# 甚麼是 Inheritance?
-繼承是物件導向程式設計中的一個概念，允許透過繼承或擴展現有類別的屬性和行為來建立新類別。
-現有的類稱為父類或基類，新擴展出來的類別稱為子類或衍生類。子類別繼承了父類別的所有成員，如變量，方法和建構函數，也可以新增成員或覆寫繼承的成員。
+// For some reason an object of A is required in B causing
+// a dependency loop
+class B;
+	A 	a;
 
-# 甚麼是 DPI? 解釋 DPI export import
-DPI stands for Direct Programming Interface, which is a mechanism in SystemVerilog for integrating SystemVerilog design and verification code with external C/C++ code. It enables interoperability between SystemVerilog and other high-level programming languages, which is not possible with traditional Verilog.
-DPI export is used to export C/C++ functions to SystemVerilog. This means that a C/C++ function can be used as a task or function in SystemVerilog by creating an import task or import function.
-extern "C" void my_function(int arg1, int arg2) {
-	// Do something here
-}
-And here's an example of how to import this function in SystemVerilog using DPI import:
-import "DPI-C" context function void my_function(int arg1, int arg2);
+endclass
+```
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+# What are the advantages of a SystemVerilog program block?
+Statements inside a program block are executed in the reactive region which is executed the last in a Verilog simulator event scheduler and hence can react on final state of design signals. It acts as an entry point for test stimulus to be executed by the testbench. It can contain functions, tasks and other supported constructs that enable user to create meaningful test stimulus.
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+# What is scope randomization?
+Scope randomization allows to define different randomization constraints for different parts or scopes of the design hierarchy.
+```
+module tb;
+	byte data;
 
-# static variable 和 automatic variable 的差異
-The main difference is that a static variable gets initialized once before time 0 at some memory location and future accesses to this variable from different threads or processes access the same memory location. However, an automatic variable gets initialized every time the scope where it is declared gets executed and stored in a different location every time.
+	initial begin
+		randomize(data) with { data > 0 };
+		$display("data = 0x%0h", data);
+	end
+endmodule
+```
+Note that std:: is required if you need to call from within a class method to distinguish it from the class's built-in randomize method.
 
-# Module 和 Program block 的差異
-A module is the primary container for all RTL design code and allows hierarchical structuring of design intent. A program block on the other hand is a verification container introduced in SystemVerilog to avoid race conditions in the testbench by executing its contents at the end of the time step.
+# What is the input skew and output skew in the clocking block?
+A clocking block is a feature in SystemVerilog used to manage clock signals in a design. Input skew refers to when a signal defined as input to the clocking block should be sampled relative to the given edge of the clock. Output skew refers to when a signal declared as an output to the clocking block should be driven relative to the given edge of the clock.
+```
+clocking cb @(posedge clk);
+	default input #1step output #1ns;
+	input 	hready;
+	output 	haddr;
+endclocking
+```
 
-# Dynamic array 和 Associative array 的差異
-A dynamic array is an array whose size can be changed during runtime. Elements of the array are stored in a contiguous block of memory, and the size is determined when the array is created. An associative array, on the other hand, is also known as a dictionary or a map. It is a collection of key-value pairs where each key has a corresponding value.
+# Explain the different stages a simulator goes through to run a simulation.
+Simulators typically comprises three simulation phases. These phases are:
 
-In a dynamic array, the elements are accessed using an index, which refers to the position of the element in the array. In an associative array, elements are accessed using the key.
+Compilation Phase: This phase involves compiling the design and testbench files and checks the syntax, semantics, and hierarchy of the design, including all modules and interfaces.
+Elaboration Phase: During this phase, the SystemVerilog compiler parses the design files and creates an internal representation of the design in memory. It reads the testbench code, generates object files, and links them together to create an executable file. It also includes the loading of any libraries, linking with external modules, and optimizing the executable file. Any issues found during elaboration must be resolved before simulation can proceed.
+Simulation Phase: This is the actual running of the simulation. The simulation takes the compiled executable file and simulates the hardware design under test. The simulation initializes the testbench and DUT, applies stimulus to the DUT, and checks the expected output. The SystemVerilog simulation engine checks for timing, race conditions, and other errors and generates a log file during the simulation.
 
-# Race condition in SV
-![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+# What is casting?
+Casting is a fundamental concept in programming and refers to the process of converting one data type into another data type. In SystemVerilog, casting is mainly used for type conversion between numeric and non-numeric data types.
+```
+real pi = 3.14;
+int  a = int'(pi) * 10; 	// Cast real into an integer number
+
+$cast(aa, a); 				// Cast object 'a' into 'aa'
+```
+
+# How to generate array without randomization?
+This solution does not generate fully random numbers, however it does give unique values.
+```
+module tb;
+	byte 	data_q [10];
+
+	initial begin
+		// Store numbers 0 through 10
+		foreach (data_q [i])
+			data_q[i] = i;
+
+		// Shuffle the array
+		data_q.shuffle();
+	end
+endmodule
+```
+
+# Write randomization constraints for the following requirements on an array.
+An array of size 9 should contain any value from 1 to 9. Two values should be the same between indices 0 and 7.
+```
+module tb;
+	bit [3:0] 	data_q [9];
+
+	initial begin
+		bit [2:0] idx_q [2];
+
+		randomize(data_q, idx_q) with
+		{
+			// Let idx_q represent two random indices
+			// which should contain same value
+			unique { idx_q };
+			solve idx_q before data_q;
+	
+			// When indices match, assign same value to data_q[i]
+			// else follow general rule to keep between 1:9
+			foreach (data_q[i]) {
+				if (i == idx_q[1]) {
+					data_q[i] == data_q[idx_q[0]];
+				} else {
+					data_q[i] inside {[1:9]};
+				}
+			}
+		};
+
+		$display ("idx_q  = %p", idx_q);
+		$display ("data_q = %p", data_q);
+	end
+
+endmodule
+```
