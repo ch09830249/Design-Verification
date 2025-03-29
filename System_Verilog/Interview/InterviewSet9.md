@@ -1,5 +1,6 @@
 # What is `timescale?
-The `timescale directive is used to set the time units and precision for a design. It specifies the time scale used in the simulation and the unit of time for delays and times associated with signal assignments and other operations.
+The `timescale directive is used to set the **time units** and **precision** for a design.  
+It specifies the time scale used in the simulation and the unit of time for delays and times associated with signal assignments and other operations.
 ```
 `timescale <time_unit>/<time_precision>
 
@@ -12,15 +13,18 @@ The `timescale directive is used to set the time units and precision for a desig
 # What are the basic testbench components?
 A basic testbench consists of the following components:
 
-Stimulus generation: Stimulus generation involves creating test vectors or other input signals that will be applied to the inputs of the design under test (DUT).
-Interface: The interface provides the communication between the testbench and the DUT. It includes input and output ports, which are connected to the corresponding signals in the DUT.
-Driver: The driver is responsible for converting stimulus into pin toggles appropriate to the bus protocol used by the DUT.
-Monitor: The monitor observes the output signals of the DUT and produces a stream of data that the testbench can analyze.
-Scoreboard: The scoreboard compares the output of the DUT with the expected output, and generates an error message or other notification if there is a mismatch.
-Coverage analysis: Coverage analysis measures how much of the design has been exercised during simulation, and helps identify parts of the design that may not have been tested thoroughly.
+* **Stimulus generation**: Stimulus generation involves creating test vectors or other input signals that will be applied to the inputs of the design under test (DUT).  
+* **Interface**: The interface provides the communication between the testbench and the DUT. It includes input and output ports, which are connected to the corresponding signals in the DUT.
+* **Driver**: The driver is responsible for converting stimulus into pin toggles appropriate to the bus protocol used by the DUT.
+* **Monitor**: The monitor observes the output signals of the DUT and produces a stream of data that the testbench can analyze.
+* **Scoreboard**: The scoreboard compares the output of the DUT with the expected output, and generates an error message or other notification if there is a mismatch.
+* **Coverage analysis**: Coverage analysis measures how much of the design has been exercised during simulation, and helps identify parts of the design that may not have been tested thoroughly.
 
 # What is circular dependency?
-Circular dependency is a situation in which two or more components or entities of a system depend on each other in a circular way, creating a cycle. It can occur between modules, functions, or libraries that depend on each other in a way that creates a loop. This can lead to issues when trying to compile or link the code, as the dependencies cannot be resolved. This can be solved with forward declaration by typedef.
+Circular dependency is a situation in which two or more components or entities of a system depend on each other in a circular way, creating a cycle.  
+It can occur between modules, functions, or libraries that depend on each other in a way that creates a loop.  
+This can lead to issues when trying to compile or link the code, as the dependencies cannot be resolved.  
+This can be solved with forward declaration by typedef.
 ```
 // Declaration beforehand that a class called B will be
 // defined somewhere later in the same file
@@ -75,7 +79,8 @@ Elaboration Phase: During this phase, the SystemVerilog compiler parses the desi
 Simulation Phase: This is the actual running of the simulation. The simulation takes the compiled executable file and simulates the hardware design under test. The simulation initializes the testbench and DUT, applies stimulus to the DUT, and checks the expected output. The SystemVerilog simulation engine checks for timing, race conditions, and other errors and generates a log file during the simulation.
 
 # What is casting?
-Casting is a fundamental concept in programming and refers to the process of converting one data type into another data type. In SystemVerilog, casting is mainly used for type conversion between numeric and non-numeric data types.
+Casting is a fundamental concept in programming and refers to the process of **converting one data type into another data type**.  
+In SystemVerilog, casting is mainly used for type conversion between numeric and non-numeric data types.
 ```
 real pi = 3.14;
 int  a = int'(pi) * 10; 	// Cast real into an integer number
