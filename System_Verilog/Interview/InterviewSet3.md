@@ -1,69 +1,77 @@
-# 甚麼是 Semaphore 且何時需要使用它?
-  Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
+# What is virtual function?
+In SystemVerilog, a virtual function is a type of function that allows a base class to define a function signature which can be overwritten in a derived class. This means that a virtual function can be customized by a subclass to perform a different function than the base class.
 
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
-Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
-package ahb_pkg;
-	typedef enum {READ, WRITE} e_access;
-endpackage
-package wishbone_pkg;
-	typedef enum {WRITE, READ} e_access;
-endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
+Virtual functions are an important aspect of object-oriented programming (OOP) and are used heavily in verification methodologies such as the Universal Verification Methodology (UVM). In UVM, virtual functions are used to customize the behavior of verification components and facilitate the reuse of code across different testbenches.
 
-# 如何使用 randc in SV?
+# Difference between virtual and pure virtual function
+In Verilog and SystemVerilog, virtual and pure virtual functions are used in polymorphism and inheritance.
 
-The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
-Here's an example :
-class ABC;
-	rand 	bit [1:0] 	x; 		// randomization can give x = 3, 1, 1, 0, 3, 0, 2, 2
-	randc 	bit [1:0] 	y; 		// randomization can give y = 1, 3, 0, 2, 3, 1, 2, 0
+A virtual function is a function declared in a base class that can be overwritten in a derived class, **enabling runtime polymorphism**. When the function is called on an object of the derived class, the derived class's implementation of the function is executed. If there is **no implementation in the derived class, the base class's implementation is executed**. The syntax for a virtual function is declared by using the keyword virtual in the base class.
+
+A pure virtual function, on the other hand, is a virtual function that has **no implementation in the base class**. This means that derived classes **must provide an implementation for the function**. If a derived class doesn't overwrite the pure virtual function, it will remain abstract and cannot be instantiated. Pure virtual functions are used to create abstract classes that act as a blueprint for derived classes.
+```
+virtual class BasePacket;
+  pure virtual function int transfer(bit[31:0] data); // No implementation
 endclass
 
-# 甚麼是 Inheritance?
-繼承是物件導向程式設計中的一個概念，允許透過繼承或擴展現有類別的屬性和行為來建立新類別。
-現有的類稱為父類或基類，新擴展出來的類別稱為子類或衍生類。子類別繼承了父類別的所有成員，如變量，方法和建構函數，也可以新增成員或覆寫繼承的成員。
+class ExtPacket extends BasePacket;
+  virtual function int transfer(bit[31:0] data);
+    ...
+  endfunction
+endclass
+```
 
-# 甚麼是 DPI? 解釋 DPI export import
-DPI stands for Direct Programming Interface, which is a mechanism in SystemVerilog for integrating SystemVerilog design and verification code with external C/C++ code. It enables interoperability between SystemVerilog and other high-level programming languages, which is not possible with traditional Verilog.
-DPI export is used to export C/C++ functions to SystemVerilog. This means that a C/C++ function can be used as a task or function in SystemVerilog by creating an import task or import function.
-extern "C" void my_function(int arg1, int arg2) {
-	// Do something here
-}
-And here's an example of how to import this function in SystemVerilog using DPI import:
-import "DPI-C" context function void my_function(int arg1, int arg2);
+# Difference between static and dynamic casting
+Static and dynamic casting are type conversion operations used to convert between different data types.
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+* Static casting is a **compile-time operation** in which the compiler converts a given data type into another data type.
+* It is called static casting because the conversion is determined and enforced by the compiler at the time of compilation.
+* Static casting is a **simple and efficient process**, but it can **lead to errors or loss of information if the conversion is not compatible**.
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+* Dynamic casting is a **run-time operation** in which the type of an object is determined at run-time and then explicitly converted to a different type.
+  * Dynamic casting is **more complex and less efficient than static casting**, but it is **safer as it can detect and handle errors during runtime**.
 
-# static variable 和 automatic variable 的差異
-The main difference is that a static variable gets initialized once before time 0 at some memory location and future accesses to this variable from different threads or processes access the same memory location. However, an automatic variable gets initialized every time the scope where it is declared gets executed and stored in a different location every time.
+# Why do we need randomization in SystemVerilog?
+In SystemVerilog, randomization is the process of generating random stimuli or inputs to the design, which can help verify its functionality and reliability. Here are some reasons why we need randomization in SystemVerilog:
 
-# Module 和 Program block 的差異
-A module is the primary container for all RTL design code and allows hierarchical structuring of design intent. A program block on the other hand is a verification container introduced in SystemVerilog to avoid race conditions in the testbench by executing its contents at the end of the time step.
+# Difference between while and do while.
+In programming languages, the while loop and do-while loop are used for repetitive execution of a code block based on certain conditions. Here are the differences between while and do-while loops:
 
-# Dynamic array 和 Associative array 的差異
-A dynamic array is an array whose size can be changed during runtime. Elements of the array are stored in a contiguous block of memory, and the size is determined when the array is created. An associative array, on the other hand, is also known as a dictionary or a map. It is a collection of key-value pairs where each key has a corresponding value.
+Execution: In the while loop, the condition is checked first, and if it is true, then the code block is executed. However, in the do-while loop, the code block is executed first, and then the condition is checked. This means that the code block will be executed at least once in the do-while loop, even if the condition is initially false.
+Loop condition: In the while loop, the loop condition is checked at the beginning of each iteration. If the condition is false, the loop is terminated, and the control goes to the next statement after the loop. However, in the do-while loop, the loop condition is checked at the end of each iteration. This means that the code block is executed at least once, even if the condition is false.
+Initialization: In the while loop, the initialization of the loop variable or counter happens outside of the loop. This makes it possible to create an infinite loop if the initialization is incorrect. However, in the do-while loop the initialization of the loop variable or counter can be done within the loop.
+Use Cases: The while loop is used in cases where the condition is unknown, and the loop should not execute if the condition is false. In contrast, the do-while loop is used when we want the loop to execute at least once, even if the condition is false.
 
-In a dynamic array, the elements are accessed using an index, which refers to the position of the element in the array. In an associative array, elements are accessed using the key.
+# Explain bidirectional constraints
+Bidirectional constraints are used to specify a relationship between two or more variables or signals, such that the value of one variable is dependent on the value of the other variable(s). In SystemVerilog, constraints are solved bidirectionally.
 
-# Race condition in SV
-![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+For example, if we have two signals, data_valid and data_ready we can specify the constraint that when data_valid is asserted data_ready must be asserted, using the following conditional constraint:
+```
+data_valid -> data_ready;
+```
+
+# Difference between integer and int
+**integer is a 4-state data type** where as **int is a 2-state data type**. Both can hold 32-bit signed numbers.
+
+# Write a constraint to have a variable divisible by 5.
+To have a variable divisible by 5, we can use the following constraint:
+```
+constraint c_div5 { my_variable % 5 == 0; }
+```
+Here, the modulo operator % is used to retrieve the remainder of a division operation, and the constraint ensures that the remainder of the division of my_variable by 5 is equal to zero, which means my_variable is divisible by 5.
+
+# What are parameterized classes?
+Parameterized classes in object-oriented programming (OOP) are classes that are defined with one or more parameters, allowing them to be customized or specialized during their instantiation or creation.
+```
+class stack #(type T = int);
+  T item;
+
+  function T add_a (T a);
+    return item + a;
+  endfunction
+endclass
+```
+
+# How can you establish communication between monitor and scoreboard in SystemVerilog?
+In SystemVerilog, a monitor and scoreboard are typically used in a verification environment to check that a design is behaving correctly. The monitor observes the signals of the design and generates transactions, while the scoreboard compares these transactions against expected values and generates results, and they can be connected using a mailbox.
+
