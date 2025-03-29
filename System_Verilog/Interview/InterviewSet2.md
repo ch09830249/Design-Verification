@@ -1,69 +1,107 @@
-# 甚麼是 Semaphore 且何時需要使用它?
-  Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
+# What is the difference between a deep copy and a shallow copy ?
+A deep copy is one where nested class object contents are also entirely copied over into the new class object. A shallow copy is one where nested class objects are not copied but instead handles are simply assigned. So, if the original class object changes its contents, then the copied class also see the same contents.
 
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
-Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
-package ahb_pkg;
-	typedef enum {READ, WRITE} e_access;
-endpackage
-package wishbone_pkg;
-	typedef enum {WRITE, READ} e_access;
-endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
-
-# 如何使用 randc in SV?
-
-The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
-Here's an example :
+# How to disable constraints?
+All constraints are by default enabled and will be considered by the SystemVerilog constraint solver during randomization. A disabled constraint is not considered during randomization. Constraints can be enabled or disabled by constraint_mode().
+```
 class ABC;
-	rand 	bit [1:0] 	x; 		// randomization can give x = 3, 1, 1, 0, 3, 0, 2, 2
-	randc 	bit [1:0] 	y; 		// randomization can give y = 1, 3, 0, 2, 3, 1, 2, 0
+	rand bit [3:0] 	data;
+
+	constraint c_data { data == 10; }
 endclass
 
-# 甚麼是 Inheritance?
-繼承是物件導向程式設計中的一個概念，允許透過繼承或擴展現有類別的屬性和行為來建立新類別。
-現有的類稱為父類或基類，新擴展出來的類別稱為子類或衍生類。子類別繼承了父類別的所有成員，如變量，方法和建構函數，也可以新增成員或覆寫繼承的成員。
+ABC m_abc = new;
+m_abc.c_data.constraint_mode(0); 	// Disable constraint
+```
 
-# 甚麼是 DPI? 解釋 DPI export import
-DPI stands for Direct Programming Interface, which is a mechanism in SystemVerilog for integrating SystemVerilog design and verification code with external C/C++ code. It enables interoperability between SystemVerilog and other high-level programming languages, which is not possible with traditional Verilog.
-DPI export is used to export C/C++ functions to SystemVerilog. This means that a C/C++ function can be used as a task or function in SystemVerilog by creating an import task or import function.
-extern "C" void my_function(int arg1, int arg2) {
-	// Do something here
-}
-And here's an example of how to import this function in SystemVerilog using DPI import:
-import "DPI-C" context function void my_function(int arg1, int arg2);
+# Difference between code and functional coverage?
+In Verilog/SystemVerilog, code coverage and functional coverage are two types of verification metrics used to measure the completeness of a testbench.
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+Code coverage measures the extent to which the testbench has exercised the RTL code being verified. It tracks which lines of the code were executed during simulation, which branches of conditional statements were taken, and which blocks of code were repeated in loops. Code coverage is often measured in terms of statement coverage, branch coverage, and condition coverage.
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+Functional coverage, on the other hand, measures the completeness of the functional requirements being verified. It tracks how many and which functional scenarios were exercised during simulation. Functional coverage is defined based on functional coverage points, which are specific items or aspects of the functional specification that need to be tested. For example, a functional coverage point could be the number of packets transmitted and received correctly by a network interface block.
 
-# static variable 和 automatic variable 的差異
-The main difference is that a static variable gets initialized once before time 0 at some memory location and future accesses to this variable from different threads or processes access the same memory location. However, an automatic variable gets initialized every time the scope where it is declared gets executed and stored in a different location every time.
+The key differences between code coverage and functional coverage are:
 
-# Module 和 Program block 的差異
-A module is the primary container for all RTL design code and allows hierarchical structuring of design intent. A program block on the other hand is a verification container introduced in SystemVerilog to avoid race conditions in the testbench by executing its contents at the end of the time step.
+Purpose: Code coverage is used to ensure that every line of code in the design has been tested while functional coverage is used to ensure that all functional requirements of the design have been tested.
+Measurement: Code coverage is measured based on the number of lines of code executed, branches explored, and conditions evaluated during simulation, while functional coverage is measured based on the number of functional coverage points exercised during simulation.
+Scope: Code coverage provides insight into the completeness of the implementation of the design, while functional coverage provides insight into the completeness of the specifications of the design.
 
-# Dynamic array 和 Associative array 的差異
-A dynamic array is an array whose size can be changed during runtime. Elements of the array are stored in a contiguous block of memory, and the size is determined when the array is created. An associative array, on the other hand, is also known as a dictionary or a map. It is a collection of key-value pairs where each key has a corresponding value.
+# What is ignore_bins?
+In SystemVerilog, ignore_bins is a keyword used in functional coverage to exclude certain bins from being counted towards the coverage goal.SystemVerilog certification
 
-In a dynamic array, the elements are accessed using an index, which refers to the position of the element in the array. In an associative array, elements are accessed using the key.
+Ignoring bins can be useful when there are some bins that are not meaningful for the verification objectives, or if it is not feasible to cover some of the bins. By ignoring some bins, the coverage report can focus on the meaningful and feasible coverage points.
 
-# Race condition in SV
-![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+To ignore bins in a functional coverage point, the ignore_bins attribute can be used. Here's an example:
+```
+covergroup my_covergroup;
+   // Coverage points definitions
+
+	coverpoint my_var {
+		bins  		zero 	= {0};
+   		ignore_bins unused 	= {10};
+	}
+
+endgroup
+```
+
+# What are 2 state and 4 state variables? Provide some examples.
+Two-state variables have only two possible values: 0 and 1. In two-state variables, there is no distinction between "unknown" and "floating" values. Two-state variables are commonly used in simple designs, or where the value of a variable is either known or unknown, but not floating.
+
+Four-state variables, on the other hand, have four possible values: 0, 1, X, and Z. Four-state variables are used to model the behavior of digital circuits, where the signal can either be a known logic value, or a floating or unknown value.
+```
+reg [7:0] 	data_bus; 		// Can hold 0, 1, X, Z
+bit  		true; 			// Can hold 0, 1
+```
+
+
+# How to ensure address range 0x2000 to 0x9000 is covered in simulations ?
+To make sure that address ranges from 0x2000 to 0x9000 are covered in Verilog/SystemVerilog, we can use a covergroup to define coverage points for each address value within the range. Here's an example:
+```
+covergroup memory_access_coverage @(posedge clk);
+   // Declare coverage points for each address within the range
+
+   addr_coverage: coverpoint addr {
+      bins addr_0x2000  		= {[16'h2000]};
+      bins addr_0x2001_0x8FFF 	= {[16'h2001:16'h8FFF]};
+      bins addr_0x9000  		= {[16'h9000]};
+   }
+
+   // Declare coverage points for other signals of interest
+endgroup
+```
+Within the "addr_coverage" point, we declare three bins to cover the address range. The bin "addr_0x2000" covers the value 0x2000, while the bin "addr_0x2001_0x8FFF" covers the range from 0x2001 to 0x8FFF. Finally, the bin "addr_0x9000" covers the value 0x9000.
+
+# What is layered architecture in Verification?
+In verification, a layered architecture is a methodology in which the verification environment is structured into multiple layers of abstraction, each building on the lower layers. This approach separates functionality and responsibilities of different layers, making verification more manageable and scalable.
+
+Layered architecture typically consists of three main layers:
+
+Testbench layer: This is the top layer of the verification architecture, which contains test scenarios that stimulate the design under test (DUT) and verify its functionality. The testbench layer is responsible for test management, collecting and analyzing results, and reporting errors and warnings.
+Verification IP (VIP) layer: The VIP layer provides hardware and software components that are reusable and pre-verified, such as memory models, bus functional models (BFMs), and protocol checkers. The VIP layer abstracts the DUT interface and behavior, allowing the testbench layer to focus on DUT functionality.
+Functional block layer: This is the lowest layer of the verification architecture, which contains individual blocks of the design. The functional block layer specifies the behavior and function of the DUT at the RTL level. The functional block layer includes RTL code, gate-level models, and timing models.
+The layered architecture approach promotes reusability and scalability of the verification environment. Each layer can be independently designed and tested, facilitating incremental verification of the DUT. It allows efficient and thorough testing for complex designs with multiple blocks, interfaces, and protocols. By separating concerns and providing abstraction, layered architecture makes verification more manageable and improves the quality of the design.
+
+# Explain the cycle of verification and its closure.
+In the context of digital design verification, the verification cycle refers to the iterative process of designing, developing, running tests, and debugging to ensure the design meets the functional and performance requirements. The verification cycle generally consists of design verification plan, testbench development, test execution and verification closure.
+
+# Difference between dynamic array and queue
+A dynamic array is a collection of similar data elements whose sizes and memory locations are allocated dynamically during the runtime of the program. The size of the array can be changed at runtime, making it more flexible than a static array.
+
+It can grow or shrink dynamically.
+It can be used for random access of data elements.
+It does not have a fixed size.
+It has an index to locate an element.
+A queue is also a collection of similar data elements, but its primary function is to store and retrieve data elements in a specific order, FIFO (First in First out), or LILO (Last in Last out).
+
+It is a sequential data structure that stores and retrieves elements in a specific order.
+It follows the FIFO (First In First Out) or LILO (Last In Last Out) rule to maintain the order of elements.
+It has two main functions of adding elements to the rear and removing elements from the front.
+
+# Difference between structure and class
+In object-oriented programming, both structures and classes can be used to define custom data types with properties and functions, but there are some differences in their behavior and usage.
+
+Access Modifiers: Classes have private, public, and protected access modifiers for data members and member functions. Structures only support public access modifiers.
+Inheritance: Classes support inheritance, where a new class can be derived from a base class. Structures do not support inheritance.
+Constructors and Destructors: Classes have constructors and destructors that get called when objects are created and destroyed, respectively. On the other hand, structures do not have constructors or destructors.
+Methods: Classes can have functions and tasks that operate on its members, but structures do not have them.
