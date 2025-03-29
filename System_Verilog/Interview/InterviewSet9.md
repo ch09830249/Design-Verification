@@ -24,7 +24,8 @@ A basic testbench consists of the following components:
 Circular dependency is a situation in which two or more components or entities of a system depend on each other in a circular way, creating a cycle.  
 It can occur between modules, functions, or libraries that depend on each other in a way that creates a loop.  
 This can lead to issues when trying to compile or link the code, as the dependencies cannot be resolved.  
-This can be solved with forward declaration by typedef.
+This can be solved with **forward declaration by typedef**.  
+因為 class B 在後面, 所以 class A 中的 B 物件在 compile 或 link code 時, 不知道 B 是甚麼, 可以透過 typedef 告訴 compiler class 定義在文件的某處以避免 circular dependency 的問題
 ```
 // Declaration beforehand that a class called B will be
 // defined somewhere later in the same file
@@ -62,7 +63,9 @@ endmodule
 Note that std:: is required if you need to call from within a class method to distinguish it from the class's built-in randomize method.
 
 # What is the input skew and output skew in the clocking block?
-A clocking block is a feature in SystemVerilog used to manage clock signals in a design. Input skew refers to when a signal defined as input to the clocking block should be sampled relative to the given edge of the clock. Output skew refers to when a signal declared as an output to the clocking block should be driven relative to the given edge of the clock.
+A clocking block is a feature in SystemVerilog used to manage clock signals in a design.  
+Input skew refers to when a signal defined as input to the clocking block should be sampled relative to the given edge of the clock.  
+Output skew refers to when a signal declared as an output to the clocking block should be driven relative to the given edge of the clock.  
 ```
 clocking cb @(posedge clk);
 	default input #1step output #1ns;
@@ -97,9 +100,9 @@ module tb;
 	initial begin
 		// Store numbers 0 through 10
 		foreach (data_q [i])
-			data_q[i] = i;
+			data_q[i] = i;	// 每個 element 值為其 index
 
-		// Shuffle the array
+		// Shuffle the array	打亂 array 元素順序
 		data_q.shuffle();
 	end
 endmodule
