@@ -1,16 +1,16 @@
 # Write a small function to push 10 unique values from 0 to 50 into a queue.
 ```
 function random();
-	bit [7:0] array[$];
+	bit [7:0] array[$];	// 每個 element 8 bits
 
 	for (int i = 0; i  10; i++) begin
 		int num;
 		std::randomize(num) with
 		{
-                  num inside {[0:50]};
-		  !(num inside {array};
+                  num inside {[0:50]};	// num 範圍 0~50
+		  !(num inside {array}; // 且之前沒有產生過
 		};
-		array.push_back(num);
+		array.push_back(num);	// 推進 array
 	end
 endfunction
 ```
@@ -76,8 +76,34 @@ It can also suspend the thread by tasks like get() and put(). So a component can
 The **super keyword** is used to access variables and methods of the parent class and is a very basic construct of OOP.
 
 # Where is extern keyword used ?
-An extern keyword is used to define methods and constraints outside the class definition.  
+An extern keyword is used to **define methods and constraints outside the class definition**.  
 For example, we could have the declaration of functions and constraints within the class body, but do the complete definition later on outside the class body.
+```
+class ABC;
+
+  // Let this function be declared here and defined later
+  // by "extern" qualifier
+  extern function void display();
+
+endclass
+
+// Outside the class body, we have the implementation of the
+// function declared as "extern"
+function void ABC::display();
+
+   $display ("Hello world");
+
+endfunction
+
+module tb;
+
+  // Lets simply create a class object and call the display method
+  initial begin
+    ABC abc = new();
+    abc.display();
+  end
+endmodule
+```
 
 # Give one way to avoid race conditions between DUT and testbench in a verification environment
 Clock edges are the most probable points for a race condition to arise. The DUT may sample one value but the testbench may sample something else.
