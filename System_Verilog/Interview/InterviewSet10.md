@@ -44,19 +44,20 @@ extern "C" void my_function(int arg1, int arg2) {
 And here's an example of how to import this function in SystemVerilog using DPI import:
 import "DPI-C" context function void my_function(int arg1, int arg2);
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+# What is the advantage of seed in randomization?
+In SystemVerilog, seed is used as a starting point or initial value for the random number generator. The advantage of using the seed in randomization is that it allows for a more deterministic and reproducible behavior of the randomized simulation.
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+By setting a seed, a specific set of randomized values can be generated consistently, making it easier to replicate specific test scenarios and debug issues that arise during simulation. It also allows for better verification of the design as specific tests can be rerun with the same seed to ensure that issues have been resolved and that the behavior of the design is as expected.
+
+# Is it possible to write assertions in class?
+Yes, assertions using assert and assume are used to check the correctness of the design, and they can be written in any of the SystemVerilog constructs including modules, interfaces, programs or classes.
+
+In SystemVerilog, assertions can be written using the assert and assume keywords. These keywords can be used directly inside a SystemVerilog class, with the assertion check being triggered when the appropriate method of the class is called.
 
 # What is a clocking block?
-A clocking block is a SystemVerilog construct that provides a way to model clock-related events that occur in a design. It is specifically used to define the timing and synchronization of signals that are driven by a clock. The clocking block can be used to drive and sample signals using the clock signal, with the signals being synchronized at specific edges of the clock.
+A clocking block is a SystemVerilog construct that provides a way to model clock-related events that occur in a design. It is specifically used to define the timing and synchronization of signals that are driven by a clock. The clocking block can be used to drive and sample signals using the clock signal, with the signals being synchronized at specific edges of the clock.  
 clocking block是為了避免test bench跟DUT搶訊號造成race condition
+![image](https://github.com/user-attachments/assets/b910b4ec-1eb0-40a0-9a02-128628d29ca1)
 
 # What is an abstract class?
 An abstract class is a class in object-oriented programming that cannot be instantiated, meaning it cannot be used to create objects.  
