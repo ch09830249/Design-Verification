@@ -1,69 +1,121 @@
-# 甚麼是 Semaphore 且何時需要使用它?
-  Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
-
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
-Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
-package ahb_pkg;
-	typedef enum {READ, WRITE} e_access;
-endpackage
-package wishbone_pkg;
-	typedef enum {WRITE, READ} e_access;
-endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
-
-# 如何使用 randc in SV?
-
-The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
-Here's an example :
+# Is it possible to override existing constraints?
+Yes, it's possible to override existing constraints in SystemVerilog using **inline constraints** or **inheritance**.
+```
 class ABC;
-	rand 	bit [1:0] 	x; 		// randomization can give x = 3, 1, 1, 0, 3, 0, 2, 2
-	randc 	bit [1:0] 	y; 		// randomization can give y = 1, 3, 0, 2, 3, 1, 2, 0
+	rand bit [3:0] data;
+
+	constraint c_data { data inside {[5:10]}; }
 endclass
 
-# 甚麼是 Inheritance?
-繼承是物件導向程式設計中的一個概念，允許透過繼承或擴展現有類別的屬性和行為來建立新類別。
-現有的類稱為父類或基類，新擴展出來的類別稱為子類或衍生類。子類別繼承了父類別的所有成員，如變量，方法和建構函數，也可以新增成員或覆寫繼承的成員。
+module tb;
+	initial begin
+		ABC abc = new;
 
-# 甚麼是 DPI? 解釋 DPI export import
-DPI stands for Direct Programming Interface, which is a mechanism in SystemVerilog for integrating SystemVerilog design and verification code with external C/C++ code. It enables interoperability between SystemVerilog and other high-level programming languages, which is not possible with traditional Verilog.
-DPI export is used to export C/C++ functions to SystemVerilog. This means that a C/C++ function can be used as a task or function in SystemVerilog by creating an import task or import function.
-extern "C" void my_function(int arg1, int arg2) {
-	// Do something here
-}
-And here's an example of how to import this function in SystemVerilog using DPI import:
-import "DPI-C" context function void my_function(int arg1, int arg2);
+		// Use inline constraint to override with new value
+		// Note that this should not contradict the hard constraints in ABC
+		abc.randomize() with { data == 8; };
+	end
+endmodule
+```
+Another way is to redefine constraint block in an inherited class.
+```
+class DEF extends ABC;
+	constraint c_data { data inside {[0:5]}; }   // 記得 constraint 名稱也要相同
+endclass
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+module tb;
+	initial begin
+		DEF def = new;
+		def.randomize();
+	end
+endmodule
+```
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+# What will be your approach if functional coverage is 100% but code coverage is too low ?
+If the functional coverage is 100% but the code coverage is too low, it typically means that there are parts of the code that are never executed and therefore not covered by the test cases. Here are some possible approaches to improve code coverage:
 
-# static variable 和 automatic variable 的差異
-The main difference is that a static variable gets initialized once before time 0 at some memory location and future accesses to this variable from different threads or processes access the same memory location. However, an automatic variable gets initialized every time the scope where it is declared gets executed and stored in a different location every time.
+Review the code and identify the uncovered areas: You can go through the code manually or use a code coverage tool to identify the parts of the code that are not covered by the tests. This will help you to focus on the areas that need to be tested more thoroughly.
+Add new test cases: Once you have identified the uncovered areas, you can add new test cases to cover them. You can use different techniques such as random testing, directed testing or assertion-based testing to create new test cases.
+Modify existing test cases: You can also modify the existing test cases to cover the uncovered areas. For example, you can change the parameters or stimuli of the test cases to target specific areas of the code.
+Use code coverage metrics: You can use code coverage metrics as a guide to track your progress and ensure that you are improving overall coverage. You can set targets for specific types of coverage, such as branch or statement coverage, and monitor your progress as you add new test cases or modify existing ones.
+Use techniques like coverage-driven verification and constrained-random testing: These techniques focus on generating test cases to cover specific portions of the design, which can help you achieve better code coverage.
 
-# Module 和 Program block 的差異
-A module is the primary container for all RTL design code and allows hierarchical structuring of design intent. A program block on the other hand is a verification container introduced in SystemVerilog to avoid race conditions in the testbench by executing its contents at the end of the time step.
+# What are the types of assertions?
+Assertions are statements that specify a particular relationship between two or more signals or variables. There are two main types of assertions, which are as follows:
 
-# Dynamic array 和 Associative array 的差異
-A dynamic array is an array whose size can be changed during runtime. Elements of the array are stored in a contiguous block of memory, and the size is determined when the array is created. An associative array, on the other hand, is also known as a dictionary or a map. It is a collection of key-value pairs where each key has a corresponding value.
+Immediate assertion: Checks whether a particular condition is true at a particular point in time.
+Concurrent assertion: Checks whether a particular condition is always true over a period of time.
 
-In a dynamic array, the elements are accessed using an index, which refers to the position of the element in the array. In an associative array, elements are accessed using the key.
+# How to find indices associated with associative array items?
+Array manipulation functions can be used to query indices and values in SystemVerilog arrays.
+```
+module tb;
+  int   fruit_hash [string];
+  string 	idx_q [$];
 
-# Race condition in SV
-![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+  initial begin
+    fruit_hash["apple"] = 5;
+    fruit_hash["pear"]  = 3;
+    fruit_hash["mango"] = 9;
+
+    idx_q = fruit_hash.find_index with (1);
+    $display("idx_q= %p", idx_q);
+  end
+endmodule
+
+// Output
+// idx_q= '{"apple", "mango", "pear"}
+```
+
+# Give an example of a function call inside a constraint.
+**The function must return a value** that can be used in the constraint expression. Here's an example:
+```
+function int rand_range(int a, int b);
+    return (a + b) % 2;
+endfunction
+
+class ABC;
+    rand bit my_val;
+
+    constraint my_val_c {
+        my_val == rand_range(a, b);
+    }
+endmodule
+```
+
+# What are pass-by-value and pass-by-reference methods?
+Pass-by-value and pass-by-reference are two ways of passing arguments to a function or a method in programming languages.
+
+In **pass-by-value** method, **a copy of the value of the argument is passed to the function or method**. Any change made to the value inside the function or method **does not affect the original value** of the argument.
+```
+function void abc(int a, b);
+```
+In **pass-by-reference** method, **a reference to the memory location of the argument is passed to the function or method**. Any changes made to the value inside the function or method **will affect the original value** of the argument.
+```
+function void abc(ref int a, b);
+```
+
+# Difference between initial and final block
+The initial block is executed at the start of simulation, i.e. at time 0 units. This is useful for initializing variables and stting up initial configurations. This is the very basic procedural construct supported since the first version of Verilog.
+
+However, the final block was introduced in SystemVerilog and is executed just before the simulation ends. This does not consume any time and hence is very ideal to do last minute housekeeping tasks and print reports.
+
+# What are the default values of variables in the SystemVerilog ?
+* The default value of all
+  * 2-state variables are zero, and
+  * 4-state variables are X.
+  * Inputs that are not connected are Z.
+
+# What is polymorphism and its advantages?
+Polymorphism is a fundamental concept in object-oriented programming that allows objects of different classes to be treated as if they are objects of the same class.
+
+The advantages of polymorphism in object-oriented programming are:
+
+Code reusability: Polymorphism enables code reuse, as objects of different classes can be treated as if they are objects of the same class. This means that common behaviors and methods can be defined in a superclass and inherited by multiple subclasses.
+Flexibility and extensibility: Polymorphism allows objects to behave differently based on the context in which they are called, improving the flexibility of the code. It also enables extensibility by allowing new subclasses to be added to a program easily without modifying the existing code.
+Code readability and maintainability: Polymorphism can improve the readability and maintainability of the code by reducing the amount of redundant code and making it easier to understand the relationship between different classes.
+
+# What is the purpose of this pointer in SystemVerilog ?
+The this keyword is used to **explicity reference the current class object**.  
+This is mostly **used within class definitions** to be able to specifically reference variables and methods belonging to the same class.
+有時候 local variable 和 class member 同名時, 避免誤用所以加上 this
