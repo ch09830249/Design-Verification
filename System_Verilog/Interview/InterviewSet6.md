@@ -1,69 +1,87 @@
-# 甚麼是 Semaphore 且何時需要使用它?
-  Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
+# Write a small function to push 10 unique values from 0 to 50 into a queue.
+```
+function random();
+	bit [7:0] array[$];
 
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
-Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
-package ahb_pkg;
-	typedef enum {READ, WRITE} e_access;
-endpackage
-package wishbone_pkg;
-	typedef enum {WRITE, READ} e_access;
-endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
+	for (int i = 0; i  10; i++) begin
+		int num;
+		std::randomize(num) with
+		{
+                  num inside {[0:50]};
+		  !(num inside {array};
+		};
+		array.push_back(num);
+	end
+endfunction
+```
 
-# 如何使用 randc in SV?
+# Write constraints to randomize with the following requirements.
+Assume memory region from 0x0 to 0x100. There is a small region in between from 0x20 to 0xE0 that is reserved. Write system verilog constraints to choose a block of memory of size 16 bytes that is outside the reserved region and inside the entire memory range. The starting address of the block should be 4-byte aligned.
+```
+rand bit [31:0] 	addr;
+int 			size = 'h10;
 
-The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
-Here's an example :
-class ABC;
-	rand 	bit [1:0] 	x; 		// randomization can give x = 3, 1, 1, 0, 3, 0, 2, 2
-	randc 	bit [1:0] 	y; 		// randomization can give y = 1, 3, 0, 2, 3, 1, 2, 0
-endclass
-
-# 甚麼是 Inheritance?
-繼承是物件導向程式設計中的一個概念，允許透過繼承或擴展現有類別的屬性和行為來建立新類別。
-現有的類稱為父類或基類，新擴展出來的類別稱為子類或衍生類。子類別繼承了父類別的所有成員，如變量，方法和建構函數，也可以新增成員或覆寫繼承的成員。
-
-# 甚麼是 DPI? 解釋 DPI export import
-DPI stands for Direct Programming Interface, which is a mechanism in SystemVerilog for integrating SystemVerilog design and verification code with external C/C++ code. It enables interoperability between SystemVerilog and other high-level programming languages, which is not possible with traditional Verilog.
-DPI export is used to export C/C++ functions to SystemVerilog. This means that a C/C++ function can be used as a task or function in SystemVerilog by creating an import task or import function.
-extern "C" void my_function(int arg1, int arg2) {
-	// Do something here
+constraint c_addr
+{
+	addr inside {[0:'h100]};      	// Ensure its within memory region
+	!(addr inside {['h20:'hE0]}; 	// Ensure its not in reserved region
+	addr % 4 == 0; 					// Ensure its 4-byte aligned
+	addr + size inside {[0:'h20], ['hE0:'h100]}; 	// Ensure its either in lower or upper region
+	!(addr + size inside {'h20, 'h100}); 		// Ensure last addr does not hit limit
 }
-And here's an example of how to import this function in SystemVerilog using DPI import:
-import "DPI-C" context function void my_function(int arg1, int arg2);
+```
 
-# 甚麼是 Semaphore 且何時需要使用它?
-Semaphore is a synchronization mechanism used to control access to shared resources. It is a variable or an abstract data type that is used to indicate the status of a shared resource, whether it is free, in use, or unavailable.
-In a multi-tasking or multi-threaded environment where multiple processes or threads access shared resources concurrently, semaphores can ensure that only one process or thread can access the shared resource at a time. This helps to avoid conflicts and data inconsistency caused by simultaneous access, which could result in unexpected behavior.
+# Write constraints to randomize with the following requirements.
+Assume a memory region exists from 0x2000 to 0x4000 that is byte addressable. Write SV constraints to randomly pick an address within this memory region that is aligned to 4-byte boundary.
+```
+bit [31:0] 		addr;
+constraint c_addr
+{
+	addr inside {[32'h2000:32'h4000]};
+	addr % 4 == 0;
+	//  addr[1:0] == 0;  	Also okay
+}
+```
 
-# fork join, fork join_any, fork join_none 的差異
-fork-join will exit only after all child processes finish.
-fork-join_any will exit after any of the child processes finish.
-fork-join_none will exit immediately without waiting for any child process to finish.
-See examples of fork join, fork join_any and fork join_none.
+# Provide solution for the following requirement.
+Assume a class called "ABC" has been used throughout in a project. In a derivative project, you had to extend "ABC" to form "DEF" and add some more variables and functions within it. What will happen if you try to use an object of "ABC" that was created in the legacy testbench to access these new variables or functions ?
 
-# static variable 和 automatic variable 的差異
-The main difference is that a static variable gets initialized once before time 0 at some memory location and future accesses to this variable from different threads or processes access the same memory location. However, an automatic variable gets initialized every time the scope where it is declared gets executed and stored in a different location every time.
+It will result in a compilation error because the new variables do not exist in the base class. Instead you need to declare a local variable of type "DEF" and perform a dynamic cast if required to access the new variables and functions.
 
-# Module 和 Program block 的差異
-A module is the primary container for all RTL design code and allows hierarchical structuring of design intent. A program block on the other hand is a verification container introduced in SystemVerilog to avoid race conditions in the testbench by executing its contents at the end of the time step.
+# Randomly generate 8, 16, 32, 64 with equal probability using SystemVerilog constructs.
+```
+module tb;
+	initial begin
+		bit [31:0] result;
+		result = 1 << $urandom_range(3, 6);	// 左移 3~6 bits
+	end
+endmodule
+```
 
-# Dynamic array 和 Associative array 的差異
-A dynamic array is an array whose size can be changed during runtime. Elements of the array are stored in a contiguous block of memory, and the size is determined when the array is created. An associative array, on the other hand, is also known as a dictionary or a map. It is a collection of key-value pairs where each key has a corresponding value.
+# What is the difference between mailbox and queue ?
+A queue is a variable size ordered collection of elements of the same type.
 
-In a dynamic array, the elements are accessed using an index, which refers to the position of the element in the array. In an associative array, elements are accessed using the key.
+A mailbox is a communication mechanism used by testbench components to send a data message from one to another.  
+A mailbox has to be parameterized to hold a particular element and can be either bounded or unbounded. 
+It can also suspend the thread by tasks like get() and put(). So a component can wait until an item is available in the mailbox.
 
-# Race condition in SV
-![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+# What is the difference between rand and randc ?
+* **rand** randomizes the variable and **can have repetitive values** before the entire set of allowable values are used.	可重複產生之前產生過的值
+  * For example, a 2-bit variable when used with rand can give values 1, 3, 3, 2, 1, 3, 0  
+* **randc** randomizes the variable and **repeats a value only after the entire set of allowable values are used**.		之前產生過的值不會再次產生, 直到所有可能的數值都產生過後
+  * For example, a 2-bit variable when used with randc can give values [1, 3, 2, 0], [0, 3, 1, 2], 1 ...  
+    The values in the square brackets show a set.
+
+# How can we reference variables and methods defined in the parent class from a child class ?
+The **super keyword** is used to access variables and methods of the parent class and is a very basic construct of OOP.
+
+# Where is extern keyword used ?
+An extern keyword is used to define methods and constraints outside the class definition.  
+For example, we could have the declaration of functions and constraints within the class body, but do the complete definition later on outside the class body.
+
+# Give one way to avoid race conditions between DUT and testbench in a verification environment
+Clock edges are the most probable points for a race condition to arise. The DUT may sample one value but the testbench may sample something else.
+
+Although race conditions may arise from improper coding practices, use of SystemVerilog Clocking Blocks allows the testbench to sample DUT appropriately and drive inputs to the DUT with a small skew. Also, this allows the skews to be changed later on with minimal code change.
+
+Race condition can also be avoided by the use of program blocks and the use of non-blocking assigments.
