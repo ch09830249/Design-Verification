@@ -60,7 +60,7 @@ module tb;
 	initial begin
 		int delay;
 
-		std::randomize(delay) with { delay inside {[100:500]}; };
+		std::randomize(delay) with { delay inside {[100:500]}; };	// in-line constraint
 		#(delay) $display("Statement printed after %0d delay", delay);
 
 		// This is also good enough, although there's no variable to print actual randomized delay
@@ -70,7 +70,8 @@ endmodule
 ```
 
 # What is the difference between a parameter and typedef?
-parameter is used to define compile-time constants used within modules, which are values that can be evaluated and assigned before the simulation starts. It can be used to specify parameters such as width, depth, or delay of modules.
+**parameter is used to define compile-time constants used within modules**, which are values that can be evaluated and assigned before the simulation starts.  
+It can be used to specify parameters such as width, depth, or delay of modules.
 ```
 module my_module #(parameter WIDTH=8) (
     input [WIDTH-1:0] data_in,
@@ -79,7 +80,9 @@ module my_module #(parameter WIDTH=8) (
     // module logic here
 endmodule
 ```
-typedef is used to define custom data types that can be reused throughout the design. It can be used to define complex data types such as structures, arrays, and enumerated types. It is used to make the code more readable and easier to understand by encapsulating complex data types within a single type name.
+自定義一個 data types
+**typedef is used to define custom data types that can be reused throughout the design**. It can be used to define complex data types such as structures, arrays, and enumerated types.  
+It is used to make the code more readable and easier to understand by encapsulating complex data types within a single type name.
 ```
 typedef struct {
     logic [7:0] addr;
@@ -93,12 +96,13 @@ my_req.data = 32'h12345678;
 ```
 
 # What is constraint solve-before?
-In SystemVerilog, solve - before is a constraint solver directive that allows constraints to be solved in a specific order. This directive specifies that a particular constraint should be solved before another constraint. It is useful in cases where certain constraints must be solved before others to avoid conflicts or to ensure that specific constraints are satisfied.
+solve - before is a constraint solver directive that allows constraints to be solved in a specific order. This directive specifies that a particular constraint should be solved before another constraint. It is useful in cases where certain constraints must be solved before others to avoid conflicts or to ensure that specific constraints are satisfied.
 
 # What is an alias?
-alias is a keyword used to declare an alternate name for a variable or net. It allows access to the same object through multiple names. The new name created using the alias keyword refers to the same variable or memory location as the original variable.
+**alias is a keyword used to declare an alternate name for a variable or net**.  
+It allows access to the same object through multiple names. The new name created using the alias keyword refers to the same variable or memory location as the original variable.
 ```
-wire [7:0]  _byte;
+wire [7:0]      _byte;
 wire 		_bit;
 
 alias bits_9 = { _byte, _bit };
@@ -111,7 +115,7 @@ module tb;
 	bit [7:0] 	tmp [$];
 
 	initial begin
-		repeat (9) q.push_back($random);
+		repeat (9) q.push_back($random);	// 推 9 個數進 queue
 
 		for (byte i = 0; i < q.size(); i += 5)
 			tmp = q[i +: 5];
