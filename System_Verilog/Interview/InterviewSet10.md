@@ -56,18 +56,18 @@ In SystemVerilog, assertions can be written using the assert and assume keywords
 # What is a clocking block?
 A clocking block is a SystemVerilog construct that provides a way to model clock-related events that occur in a design.  
 It is specifically used to define the timing and synchronization of signals that are driven by a clock.  
-The clocking block can be used to drive and sample signals using the clock signal, with the signals being synchronized at specific edges of the clock.  
+The clocking block can be used to **drive and sample signals using the clock signal, with the signals being synchronized at specific edges of the clock**.  
 clocking block 是為了避免 test bench 跟 DUT 搶訊號造成 race condition
 ![image](https://github.com/user-attachments/assets/b910b4ec-1eb0-40a0-9a02-128628d29ca1)
 
 # What is an abstract class?
 An abstract class is a class in object-oriented programming that cannot be instantiated, meaning it cannot be used to create objects.  
-虛擬類別是不能被實例化的, 有點像是建立 class 的 prototype  
-Instead, it is used as a superclass to other classes, providing a common set of properties and methods that subclasses can inherit and implement as necessary.  
+**虛擬類別是不能被實例化的 , 有點像是建立 class 的 prototype**  
+Instead, it is used as a superclass to other classes, **providing a common set of properties and methods that subclasses can inherit and implement** as necessary.  
 虛擬類別提供一些通用的 properties 和供子類繼承並需要實作的 method  
 
 # How to disable a cover point?
-Covergroups and coverpoint weight can be disabled by setting its weight to zero.	設定該 cover group 或 cover point 的權重為 0 即可
+**Covergroups and coverpoint weight can be disabled by setting its weight to zero.	設定該 cover group 或 cover point 的權重為 0 即可**
 ```
 covergroup cg_ahb @ (posedge hclk);
 	cp_haddr  : coverpoint haddr;
@@ -81,5 +81,5 @@ m_cg_ahb.cp_htrans.option.weight = 0;  // disable coverpoint by setting weight t
 
 # What is super keyword?
 The super keyword in SystemVerilog or even any OOP language refers to the superclass of a class. 
-**It is used to access methods and variables of the superclass from within a subclass. 在子 class 透過 super 來取用父 class 的 method 和 variabless**
+It is used to **access methods and variables of the superclass from within a subclass. 在子 class 透過 super 來取用父 class 的 methods 和 variables**
 
