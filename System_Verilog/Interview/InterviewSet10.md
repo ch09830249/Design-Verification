@@ -1,4 +1,4 @@
-# What is SVA?
+![image](https://github.com/user-attachments/assets/8b7f7938-5748-472b-aac6-d71d78dc368e)# What is SVA?
 SVA or SystemVerilog Assertions provides a syntax for expressing assertions that describe the expected behavior of a design, allowing for direct verification of its correctness.
 
 Assertions expressed using SVA can be used to verify various types of design properties, such as proper data flow, correct timing constraints, and correct synchronization between different parts of the design. SVA can be used as a standalone language or in conjunction with other formal verification techniques such as model checking and theorem proving. It is an important tool for ensuring the correctness and reliability of digital designs in VLSI and other fields.
@@ -54,11 +54,35 @@ Yes, assertions using assert and assume are used to check the correctness of the
 In SystemVerilog, assertions can be written using the assert and assume keywords. These keywords can be used directly inside a SystemVerilog class, with the assertion check being triggered when the appropriate method of the class is called.
 
 # What is a clocking block?
-A clocking block is a SystemVerilog construct that provides a way to model clock-related events that occur in a design.  
-It is specifically used to define the timing and synchronization of signals that are driven by a clock.  
+A clocking block is a SystemVerilog construct that **provides a way to model clock-related events** that occur in a design.  
+It is specifically used to **define the timing and synchronization of signals that are driven by a clock**.  
 The clocking block can be used to **drive and sample signals using the clock signal, with the signals being synchronized at specific edges of the clock**.  
 clocking block 是為了避免 test bench 跟 DUT 搶訊號造成 race condition
 ![image](https://github.com/user-attachments/assets/b910b4ec-1eb0-40a0-9a02-128628d29ca1)
+
+## Clocking Block
+* 在介面中聲明 clocking（時序區塊）和取樣的時脈訊號，可以用來實現訊號的**同步**與**取樣**
+* clocking block 基於時脈週期對訊號進行**驅動**或**取樣**的方式，使 testbench 不再苦惱於如何準確及時地對訊號**驅動**或**取樣**, 消除了訊號競爭的問題
+```
+clocking bus @(posedge clk1);
+    default input #10ns output #2ns;
+    input data, ready, enable;
+    output negedge ack;
+    input #1step addr;
+endclocking
+```
+![image](https://github.com/user-attachments/assets/f2434bfa-8dba-4812-ac33-aa0b2d4948a4)
+* 對上述clocking描述程式碼進行說明：
+  * 第一行定義 clocking 塊 bus，使用**上升沿**來**驅動**和**採樣**
+  * 第二行指出輸入訊號在 clk1 **上升沿之前 5ns 取樣**，輸出訊號在 clk1 **上升沿之後 2ns 驅動**（輸入為取樣，輸出為驅動）
+  * 第三行聲明輸入訊號，採用預設的輸入事件（clk1 上升沿 5ns 前取樣）
+  * 第四行聲明輸出訊號，並且**指明為 clk1 下降沿驅動**，**覆蓋了原有的 clk1 上升沿後 2ns 驅動**
+  * 第五行定義了輸入訊號 addr，採用了自訂的取樣事件，**clk1 上升沿後的 1 step**，**覆蓋了原有的 clk1 上升沿前 5ns 取樣**，這裡 1 step 使得取樣發生在 clk1 上升沿的上一個時脈片取樣區域，即可以保證取樣到的資料是上一個時脈週期資料
+* clocking區塊的總結：
+  * clocking 區塊不只可以定義在 interface 中，也可以定義在 module 和 program 中
+  * clocking 中所列舉的訊號不是自己定義的，而是 interface 或其他聲明 clocking 的模組定義的
+  * clocking 在聲明完後，應該伴隨著定義預設的取樣事件，也就是 “default input/output event”，**如果沒有定義，會預設使用時脈上升/下降沿前 1step 進行取樣，時脈上升/下降沿後 #0 進行驅動**
+  * 除了定義預設的取樣和驅動事件，定義訊號方向時同樣可以用新的取樣/驅動事件對預設事件進行覆寫
 
 # What is an abstract class?
 An abstract class is a class in object-oriented programming that cannot be instantiated, meaning it cannot be used to create objects.  
