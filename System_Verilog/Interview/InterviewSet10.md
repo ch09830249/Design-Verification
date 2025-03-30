@@ -21,7 +21,7 @@ The preferred array type for memory declaration is an **associative array** beca
 It does not require all addresses in memory to be pre-allocated before usage unlike a dynamic array.
 
 # What is the advantage of seed in randomization?
-seed is used as a starting point or initial value for the random number generator. 
+seed is used as **a starting point or initial value for the random number generator**. 
 The advantage of using the seed in randomization is that it allows for a more deterministic and reproducible behavior of the randomized simulation.  
 By setting a seed, a specific set of randomized values can be generated consistently, making it easier to replicate specific test scenarios and debug issues that arise during simulation.  
 同樣的 seed 會產生相同的隨機序列, 故可以複製相同的行為  
