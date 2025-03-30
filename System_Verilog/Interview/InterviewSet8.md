@@ -90,3 +90,34 @@ always_comb is automatically triggered once at time zero, after all initial and 
 always_comb is sensitive to changes of contents in a function where the latter is sensitive only to the arguments of the function when invoked inside it.  
 always_comb cannot have statements that have delays or timing constructs in it.  
 Variables used on the LHS inside an always_comb block cannot be assigned to in any other parallel process.
+
+Verilog 中我們會使用 always 來建立一個 block。這個語法其實沒有太大的問題，而 SystemVerilog 提供了數個更好的語法。
+SystemVerilog 中引入了 always_comb always_ff 用來提供替換原本的 always，分別用在 combinational circuit 以及 register 使用。
+使用這兩個語法的話，如果 tool 支援的話，可以在不小心把 register 跟 combinational circuit 寫錯的時候，發出一些警告。tool 不支援的話也能多少當作註解來用。
+
+## always_comb
+在最早的 Verilog 裡面，combinational circuit 需要用 @ 語法加上 sensitive list 才能正確運作。然而隨語法的更新，根本沒有這個需求了，所以在 Verilog 中 always 後面一律是 @(*)。
+```
+always@(*) begin
+   x = y;
+end
+```
+這就導致了 @(*) 看起來很多餘，所以新版語法 always_comb 就直接去掉了，如下：
+```
+always_comb begin
+   x = y;
+end
+```
+另外，因為不用加上 @(*)，所以想把他當 assign 來用也是可以的。
+```
+assign x = y;
+always_comb x = y;
+```
+## always_ff
+這個語法相比 always_comb 沒什麼好說，因為就是直接替換掉本來的 always 就好。
+```
+always_ff@(posedge clk) begin
+   x <= y;
+end
+```
+最後，雖然也有 always_latch 這個語法用在 latch 的，但是在大部分同步電路中，這個不太常用，所以沒有介紹
