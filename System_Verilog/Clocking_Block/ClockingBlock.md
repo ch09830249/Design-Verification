@@ -101,40 +101,40 @@ endmodule
 # Input skew
 ```
 module des (output reg[3:0] gnt);
-  always #1 gnt <= $random;
+  always #1 gnt <= $random;    // 每 1ns 指定新的隨機變數
 endmodule
 
 interface _if (input bit clk);
   logic [3:0] gnt;
 
   clocking cb_0 @(posedge clk);
-    input #0  gnt;
+    input #0  gnt;    // 提早 0ns drive signal
   endclocking
 
   clocking cb_1 @(posedge clk);
-    input #1step gnt;
+    input #1step gnt; // 提早 1step drive signal  (這裡也是 1ns)
   endclocking
 
   clocking cb_2 @(posedge clk);
-    input #1 gnt;
+    input #1 gnt;     // 提早 1ns drive signal
   endclocking
 
   clocking cb_3 @(posedge clk);
-    input #2 gnt;
+    input #2 gnt;     // 提早 2ns drive signal
   endclocking
 endinterface
 
 module tb;
   bit clk;
 
-  always #5 clk = ~clk;
+  always #5 clk = ~clk;  // 5ns
   initial   clk <= 0;
 
   _if if0 (.clk (clk));
   des d0  (.gnt (if0.gnt));
 
   initial begin
-    fork
+    fork    // 4 個 thread
       begin
         @(if0.cb_0);
         $display ("cb_0.gnt = 0x%0h", if0.cb_0.gnt);
@@ -158,10 +158,15 @@ module tb;
 endmodule
 ```
 ![image](https://github.com/user-attachments/assets/4ba37170-4e68-4445-98ae-ea8e57116ffe)
-ncsim> run  
-cb_3.gnt = 0x9  
-cb_2.gnt = 0x3  
-cb_1.gnt = 0x3  
-cb_0.gnt = 0xd  
-Simulation complete via $finish(1) at time 15 NS + 0  
+![image](https://github.com/user-attachments/assets/4743827d-ba56-40a6-ad3c-12d6ff26b9a0)
+
+
+/*
+  ncsim> run  
+  cb_3.gnt = 0x9  
+  cb_2.gnt = 0x3  
+  cb_1.gnt = 0x3  
+  cb_0.gnt = 0xd  
+  Simulation complete via $finish(1) at time 15 NS + 0  
+*/
 
