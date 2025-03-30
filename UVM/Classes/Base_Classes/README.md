@@ -1,64 +1,42 @@
-# UVM Agent
-![image](https://github.com/user-attachments/assets/3f1a44ce-0c99-44cf-90d3-cee6806a1fb2)
-* An **agent** encapsulates a **Sequencer**, **Driver** and **Monitor** into a single entity by **instantiating** and **connecting the components together** via TLM interfaces. An agent can also have configuration options like the type of UVM agent (active/passive), knobs to turn on features such as functional coverage, and other similar parameters.
-* Types of Agents   (可以透過 get_is_active() 得知)
-   * Active:
-      * Instantiates all three components [Sequencer, Driver, Monitor]
-      * **Enables data to be driven to DUT via driver**
-   * Passive:
-      * Only instantiate the monitor  Used for checking and coverage only
-      * **Useful when there's no data item to be driven to DUT**
-# Class Hierarchy
-![image](https://github.com/user-attachments/assets/5e4c4977-5201-4527-bb3b-6aaa3644e6fd)
-# 建立 UVM Agent 的步驟
-* Create a custom class inherited from uvm_agent, register with factory and call new
+# Base Classes
+* The basic building blocks for any verification environment are the **components (drivers, sequencers, monitors ...)**
+* The **transactions (class objects that contain actual data)** they use to communicate.
+* From the UVM hierarchy, we can see that most of the classes in UVM are derived from a set of core classes that are described below.
+![image](https://github.com/user-attachments/assets/331cc465-4ca5-4ca9-8c23-73f3405535a2)
+## uvm_void
 ```
-// my_agent is user-given name for this class that has been derived from "uvm_agent"
-class my_agent extends uvm_agent;
-
-    // [Recommended] Makes this agent more re-usable
-    `uvm_component_utils (my_agent)
-
-    // This is standard code for all components
-    function new (string name = "my_agent", uvm_component parent = null);
-      super.new (name, parent);
-    endfunction
-
-    // Code for rest of the steps come here
+virtual class uvm_void;
 endclass
 ```
-* Instantiate agent components
+* This **doesn't have any purpose**, but serves as the base class for all UVM classes.
+* It is an **abstract class** with **no data members or functions**.
+* It allows for generic containers of objects to be created, **similar to a void pointer** in the C programming language. 像是一個 void pointer 可以指向任何型態的物件
+* User classes derived directly from uvm_void **inherit none of the UVM functionality**, but such classes may be placed in uvm_void typed containers along with other UVM objects.
+## uvm_object
+* This is a **virtual base class for all components and transactions** in the UVM testbench. It's primary role is to define a set of methods for common operations like print, copy, compare and record.
 ```
-// Create handles to all agent components like driver, monitor and sequencer
-// my_driver, my_monitor and agent_cfg are custom classes assumed to be defined
-// Agents can be configured via a configuration object that can be passed in from the test
-   my_driver                  m_drv0;
-   my_monitor                 m_mon0;
-   uvm_sequencer #(my_data)   m_seqr0;
-   agent_cfg                  m_agt_cfg;
-```
-* Instantiate and build components
-```
-virtual function void build_phase (uvm_phase phase);
-// 這裡特別針對 active 有不同的處理
-// If this UVM agent is active, then build driver, and sequencer
-         if (get_is_active()) begin
-            m_seqr0 = uvm_sequencer#(my_data)::type_id::create ("m_seqr0", this);   // 只有 Active agent 需要驅動 DUT, 所以需要 sequencer 和 driver
-            m_drv0 = my_driver::type_id::create ("m_drv0", this);
-         end
+virtual class uvm_object extends uvm_void;
 
-         // Both active and passive agents need a monitor
-         m_mon0 = my_monitor::type_id::create ("m_mon0", this);   // monitor 都要
+	extern function void print (uvm_printer printer=null);
+ 	extern function void copy (uvm_object rhs, uvm_copier copier=null);
+  extern function bit  compare (uvm_object rhs, uvm_comparer comparer=null);
+ 	extern function void record (uvm_recorder recorder=null);
+	...
 
-         //[Optional] Get any agent configuration objects from uvm_config_db
-      endfunction
+endclass
 ```
-* Connect agent components together
+## uvm_report_object
+* Provides an interface to the UVM reporting facility.
+  * **All messages, warnings, errors issued by components go via this interface.**
+  * There's an internal instance of uvm_report_handler which stores the reporting configuration on the basis of which the handler makes decisions on whether the message should be printed or not. Then it's passed to a central uvm_report_server which does the actual formatting and production of messages.
 ```
-virtual function void connect_phase (uvm_phase phase);
+// A report has 'severity', 'id_string', 'text_message', and 'verbosity_level'
+`uvm_info ("STAT", "Status register updated", UVM_HIGH")
 
-// Connect the driver to the sequencer if this agent is Active
-         if (get_is_active())
-            m_drv0.seq_item_port.connect (m_seqr0.seq_item_export);      // 如果是 active, driver 就要接收來自 sequencer 的 transaction 所以要連接
-      endfunction
+// severity  		: uvm_info
+// id_string 		: "STAT"
+// text_message 	: "Status register updated"
+// verbosity_level 	: UVM_HIGH
 ```
+* The message is ignored if the verbosity level is greater than the configured maximum verbosity level.
+  * For example, if the maximum verbosity level is set to UVM_MEDIUM, then all INFO statements with verbosity greater than MEDIUM are ignored. This is useful for debug purposes where the message level can be set to UVM_HIGH for all debug related messages, while the maximum verbosity level is set to UVM_MEDIUM. This allows the ability to switch between different output levels without recompiling the testbench.
