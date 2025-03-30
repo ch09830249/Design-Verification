@@ -106,8 +106,7 @@ endmodule
 ```
 
 # Give one way to avoid race conditions between DUT and testbench in a verification environment
-Clock edges are the most probable points for a race condition to arise. The DUT may sample one value but the testbench may sample something else.
-
-Although race conditions may arise from improper coding practices, use of SystemVerilog Clocking Blocks allows the testbench to sample DUT appropriately and drive inputs to the DUT with a small skew. Also, this allows the skews to be changed later on with minimal code change.
-
-Race condition can also be avoided by the use of program blocks and the use of non-blocking assigments.
+Clock edges are the most probable points for a race condition to arise. The DUT may sample one value but the testbench may sample something else.  
+Although race conditions may arise from improper coding practices, use of SystemVerilog **Clocking Blocks** allows the **testbench to sample DUT appropriately and drive inputs to the DUT with a small skew**. 
+Also, this allows the skews to be changed later on with minimal code change.
+Race condition can also be avoided by the use of **program blocks** and the use of **non-blocking assigments**.
