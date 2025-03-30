@@ -63,7 +63,7 @@ endmodule
 Note that std:: is required if you need to call from within a class method to distinguish it from the class's built-in randomize method.
 
 # What is the input skew and output skew in the clocking block?
-A clocking block is a feature in SystemVerilog used to manage clock signals in a design.  
+A clocking block is a feature in SystemVerilog used to **manage clock signals in a design**.  
 Input skew refers to when a signal defined as input to the clocking block should be sampled relative to the given edge of the clock.  
 Output skew refers to when a signal declared as an output to the clocking block should be driven relative to the given edge of the clock.  
 ```
@@ -77,9 +77,9 @@ endclocking
 # Explain the different stages a simulator goes through to run a simulation.
 Simulators typically comprises three simulation phases. These phases are:
 
-Compilation Phase: This phase involves compiling the design and testbench files and checks the syntax, semantics, and hierarchy of the design, including all modules and interfaces.
-Elaboration Phase: During this phase, the SystemVerilog compiler parses the design files and creates an internal representation of the design in memory. It reads the testbench code, generates object files, and links them together to create an executable file. It also includes the loading of any libraries, linking with external modules, and optimizing the executable file. Any issues found during elaboration must be resolved before simulation can proceed.
-Simulation Phase: This is the actual running of the simulation. The simulation takes the compiled executable file and simulates the hardware design under test. The simulation initializes the testbench and DUT, applies stimulus to the DUT, and checks the expected output. The SystemVerilog simulation engine checks for timing, race conditions, and other errors and generates a log file during the simulation.
+**Compilation Phase**: This phase involves compiling the design and testbench files and checks the syntax, semantics, and hierarchy of the design, including all modules and interfaces.  
+**Elaboration Phase**: During this phase, the SystemVerilog compiler parses the design files and creates an internal representation of the design in memory. It reads the testbench code, generates object files, and links them together to create an executable file. It also includes the loading of any libraries, linking with external modules, and optimizing the executable file. Any issues found during elaboration must be resolved before simulation can proceed.  
+**Simulation Phase**: This is the actual running of the simulation. The simulation takes the compiled executable file and simulates the hardware design under test. The simulation initializes the testbench and DUT, applies stimulus to the DUT, and checks the expected output. The SystemVerilog simulation engine checks for timing, race conditions, and other errors and generates a log file during the simulation.  
 
 # What is casting?
 Casting is a fundamental concept in programming and refers to the process of **converting one data type into another data type**.  
