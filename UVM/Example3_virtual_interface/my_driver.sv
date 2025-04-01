@@ -1,9 +1,10 @@
 /*
     因為 my_driver 是一個類，在類中不能使用上述方式聲明一個 interface，只有在類似 top_tb 這樣的模組（module）中才可以。
-    在類別中使用的是virtual interface：
+    在類別中使用的是 virtual interface：
 */
 class my_driver extends uvm_driver;
     virtual my_if vif;
+    virtual my_if vif2;
     `uvm_component_utils(my_driver)     // 將 my_driver 登記在 UVM 內部的一張表中
     function new(string name = "my_driver", uvm_component parent = null);
         super.new(name, parent);
@@ -12,11 +13,21 @@ class my_driver extends uvm_driver;
 
     extern virtual task main_phase(uvm_phase phase);
 
-    virtual function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
+    virtual function void build_phase(uvm_phase phase);     // build_phase 是不消耗仿真時間的
+        super.build_phase(phase);       // 因為在其父類別的 build_phase 中執行了一些必要的操作，這裡必須顯式地呼叫並執行它
         `uvm_info("my_driver", "build_phase is called", UVM_LOW);
-        if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
+        if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif)) 
             `uvm_fatal("my_driver", "virtual interface must be set for vif!!!")
+        if(!uvm_config_db#(virtual my_if)::get(this, "", "vif2", vif2))
+            `uvm_fatal("my_driver", "virtual interface must be set for vif2!!!")
+        /*
+        get:
+            virtual my_if:  uvm_config_db#（virtual my_if）則是一個參數化的類，其參數就是要寄信的類型，這裡是 virtual my_if
+            this:
+            "":
+            "vif":          必須和 set 第三個參數一致
+            vif:            表示要把得到的 interface 傳遞給哪個 my_driver 的成員變數
+        */
     endfunction
 endclass
 

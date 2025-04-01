@@ -34,21 +34,8 @@ module top_tb;
     end
 
     initial begin
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top", "vif", input_if);  // 使用雙冒號是因為這兩個函數都是靜態函數
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top", "vif", input_if);
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top", "vif2", output_if);
-        /*
-        set:
-            virtual my_if:      uvm_config_db#（virtual my_if）則是一個參數化的類，其參數就是要寄信的類型，這裡是 virtual my_if
-            null:
-            "uvm_test_top":     表示的是路徑索引
-            "vif":              此參數必須和 get 的第三個參數一致
-            input_if:           表示要將哪個 interface 透過 config_db 傳遞給 my_driver
-        */
     end
 
 endmodule
-
-/*
-new is called
-main_phased is called
-*/

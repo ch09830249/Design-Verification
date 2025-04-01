@@ -6,7 +6,7 @@
 */
 class my_driver extends uvm_driver;
 
-    `uvm_component_utils(my_driver)     // 將 my_driver 登記在 UVM 內部的一張表中
+    `uvm_component_utils(my_driver)
     function new(string name = "my_driver", uvm_component parent = null);
         super.new(name, parent);
         `uvm_info("my_driver", "new is called", UVM_LOW);
