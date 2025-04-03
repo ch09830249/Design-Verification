@@ -1,5 +1,8 @@
 class my_model extends uvm_component;
-
+    /*
+        UVM 的 transaction 層級通訊的資料接收方式也有多種，其中一種就是使用 uvm_blocking_get_port。這也是一個參數化的類，其參數是其中要傳遞的 transaction 的類型。
+    */
+    // 建立 handle 
     uvm_blocking_get_port #(my_transaction) port;
     uvm_analysis_port #(my_transaction) ap;
 
@@ -16,6 +19,7 @@ endfunction
 
 function void my_model::build_phase(uvm_phase phase);
     super.build_phase(phase);
+    // 實例化
     port = new("port", this);
     ap = new("ap", this);
 endfunction
