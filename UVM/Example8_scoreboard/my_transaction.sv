@@ -47,4 +47,26 @@ class my_transaction extends uvm_sequence_item;
         end
         crc = tr.crc;
     endfunction
+
+    // 增加 my_compare
+    function bit my_compare(my_transaction tr);
+        bit result;
+
+        if(tr == null)
+            `uvm_fatal("my_transaction", "tr is null!!!!")
+        // 比較欄位
+        result = ((dmac == tr.dmac) &&
+                (smac == tr.smac) &&
+                (ether_type == tr.ether_type) &&
+                (crc == tr.crc));
+        // 比較 payload
+        if(pload.size() != tr.pload.size())
+            result = 0;
+        else
+            for(int i = 0; i < pload.size(); i++) begin
+                if(pload[i] != tr.pload[i])
+                    result = 0;
+            end
+        return result;
+    endfunction
 endclass

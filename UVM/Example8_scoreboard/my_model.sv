@@ -1,7 +1,7 @@
 class my_model extends uvm_component;
 
     uvm_blocking_get_port #(my_transaction) port;
-    uvm_analysis_port #(my_transaction) ap;
+    uvm_analysis_port #(my_transaction) ap;             // 這是要傳送給 scoreboard 的 port
 
     extern function new(string name, uvm_component parent);
     extern function void build_phase(uvm_phase phase);
