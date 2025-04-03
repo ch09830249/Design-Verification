@@ -16,7 +16,8 @@ class my_monitor extends uvm_monitor;
         super.build_phase(phase);
         if (!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
             `uvm_fatal("my_monitor", "virtual interface must be set for vif!!!")
-        ap = new("ap", this);                   // 實例化端口
+        // 實例化端口
+        ap = new("ap", this);
     endfunction
 
     extern task main_phase(uvm_phase phase);

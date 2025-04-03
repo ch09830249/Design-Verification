@@ -8,6 +8,7 @@ class my_driver extends uvm_driver;
     endfunction
 
     extern virtual task main_phase(uvm_phase phase);
+    extern virutal task drive_one_pkt(my_transaction tr);
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
