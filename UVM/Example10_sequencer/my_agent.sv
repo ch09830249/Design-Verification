@@ -1,5 +1,7 @@
 class my_agent extends uvm_agent;
 
+    // 建立 sequencer 的 handle
+    my_sequencer sqr;
     my_driver drv;
     my_monitor mon;
     uvm_analysis_port #(my_transaction) ap;
@@ -19,6 +21,8 @@ function void my_agent::build_phase(uvm_phase phase);
     super.build_phase(phase);
     uvm_config_db#(uvm_active_passive_enum)::get(this, "", "is_active", is_active);
     if (is_active == UVM_ACTIVE) begin
+        // new 一個 sequencer 物件
+        sqr = my_sequencer::type_id::create("sqr", this);
         drv = my_driver::type_id::create("drv", this);
     end
     mon = my_monitor::type_id::create("mon", this);
