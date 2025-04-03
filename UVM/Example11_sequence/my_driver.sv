@@ -18,6 +18,7 @@ class my_driver extends uvm_driver#(my_transaction);
     endfunction
 endclass
 
+// 當把二者連接好之後，就可以在 driver 中透過 get_next_item 任務向 sequencer 申請新的 transaction
 task my_driver::main_phase(uvm_phase phase);
     phase.raise_objection(this);
     vif.data <= 8'b0;
@@ -25,9 +26,11 @@ task my_driver::main_phase(uvm_phase phase);
     while(!vif.rst_n)
         @(posedge vif.clk);
     for(int i = 0; i < 2; i++) begin
-        req = new("req");
-        assert(req.randomize() with {pload.size == 200;});
+        // req = new("req");
+        // assert(req.randomize() with {pload.size == 200;});
+        seq_item_port.get_next_item(req);
         drive_one_pkt(req);
+        seq_item_port.item_done();
     end
     repeat(5) @(posedge vif.clk);
     phase.drop_objection(this);
