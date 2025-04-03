@@ -6,6 +6,7 @@ import uvm_pkg::*;              // import 語句將整個 uvm_pkg 導入驗證�
 
 module top_tb;
 
+    // 以下皆是要串連 dut 的變數
     reg clk;
     reg rst_n;
     reg [7:0] rxd;
@@ -13,6 +14,7 @@ module top_tb;
     wire [7:0] txd;
     wire tx_en;
 
+    // 將 top_tb 和 dut 的 input 連接
     dut my_dut(
         .clk(clk),
         .rst_n(rst_n),
@@ -24,9 +26,9 @@ module top_tb;
 
     initial begin
         my_driver drv;          // 創建 my_driver 的 handle 並將其實例化   PS: 前文介紹 uvm_info 巨集的列印資訊時出現的代表路徑索引的 drv 就是在這裡傳入的參數 drv
-        drv = new("drv", null);
+        drv = new("drv", null); // 前面介紹 uvm_info 巨集的列印資訊時出現的代表路徑索引的 drv 就是在這裡傳入的參數 drv。
         drv.main_phase(null);   // 呼叫 my_driver 的 main_phase。在 main_phase 的聲明中，有一個 uvm_phase 類型的參數phase，在真正的驗證平台，這個參數是不需要使用者理會的。本節的驗證平台還不算完整的UVM驗證平台，所以暫且傳入null。
-        $finish();
+        $finish();              // 呼叫 finish 函數結束整個仿真，這是一個 Verilog 提供的函數
     end
 
     initial begin
@@ -37,7 +39,7 @@ module top_tb;
     end
 
     initial begin
-        rst_n = 1'b0;
+        rst_n = 1'b0;           // 先清空 rxd 和 rx_dv, 等 1000 ns 後, 才正常傳送資料
         #1000;
         rst_n = 1'b1;
     end
@@ -45,5 +47,5 @@ module top_tb;
 endmodule
 
 /*
-可以看到「data is drived」被輸出了256次。
+    可以看到「data is drived」被輸出了 256 次。
 */
