@@ -66,5 +66,6 @@ task my_monitor::collect_one_pkt(my_transaction tr);
     end
 
     `uvm_info("my_monitor", "end collect one pkt, print it:", UVM_LOW);
-    tr.my_print();
+    // tr.my_print();
+    tr.print();
 endtask
