@@ -1,22 +1,35 @@
-module dut(clk, rst_n, rxd, rx_dv, txd, tx_en);
-    input clk;
-    input rst_n;
-    input[7:0] rxd;
-    input rx_dv;
-    output [7:0] txd;
-    output tx_en;
+class my_model extends uvm_component;
 
-    reg[7:0] txd;
-    reg tx_en;
+    uvm_blocking_get_port #(my_transaction) port;
+    uvm_analysis_port #(my_transaction) ap;
 
-    always @(posedge clk) begin
-        if(!rst_n) begin
-            txd <= 8'b0;
-            tx_en <= 1'b0;
-        end
-        else begin
-            txd <= rxd;
-            tx_en <= rx_dv;
-        end
+    extern function new(string name, uvm_component parent);
+    extern function void build_phase(uvm_phase phase);
+    extern virtual task main_phase(uvm_phase phase);
+
+    `uvm_component_utils(my_model)
+endclass
+
+function my_model::new(string name, uvm_component parent);
+    super.new(name, parent);
+endfunction
+
+function void my_model::build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    port = new("port", this);
+    ap = new("ap", this);
+endfunction
+
+task my_model::main_phase(uvm_phase phase);
+    my_transaction tr;
+    my_transaction new_tr;
+    super.main_phase(phase);
+    while(1) begin
+        port.get(tr);
+        new_tr = new("new_tr");
+        new_tr.my_copy(tr);
+        `uvm_info("my_model", "get one transaction, copy and print it:", UVM_LOW)
+        new_tr.my_print();
+        ap.write(new_tr);
     end
-endmodule
+endtask
