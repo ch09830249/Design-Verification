@@ -40,8 +40,3 @@ module top_tb;
     end
 
 endmodule
-
-/*
-new is called
-main_phased is called
-*/

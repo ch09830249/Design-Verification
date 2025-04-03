@@ -17,7 +17,7 @@ class my_driver extends uvm_driver;
 endclass
 
 task my_driver::main_phase(uvm_phase phase);
-    phase.raise_objection(this);                    // 多加這個
+    phase.raise_objection(this);                                // 多加這個, 控制仿真的開始
     `uvm_info("my_driver", "main_phase is called", UVM_LOW);
     top_tb.rxd <= 8'b0;
     top_tb.rx_dv <= 1'b0;
@@ -31,11 +31,11 @@ task my_driver::main_phase(uvm_phase phase);
     end
     @(posedge top_tb.clk);
     top_tb.rx_dv <= 1'b0;
-    phase.drop_objection(this);                     // 和這個
+    phase.drop_objection(this);                                 // 和這個, 控制仿真的結束, 讀者可以簡單地將 drop_objection 語句當成是 finish 函數的替代者
 endtask
 
 /*
-    raise_objection 語句必須在 main_phase 中第一個消耗模擬時間的語句之前。如$display語句是不消耗仿真時間的，這些語句可
-    以放在raise_objection之前，但是類似@（posedge top.clk）等語句是要消耗模擬時間的。照如下的方式使用raise_objection是無法
+    raise_objection 語句必須在 main_phase 中第一個消耗模擬時間的語句之前。如 $display 語句是不消耗仿真時間的，這些語句可
+    以放在 raise_objection 之前，但是類似 @posedge top.clk）等語句是要消耗模擬時間的。照如下的方式使用 raise_objection 是無法
     起到作用的
 */
