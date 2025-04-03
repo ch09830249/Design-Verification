@@ -46,24 +46,43 @@ task my_monitor::collect_one_pkt(my_transaction tr);
         @(posedge vif.clk);
     end
 
-    // Pop dmac
-    for (int i = 0; i < 6; i++) begin
-        tr.dmac = {tr.dmac[39:0], data_q.pop_front()};
+    /*
+        這裡使用 unpack_bytes 函數將 data_q 中的 byte 流轉換成 tr 中的各個欄位。 unpack_bytes 函數的輸入參數必須是一個動態數組，所
+        以需要先把收集到的、放在 data_q 中的資料複製到一個動態陣列中。由於 tr 中的 pload 是一個動態數組，所以需要在調用
+        unpack_bytes 之前就指定其大小，這樣 unpack_bytes 函數才能正常運作。
+    */
+
+    // 記錄收進來的 data size
+    data_size = data_q.size();
+    // new 一個 data array 暫存
+    data_array = new[data_size];
+    for ( int i = 0; i < data_size; i++ ) begin
+        data_array[i] = data_q[i];
     end
+    // new 一個 transaction
+    tr.pload = new[data_size - 18]; //da sa, e_type, crc
+    // 直接 unpack 到該 transaction
+    data_size = tr.unpack_bytes(data_array) / 8;
 
-    // Pop smac
-    …
+    // 以下將 packet 轉 Byte 資料流的 code 改成 field automation 方式實作
+    // // Pop dmac
+    // for (int i = 0; i < 6; i++) begin
+    //     tr.dmac = {tr.dmac[39:0], data_q.pop_front()};
+    // end
 
-    // Pop ether_type
-    …
+    // // Pop smac
+    // …
 
-    // Pop payload
-    …
+    // // Pop ether_type
+    // …
 
-    // Pop crc
-    for (int i = 0; i < 4; i++) begin
-        tr.crc = {tr.crc[23:0], data_q.pop_front()};
-    end
+    // // Pop payload
+    // …
+
+    // // Pop crc
+    // for (int i = 0; i < 4; i++) begin
+    //     tr.crc = {tr.crc[23:0], data_q.pop_front()};
+    // end
 
     `uvm_info("my_monitor", "end collect one pkt, print it:", UVM_LOW);
     // tr.my_print();

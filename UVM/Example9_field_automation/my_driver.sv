@@ -33,28 +33,37 @@ task my_driver::drive_one_pkt(my_transaction tr);
     bit [47:0] tmp_data;
     bit [7:0] data_q[$];
 
-    // Push dmac to data_q
-    tmp_data = tr.dmac;
-    for (int i = 0; i < 6; i++) begin
-        data_q.push_back(tmp_data[7:0]);
-        tmp_data = (tmp_data >> 8);
-    end
+    /*
+        第 42 行呼叫 pack_bytes 將 tr 中所有的欄位變成 byte 流放入 data_q 中，在2.3.1節中是手動地將所有欄位放入 data_q 中的。
+        pack_bytes 大大減少了程式碼量。在把所有的欄位變成 byte 流放入 data_q 中時，欄位依照 uvm_field 系列巨集書寫的順序排列。
+        是先放入 dmac，再依序放入 smac、ether_type、pload、crc。
+        那麼將會先放入smac，再依序放入dmac、ether_type、pload、crc。
+    */
+    data_size = tr.pack_bytes(data_q) / 8;
 
-    // Push smac to data_q
-    …
+    // 以下將 packet 轉 Byte 資料流的 code 改成 field automation 方式實作
+    // // Push dmac to data_q
+    // tmp_data = tr.dmac;
+    // for (int i = 0; i < 6; i++) begin
+    //     data_q.push_back(tmp_data[7:0]);
+    //     tmp_data = (tmp_data >> 8);
+    // end
 
-    // Push ether_type to data_q
-    …
+    // // Push smac to data_q
+    // …
 
-    // Push payload to data_q
-    …
+    // // Push ether_type to data_q
+    // …
 
-    // Push crc to data_q
-    tmp_data = tr.crc;
-    for (int i = 0; i < 4; i++) begin
-        data_q.push_back(tmp_data[7:0]);
-        tmp_data = (tmp_data >> 8);
-    end
+    // // Push payload to data_q
+    // …
+
+    // // Push crc to data_q
+    // tmp_data = tr.crc;
+    // for (int i = 0; i < 4; i++) begin
+    //     data_q.push_back(tmp_data[7:0]);
+    //     tmp_data = (tmp_data >> 8);
+    // end
 
     `uvm_info("my_driver", "begin to drive one pkt", UVM_LOW);
     repeat(3) @(posedge vif.clk);
