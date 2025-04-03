@@ -17,7 +17,7 @@ module top_tb;
                 .tx_en(output_if.valid));
 
     initial begin
-        run_test("my_env");
+        run_test("my_env"); // 實例化 env
     end
 
     initial begin
@@ -32,10 +32,13 @@ module top_tb;
         #1000;
         rst_n = 1'b1;
     end
-
+    /*
+        在 my_env 的 build_phase 中，建立 i_agt 和 o_agt 的實例是在在 build_phase 中；在 agent 中，
+        建立 driver 和 monitor 的實例也是在 build_phase 中。所以 build_phase 從樹根到樹葉的執行順序，
+        可以建立一棵完整的UVM樹。
+    */
     initial begin
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_agt.drv", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_agt.drv", "vif2", output_if);
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_agt.mon", "vif", input_if);
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.o_agt.mon", "vif", output_if);
     end
