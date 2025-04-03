@@ -6,15 +6,18 @@ import uvm_pkg::*;
 
 module top_tb;
 
-    my_if input_if(clk, rst_n);
+    reg clk;
+    reg rst_n;
+
+    my_if input_if(clk, rst_n);         // 定義了 interface 後，在 top_tb 中實例化DUT時，就可以直接使用
     my_if output_if(clk, rst_n);
 
     dut my_dut(.clk(clk),
-                .rst_n(rst_n),
-                .rxd(input_if.data),
-                .rx_dv(input_if.valid),
-                .txd(output_if.data),
-                .tx_en(output_if.valid));
+               .rst_n(rst_n),
+               .rxd(input_if.data),
+               .rx_dv(input_if.valid),
+               .txd(output_if.data),
+               .tx_en(output_if.valid));
 
     initial begin
         run_test("my_driver");
@@ -47,8 +50,3 @@ module top_tb;
     end
 
 endmodule
-
-/*
-new is called
-main_phased is called
-*/

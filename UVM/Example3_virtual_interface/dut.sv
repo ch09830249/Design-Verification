@@ -10,17 +10,13 @@ module dut(clk, rst_n, rxd, rx_dv, txd, tx_en);
     reg tx_en;
 
     always @(posedge clk) begin
-        if(!rst_n) begin    // 若 rst_n 為 0, 將 txd 和 tx_en 清掉
+        if(!rst_n) begin
             txd <= 8'b0;
             tx_en <= 1'b0;
         end
         else begin
-            txd <= rxd;     // 否則將 rxd 接收到的數據給 txd
-            tx_en <= rx_dv; // 並且表示該 txd 是有效的資料
+            txd <= rxd;
+            tx_en <= rx_dv;
         end
     end
 endmodule
-
-/*
-    透過 rxd 接收數據，再透過 txd 發送出去。其中 rx_dv 是接收的資料有效指示，tx_en 是發送的資料有效指示
-*/
