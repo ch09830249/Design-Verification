@@ -17,9 +17,14 @@ endclass
 
 function void my_agent::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    // is_active 的值預設為 UVM_ACTIVE，在這種模式下，是需要實例化 driver 的。
-    // UVM_PASSIVE 模式在輸出埠上不需要驅動任何訊號，只需要監測訊號。在這種情況下，連接埠上是只需要 monitor 的，所以 driver 可以不用實例化。
+    /* 
+        透過 config table 取得當前 agent 的模式, 並指定給成員變數 is_active
+    */
     uvm_config_db#(uvm_active_passive_enum)::get(this, "", "is_active", is_active);
+    /* 
+        is_active 的值預設為 UVM_ACTIVE，在這種模式下，是需要實例化 driver 的。
+        UVM_PASSIVE 模式在輸出埠上不需要驅動任何訊號，只需要監測訊號。在這種情況下，連接埠上是只需要 monitor 的，所以 driver 可以不用實例化。
+    */
     if (is_active == UVM_ACTIVE) begin
         drv = my_driver::type_id::create("drv", this);
     end
