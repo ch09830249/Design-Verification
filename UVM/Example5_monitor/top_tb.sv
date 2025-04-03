@@ -36,8 +36,8 @@ module top_tb;
     initial begin
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.drv", "vif", input_if);
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.drv", "vif2", output_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_mon", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.o_mon", "vif", output_if);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_mon", "vif", input_if);    // 一個用來監測DUT的輸入口 (為 Reference Model 計算期望值的輸入), 也可以 driver 直接交給後面的 reference model
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.o_mon", "vif", output_if);   // 一個用來監測DUT的輸出口 (為 Reference Model 比較對象)
     end
 
 endmodule
