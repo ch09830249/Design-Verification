@@ -1,6 +1,6 @@
 /*
     在這個容器類別中實例化 driver、monitor、reference model 和 scoreboard 等。在調用
-    run_test 時，傳遞的參數不再是 my_driver，而是這個容器類，也就是讓UVM自動建立這個容器類別的實例。在UVM中，這個容器類別稱為 uvm_env
+    run_test 時，傳遞的參數不再是 my_driver，而是這個容器類，也就是讓 UVM 自動建立這個容器類別的實例。在UVM中，這個容器類別稱為 uvm_env
 */
 class my_env extends uvm_env;
 
@@ -12,7 +12,7 @@ class my_env extends uvm_env;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        drv = my_driver::type_id::create("drv", this);  // factory 機制所帶來的獨特的實例化方式。只有使用factory機制註冊過的類別才能使用這種方式實例化
+        drv = my_driver::type_id::create("drv", this);  // factory 機制所帶來的獨特的實例化方式。只有使用 factory 機制註冊過的類別才能使用這種方式實例化
     endfunction
 
     `uvm_component_utils(my_env)    // 使用 uvm_component_utils 宏來實現 factory 的註冊。
