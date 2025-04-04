@@ -35,5 +35,14 @@ class my_env extends uvm_env;
         scb.act_port.connect(agt_scb_fifo.blocking_get_export);
     endfunction
 
+    // 啟動 sequence 並且設定 sequence 將 transaction 送給哪個 sequencer (也可以在 sequencer 設定)
+    // task my_env::main_phase(uvm_phase phase);
+    //     my_sequence seq;
+    //     phase.raise_objection(this);
+    //     seq = my_sequence::type_id::create("seq");
+    //     seq.start(i_agt.sqr);           // start 任務的參數是一個 sequencer 指針，如果不指明此指針，則 sequence 不知道將產生的 transaction 交給哪個 sequencer。
+    //     phase.drop_objection(this);
+    // endtask
+
     `uvm_component_utils(my_env)
 endclass
