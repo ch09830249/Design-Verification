@@ -11,7 +11,7 @@ class my_agent extends uvm_agent;
 
 	virtual function void connect_phase (uvm_phase phase);
 		// Always the port is connected to an export
-		m_drv.seq_item_port.connect(m_seqr.seq_item_export);   // 在 agent 中, driver 的 port 和 sequencer 的 export 相連
+		m_drv.seq_item_port.connect(m_seqr.seq_item_export);   // 在 agent 中, driver 的 seq_item_port (本質上是 port) 和 sequencer 的 export (本質上是 import) 相連
 	endfunction
 
 endclass
