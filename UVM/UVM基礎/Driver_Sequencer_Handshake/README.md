@@ -1,16 +1,19 @@
-# Phases
-* All testbench components are derived from **uvm_component** and are aware of the phase concept. Each component goes through a **pre-defined set of phases**, and it **cannot proceed to the next phase until all components finish their execution in the current phase (只有在完成當前的 phase, 才會進行下一個 phase 的進行)**. So UVM phases act as a **synchronizing mechanism in the life cycle of a simulation**.
-* Because phases are defined as callbacks, classes derived from uvm_component can perform useful work in the callback phase method. Methods that do **not consume simulation time** are **functions** and methods that **consume simulation time** are **tasks**. All phases can be grouped into three categories:
-  * Build time phases
-  * Run time phases
-  * Clean-Up phases  
-![image](https://github.com/user-attachments/assets/95557858-122d-4add-b08d-cb5e6a49d7cd)
-## Main Phases
-![image](https://github.com/user-attachments/assets/fecf14e8-1fe9-48f7-8ca0-4f7d401f376a)
-* Logically, the first thing to be done is to **create testbench component objects so that they can be connected together**. This is the reason for the **build_phase**. It is better to not start connecting them while other testbench components are still building their sub-components. So we have **connect_phase** which will **connect all the components that were built in the previous phase**. Although the next two phases are rarely used or are typically used to display UVM hierhachy information. **Test stimulus is driven to the design during the run_phase** which is launched in parallel with other run-time phases that are described shown below.
-## Run Phase
-![image](https://github.com/user-attachments/assets/50093c74-7c51-4b16-8591-fd69b7b7aba0)
-## What should be done in each UVM phase?
-![image](https://github.com/user-attachments/assets/6311aca1-4b27-4f5c-aaec-1031873b1590)
-![image](https://github.com/user-attachments/assets/c1e11624-55df-4918-bb67-09f895d40b60)
-![image](https://github.com/user-attachments/assets/695ac27c-2d21-4d96-98d7-ce7a126bca01)
+# Driver Sequencer Handshake
+* The **driver** class contains a TLM port called **uvm_seq_item_pull_port** which is connected to a **uvm_seq_item_pull_export** in the **sequencer** in the connect phase of a UVM agent. The driver can use TLM functions to get the next item from the sequencer when required.
+* These API methods help the driver to **get a series of sequence_items from the sequencer's FIFO** that contains data for the driver to drive to the DUT. Also, there is a way for the driver to communicate back with the sequence that it has finished driving the given sequence item and can request for the next item.
+![image](https://github.com/user-attachments/assets/2324d4bd-4459-4a06-bd12-c6c0a3b2d82a)
+```
+class my_agent extends uvm_agent;
+	`uvm_component_utils (my_agent)
+
+	my_driver  		#(my_sequence_item) 	m_drv;
+	uvm_sequencer 	#(my_sequence_item)  	m_seqr;
+
+	virtual function void connect_phase (uvm_phase phase);
+		// Always the port is connected to an export
+		m_drv.seq_item_port.connect(m_seqr.seq_item_export);   // 在 agent 中, driver 的 port 和 sequencer 的 export 相連
+	endfunction
+
+endclass
+```
+The connect between a driver and sequencer is a **one-to-one connection**. Multiple drivers are not connected to a sequencer nor are multiple sequencers connected to a single driver. Once the connection is made, the driver can utilize API calls in the TLM port definitions to receive sequence items from the sequencer.
