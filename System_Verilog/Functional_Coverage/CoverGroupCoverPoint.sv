@@ -1,11 +1,11 @@
 /*
   covergroup
 
-    - A set of coverage points  // 要 cover 的變數
+    - A set of coverage points                // 要 cover 的變數
     - Cross coverage between coverage points  // 多個變數 cross 的數組
         EX: cx_ab: cross a, b;
     - An event that defines when the covergroup is sampled
-        EX: covergroup cg @ (posedge clk);  // 只有在 posedge 採樣, 不用再透過 .sample() 採樣
+        EX: covergroup cg @ (posedge clk);    // 只有在 posedge 採樣, 不用再透過 .sample() 採樣
     - Other options to configure coverage object  
         option.at_least: 該 cover point 至少要出現次數, 滿足才算 cover 到
         option.weight: 該 cover point 的權重, 最後在算該 cover group 的機率用加權平均
@@ -25,21 +25,21 @@ module tb;
   always #20 clk = ~clk;
 
   // "cg" is a covergroup that is sampled at every posedge clk
-  covergroup cg @ (posedge clk);  // 只有在 posedge 採樣, 不用再透過 .sample() 採樣
-    coverpoint mode;    // 這裡只 cover mode 這個變數
+  covergroup cg @ (posedge clk);        // 只有在 posedge 採樣, 不用再透過 .sample() 採樣
+    coverpoint mode;                    // 這裡只 cover mode 這個變數
   endgroup
 
   // Create an instance of the covergroup
-  cg  cg_inst;    // 建立此 cover group 的 handle
+  cg  cg_inst;                          // 建立此 cover group 的 handle
 
   initial begin
     // Instantiate the covergroup object similar to a class object
-    cg_inst= new(); // 例化一個 cover group
+    cg_inst= new();                     // 例化一個 cover group
 
     // Stimulus : Simply assign random values to the coverage variables
     // so that different values can be sampled by the covergroup object
     for (int i = 0; i < 5; i++) begin
-      @(negedge clk);   // 等 clk 變 negedge, 再做下面 random 的動作
+      @(negedge clk);                   // 等 clk 變 negedge, 再做下面 random 的動作
       mode = $random;
       cfg  = $random;
       $display ("[%0t] mode=0x%0h cfg=0x%0h", $time, mode, cfg);
@@ -59,7 +59,7 @@ endmodule
   [120] mode=0x1 cfg=0x5
   [160] mode=0x1 cfg=0x2
   [200] mode=0x1 cfg=0x5
-  Coverage = 50.00 %         // mode 0~3 中只有 sample 出 0 和 1, 因此 50% coverage rate
+  Coverage = 50.00 %          // mode 0~3 中只有 sample 出 0 和 1, 因此 50% coverage rate
 */
 
 
@@ -93,12 +93,11 @@ module tb;
   // This covergroup has two coverage points, one to cover "mode"
   // and the other to cover "cfg". Mode can take any value from
   // 0 -> 3 and cfg can take any value from 0 -> 7
-  covergroup cg @ (posedge clk);
-
+  covergroup cg @ (posedge clk);          // 只有在 posedge 採樣, 不用再透過 .sample() 採樣
     // Coverpoints can optionally have a name before a colon ":"    // 這只是取名而已, 之後會顯示在 report 上
-    cp_mode    : coverpoint mode;   // mode 0~3
-    cp_cfg_10  : coverpoint cfg[1:0]; // cfg 0~3
-    cp_cfg_lsb : coverpoint cfg[0];  // cfg 0~1
+    cp_mode    : coverpoint mode;         // mode 0~3
+    cp_cfg_10  : coverpoint cfg[1:0];     // cfg 0~3
+    cp_cfg_lsb : coverpoint cfg[0];       // cfg 0~1
     cp_sum     : coverpoint (mode + cfg); // mode + cfg 0~7   PS: 因為最多 3 個 bits, 所以不是 0~10
   endgroup
 
@@ -108,7 +107,7 @@ module tb;
     cg_inst= new();
 
     for (int i = 0; i < 5; i++) begin
-      @(negedge clk);
+      @(negedge clk);                     // 上沿採樣, 下沿指定新的隨機值
       mode = $random;
       cfg  = $random;
       $display ("[%0t] mode=0x%0h cfg=0x%0h", $time, mode, cfg);
