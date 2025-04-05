@@ -1,42 +1,16 @@
-# Base Classes
-* The basic building blocks for any verification environment are the **components (drivers, sequencers, monitors ...)**
-* The **transactions (class objects that contain actual data)** they use to communicate.
-* From the UVM hierarchy, we can see that most of the classes in UVM are derived from a set of core classes that are described below.
-![image](https://github.com/user-attachments/assets/331cc465-4ca5-4ca9-8c23-73f3405535a2)
-## uvm_void
-```
-virtual class uvm_void;
-endclass
-```
-* This **doesn't have any purpose**, but serves as the base class for all UVM classes.
-* It is an **abstract class** with **no data members or functions**.
-* It allows for generic containers of objects to be created, **similar to a void pointer** in the C programming language. 像是一個 void pointer 可以指向任何型態的物件
-* User classes derived directly from uvm_void **inherit none of the UVM functionality**, but such classes may be placed in uvm_void typed containers along with other UVM objects.
-## uvm_object
-* This is a **virtual base class for all components and transactions** in the UVM testbench. It's primary role is to define a set of methods for common operations like print, copy, compare and record.
-```
-virtual class uvm_object extends uvm_void;
-
-	extern function void print (uvm_printer printer=null);
- 	extern function void copy (uvm_object rhs, uvm_copier copier=null);
-  extern function bit  compare (uvm_object rhs, uvm_comparer comparer=null);
- 	extern function void record (uvm_recorder recorder=null);
-	...
-
-endclass
-```
-## uvm_report_object
-* Provides an interface to the UVM reporting facility.
-  * **All messages, warnings, errors issued by components go via this interface.**
-  * There's an internal instance of uvm_report_handler which stores the reporting configuration on the basis of which the handler makes decisions on whether the message should be printed or not. Then it's passed to a central uvm_report_server which does the actual formatting and production of messages.
-```
-// A report has 'severity', 'id_string', 'text_message', and 'verbosity_level'
-`uvm_info ("STAT", "Status register updated", UVM_HIGH")
-
-// severity  		: uvm_info
-// id_string 		: "STAT"
-// text_message 	: "Status register updated"
-// verbosity_level 	: UVM_HIGH
-```
-* The message is ignored if the verbosity level is greater than the configured maximum verbosity level.
-  * For example, if the maximum verbosity level is set to UVM_MEDIUM, then all INFO statements with verbosity greater than MEDIUM are ignored. This is useful for debug purposes where the message level can be set to UVM_HIGH for all debug related messages, while the maximum verbosity level is set to UVM_MEDIUM. This allows the ability to switch between different output levels without recompiling the testbench.
+# Phases
+* All testbench components are derived from **uvm_component** and are aware of the phase concept. Each component goes through a **pre-defined set of phases**, and it **cannot proceed to the next phase until all components finish their execution in the current phase (只有在完成當前的 phase, 才會進行下一個 phase 的進行)**. So UVM phases act as a **synchronizing mechanism in the life cycle of a simulation**.
+* Because phases are defined as callbacks, classes derived from uvm_component can perform useful work in the callback phase method. Methods that do **not consume simulation time** are **functions** and methods that **consume simulation time** are **tasks**. All phases can be grouped into three categories:
+  * Build time phases
+  * Run time phases
+  * Clean-Up phases  
+![image](https://github.com/user-attachments/assets/95557858-122d-4add-b08d-cb5e6a49d7cd)
+## Main Phases
+![image](https://github.com/user-attachments/assets/fecf14e8-1fe9-48f7-8ca0-4f7d401f376a)
+* Logically, the first thing to be done is to **create testbench component objects so that they can be connected together**. This is the reason for the **build_phase**. It is better to not start connecting them while other testbench components are still building their sub-components. So we have **connect_phase** which will **connect all the components that were built in the previous phase**. Although the next two phases are rarely used or are typically used to display UVM hierhachy information. **Test stimulus is driven to the design during the run_phase** which is launched in parallel with other run-time phases that are described shown below.
+## Run Phase
+![image](https://github.com/user-attachments/assets/50093c74-7c51-4b16-8591-fd69b7b7aba0)
+## What should be done in each UVM phase?
+![image](https://github.com/user-attachments/assets/6311aca1-4b27-4f5c-aaec-1031873b1590)
+![image](https://github.com/user-attachments/assets/c1e11624-55df-4918-bb67-09f895d40b60)
+![image](https://github.com/user-attachments/assets/695ac27c-2d21-4d96-98d7-ce7a126bca01)
