@@ -1,10 +1,10 @@
 /*
     Callback: A callback lets you give a function to someone else’s program. 
-            When that program reaches a certain point or condition, it "calls back" your function and runs it.
+              When that program reaches a certain point or condition, it "calls back" your function and runs it.
 
     
-    Callback in SV: A class method is written to call placeholder methods.  建一個 class, 裡面的建一個 Virtual function 當作 placeholder
-                    When needed, the user can extend the class and implement these placeholder methods. 
+    Callback in SV: A class method is written to call placeholder methods.                                  建一個 class, 裡面的建一個 Virtual function 當作 placeholder
+                    When needed, the user can extend the class and implement these placeholder methods.     User 可以根據需要客製實作自己想要的功能, 然後像當前執行的程式註冊, 並在特定時機執行
                     Here, the placeholder methods are the callback methods, and the calls to these methods act as callback hooks.
 
 */
@@ -14,7 +14,7 @@
 /*
     1. Callback Class: The callback functionality is usually implemented in a class where certain methods are defined. 
                        These methods can be overridden or extended by other classes.   
-                       創一個 placeholder (運用父類 handle 可以指向一個子類 handle 的特性, 後續實作的子類, 都可以用父類的 handle 去接)
+                       創一個 placeholder (運用父類 handle 可以指向一個子類 handle 的特性, 後續實作的子類, 都可以用父類的 handle 去接, 意味著就算換不同的子類, test case 中回調 callback 的 code 都不用調整)
 */
 
 class MyCallback;                                 // 可以看作是一個 prototype
@@ -30,13 +30,13 @@ endclass
 */
 
 class MyTest;
-  MyCallback cb;    // 相較 C 用 func ptr 傳入 func, 這裡是傳入繼承 MyCallback 的子類 handle, 這個 handle 會去接子類的 object
+  MyCallback cb;                                        // 相較 C 用 func ptr 傳入 func, 這裡是傳入繼承 MyCallback 的子類 handle, 這個 handle 會去接子類的 object
   // 2. Registration of callback
   function void register_callback(MyCallback callback); // 在 class MyTest 透過 MyCallback 的 handle 接它的子類物件
     cb = callback;
   endfunction
 
-  function void execute();  // 在看何時透過該 MyCallback 的 handle 去呼叫 callback function (正因為父類 func 為 virtual, 所以用 MyCallback 的 handle 會呼叫到子類的該方法)
+  function void execute();                              // 在看何時透過該 MyCallback 的 handle 去呼叫 callback function (正因為父類 func 為 virtual, 所以用 MyCallback 的 handle 會呼叫到子類的該方法)
     if (cb != null) begin
       cb.callback_function();
     end
