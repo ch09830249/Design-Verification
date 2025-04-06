@@ -18,7 +18,7 @@ module tb_top;
 	// to be triggered
 	task waitForTrigger (event eventA);
 		$display ("[%0t] Waiting for EventA to be triggered", $time);
-    @(eventA);
+    	@(eventA);
 		// wait (eventA.triggered);
 		$display ("[%0t] EventA has triggered", $time);
 	endtask
