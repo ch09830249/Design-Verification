@@ -4,7 +4,8 @@ module tb;
   initial begin
     a <= 8'hDA;
     $display ("[%0t] a=0x%0h b=0x%0h c=0x%0h", $time, a, b, c);
-    #10 b <= 8'hF1;
+    #10 
+    b <= 8'hF1;
     $display ("[%0t] a=0x%0h b=0x%0h c=0x%0h", $time, a, b, c);
     c <= 8'h30;
     $display ("[%0t] a=0x%0h b=0x%0h c=0x%0h", $time, a, b, c);
