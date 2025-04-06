@@ -1,18 +1,21 @@
 /*
-  A clocking block called ck1 is created which will be active on the positive edge of clk   // Clocking 就是對 signal 何時 sample 和 driven 去做更進一步的描述
+  clocking block 是為了避免 test bench 跟 DUT 搶訊號造成 race condition
+
+  A clocking block called ck1 is created which will be active on the positive edge of clk   // Clocking 就是對 signal 何時 sample 和 driven 去做更進一步的描述 (提早或延遲該時間)
     By default, 
-      all input signals within the clocking block will be sampled "5ns before" and 
-      all output signals within the clocking block will be driven "2ns after" the positive edge of the clock clk data,
+      all input signals within the clocking block will be sampled "5ns before" and
+      all output signals within the clocking block will be driven "2ns after"
+          the positive edge of the clock clk data,
     valid and ready are declared as inputs to the block and hence will be sampled 5ns before the posedge of clk
     grant is an output signal to the block with its own time requirement. 
     Here grant will be driven at the negedge of clk instead of the default posedge.
 */
 
 clocking ck1 @ (posedge clk);
-	default input #5ns output #2ns;   // Default: positive edge 前 5ns sample (input), 後 2ns driven (output)
-	input data, valid, ready = top.ele.ready; // 沒特別說明就是跟著 default
-	output negedge grant; // 有指定 grant 於 negedge driven
-	input #1step addr;  // 有指定 addr 於
+	default input #5ns output #2ns;               // Default: positive edge 前 5ns sample (input), 後 2ns driven (output)
+	input data, valid, ready = top.ele.ready;     // 沒特別另外說明就是跟著 default
+	output negedge grant;                         // 有指定 grant 於 negedge driven
+	input #1step addr;                            // 有指定 addr 於
 endclocking
 
 /*
