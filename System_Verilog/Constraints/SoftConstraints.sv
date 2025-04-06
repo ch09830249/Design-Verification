@@ -14,7 +14,7 @@ class ABC;
 
   // This constraint is defined as "soft"
   constraint c_data { soft data >= 4;     // 多了 soft 4~12
-                     data <= 12; }
+                           data <= 12; }
 endclass
 
 module tb;
