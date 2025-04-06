@@ -11,11 +11,17 @@
     Here grant will be driven at the negedge of clk instead of the default posedge.
 */
 
+/*
+  The delay_value represents a skew of how many time units away from the clock event a signal is to be sampled or driven. 3
+  If a default skew is not specified, then all input signals will be sampled #1step and output signlas driven 0ns after the specified event.
+*/
+
 clocking ck1 @ (posedge clk);
 	default input #5ns output #2ns;               // Default: positive edge 前 5ns sample (input), 後 2ns driven (output)
 	input data, valid, ready = top.ele.ready;     // 沒特別另外說明就是跟著 default
 	output negedge grant;                         // 有指定 grant 於 negedge driven
-	input #1step addr;                            // 有指定 addr 於
+  // An input skew of 1step indicates that the signal should be sampled at the end of the previous time step, or in other words, immediately before the positive clock edge.
+	input #1step addr;
 endclocking
 
 /*
