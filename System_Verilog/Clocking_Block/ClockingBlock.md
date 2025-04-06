@@ -2,7 +2,7 @@
 ```
 module des (input req, clk, output reg gnt);
   always @ (posedge clk)  // 當 clk posedge 去檢查 req
-    if (req) // 看 req == 1 => gnt = 1, 否則 gnt = 0
+    if (req)              // 看 req == 1 => gnt = 1, 否則 gnt = 0
       gnt <= 1;
   	else
       gnt <= 0;
