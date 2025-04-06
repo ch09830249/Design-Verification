@@ -72,7 +72,7 @@ endmodule
 /*
   Before randomization num = 0
   Constraint c_num is disabled
-  After randomization num = 15  真的有關掉
+  After randomization num = 15  真的有關掉, 超過限制 ( num > 4; num < 9;)
 */
 
 /*
