@@ -1,3 +1,26 @@
+# Clocking Block
+* 在介面中聲明clocking（時序區塊）和取樣的時脈訊號，可以用來實現訊號的**同步和取樣**。
+* clocking 區塊基於時脈週期對訊號進行驅動或取樣的方式，使testbench不再苦惱於如何準確及時地對訊號驅動或取樣,消除了訊號競爭的問題。
+```
+clocking bus @(posedge clk1);
+    default input #10ns output #2ns;
+    input data, ready, enable;
+    output negedge ack;
+    input #1step addr;
+endclocking
+```
+![image](https://github.com/user-attachments/assets/90960039-5e40-4f94-9082-7282683c0347)
+* 對上述clocking描述程式碼進行說明：
+  * 第一行定義 clocking 塊 bus，使用上升沿來驅動和採樣。
+  * 第二行指出輸入訊號在 clk1 上升沿之前 5ns 取樣，輸出訊號在 clk1 上升沿之後 2ns 驅動（輸入為取樣，輸出為驅動）。
+  * 第三行聲明輸入訊號，採用預設的輸入事件（clk1 上升沿 5ns前取樣）。
+  * 第四行聲明輸出訊號，並且指明為 clk1 下降沿驅動，覆蓋了原有的 clk1 上升沿後 2ns 驅動。
+  * 第五行定義了輸入訊號 addr，採用了自訂的取樣事件，clk1 上升沿後的 1 step，覆蓋了原有的 clk1 上升沿前 5ns 取樣，這裡 1 step 使得取樣發生在 clk1 上升沿的上一個時脈片取樣區域，即可以保證取樣到的資料是上一個時脈週期資料。
+## clocking區塊的總結：
+* clocking 區塊不只可以定義在 interface 中，也可以定義在 module 和 program 中。
+* clocking 中所列舉的訊號不是自己定義的，而是 interface 或其他聲明 clocking 的模組定義的。
+* clocking 在聲明完後，應該伴隨著定義預設的取樣事件，也就是 “default input/output event”，如果沒有定義，會預設使用時脈上升/下降沿前 1step 進行取樣，時脈上升/下降沿後 #0 進行驅動。
+* 除了定義預設的取樣和驅動事件，定義訊號方向時同樣可以用新的取樣/驅動事件對預設事件進行覆寫。
 # Example
 ```
 module des (input req, clk, output reg gnt);
