@@ -16,8 +16,8 @@ class my_sequence extends uvm_sequence #(my_transaction);   // 每一個sequence
         repeat (10) begin
             `uvm_do(m_trans)
             // m_trans = my_transaction::type_id::create("m_trans");  // 透過 factory 機制實例化 transaction
-            // start_item(m_trans);
-            // if(!m_trans.randomize())
+            // start_item(m_trans);                                   // 對 transaction 設置
+            // if(!m_trans.randomize())                               // 隨機化 transaction
             //     `uvm_error("", "Randomize failed")
             // finish_item(m_trans);
         end

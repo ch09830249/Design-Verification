@@ -35,7 +35,7 @@ module tb;
 		// Display contents of new "id"
 		$display ("=== New id ===");
 		foreach (id[i])
-			$display ("id[%0d] = %0d", i, array[i]);
+			$display ("id[%0d] = %0d", i, id[i]);
 
 		// Display size of both arrays
 		$display ("array.size() = %0d, id.size() = %0d", array.size(), id.size());
@@ -55,7 +55,7 @@ endmodule
 	id[2] = 3
 	id[3] = 4
 	id[4] = 5
-	id[5] = x	// 怪怪的, 應該要是 6, 不確定是不是 compiler 問題 
+	id[5] = 6
 	array.size() = 5, id.size() = 6
 */
 
