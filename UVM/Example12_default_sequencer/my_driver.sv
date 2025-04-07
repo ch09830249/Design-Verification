@@ -25,9 +25,9 @@ task my_driver::main_phase(uvm_phase phase);
     while(!vif.rst_n)
         @(posedge vif.clk);
     while(1) begin
-        seq_item_port.get_next_item(req);
-        drive_one_pkt(req);
-        seq_item_port.item_done();          
+        seq_item_port.get_next_item(req);       // 向 sequencer 發送 transaction 請求, driver 會 block 直到取得 transaction
+        drive_one_pkt(req);                     // req 指向收到的 transaction, 將 transaction 分解並驅動 DUT
+        seq_item_port.item_done();              // 向 sequencer 返回一個 transaction 完成的標示     
     end
     repeat(5) @(posedge vif.clk);
     phase.drop_objection(this);

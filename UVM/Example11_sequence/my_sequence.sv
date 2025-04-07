@@ -15,6 +15,7 @@ class my_sequence extends uvm_sequence #(my_transaction);   // 每一個sequence
     virtual task body();    // 當一個 sequence 啟動之後，會自動執行 body 中的程式碼
         repeat (10) begin
             `uvm_do(m_trans)
+            // m_trans = my_transaction::type_id::create("m_trans");  // 透過 factory 機制實例化 transaction
             // start_item(m_trans);
             // if(!m_trans.randomize())
             //     `uvm_error("", "Randomize failed")
