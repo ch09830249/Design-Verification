@@ -1,7 +1,7 @@
 module tb;
 	initial begin
       $display ("[%0t] Main Thread: Fork join going to start", $time);
-		fork
+		  fork
          // Thread1
          print (20, "Thread1");
          // Thread2

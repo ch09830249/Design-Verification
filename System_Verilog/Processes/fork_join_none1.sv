@@ -1,14 +1,14 @@
 module tb;
 	initial begin
       $display ("[%0t] Main Thread: Fork join going to start", $time);
-		fork
-         // Thread1
-         print (20, "Thread1");
-         // Thread2
-         print (30, "Thread2");
-         // Thread3
-         print (10, "Thread3");
-		join_none
+      fork
+          // Thread1
+          print (20, "Thread1");
+          // Thread2
+          print (30, "Thread2");
+          // Thread3
+          print (10, "Thread3");
+      join_none
       $display ("[%0t] Main Thread: Fork join has finished", $time);
 	end
 

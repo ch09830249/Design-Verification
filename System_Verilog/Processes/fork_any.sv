@@ -6,7 +6,7 @@ module tb_top;
    	// Main Process: Fork these processes in parallel and wait until
       // any one of them finish
       fork
-      	 // Thread1 : Print this statement after 5ns from start of fork
+      	// Thread1 : Print this statement after 5ns from start of fork
          #5 $display ("[%0t ns] Thread1: Orange is named after orange", $time);
 
          // Thread2 : Print these two statements after the given delay from start of fork

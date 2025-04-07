@@ -1,8 +1,8 @@
 module tb_top;
 
 	initial begin
-   		// Fork off 3 sub-threads in parallel and the currently executing main thread
-      	// will finish when any of the 3 sub-threads have finished.
+      // Fork off 3 sub-threads in parallel and the currently executing main thread
+      // will finish when any of the 3 sub-threads have finished.
 		fork
 
          // Thread1 : Will finish first at time 40ns
