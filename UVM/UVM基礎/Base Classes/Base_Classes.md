@@ -1,118 +1,64 @@
-# Callback
-* The uvm_callback class serves as the base class for user-defined callback classes. Typically, a component developer creates an **application-specific callback class** by extending this base class. In the derived class, the developer defines one or more virtual methods, collectively known as the callback interface, which provide the hooks that users can override.
-![image](https://github.com/user-attachments/assets/1cf6b7b7-119a-49be-9e60-f543a08f28e3)
-* A callback is useful because it allows a **flexible and modular way to modify or extend the behavior of a system without altering the original code**. Callbacks decouple the code that triggers an action from the code that defines the action itself. It is required in scenarios where customization, or dynamic behavior is necessary.
-
-## Example
-* Let's create a callback mechanism that allows us to extend the behavior of a  monitor by adding custom code to a call_pre_check() and call_post_check() methods.
-1. Define the Callback Class 將需要實作的 function 
+# Base Classes
+The **basic building blocks** for any verification environment are the **components** (drivers, sequencers, monitors ...) and the **transactions (class objects that contain actual data)** they **use to communicate**. From the UVM hierarchy, we can see that most of the classes in UVM are derived from a set of core classes that are described below.
+![image](https://github.com/user-attachments/assets/8e9fe0ac-21e1-4a42-a39d-1a1bf63ae6cc)
+## uvm_void
 ```
-class my_monitor_cb extends uvm_callback;	// 繼承 uvm_callback
-  `uvm_object_utils(my_monitor_cb)		// 註冊該 callback
+virtual class uvm_void;
+endclass
+```
+* Doesn't have any purpose, but serves as the base class for all UVM classes.
+* An **abstract class with no data members or functions**
+* It allows for generic containers of objects to be created, **similar to a void pointer in the C programming language**. User classes derived directly from uvm_void inherit none of the UVM functionality, but such classes may **be placed in uvm_void typed containers** along with other UVM objects. (uvm_void 的 handle 可以去接住所有 uvm 的物件, 類似 C 語言 void pointer 可以指向任何型態的資料型態)
+## uvm_object
+```
+virtual class uvm_object extends uvm_void;
 
-  function new(string name="my_monitor_cb");
-    super.new(name);
-  endfunction
-
-  // 定義 call_pre_check 和 call_post_check 兩個需要被實作的 function
-  virtual function void call_pre_check();
-    // Placeholder
-  endfunction
-
-  virtual function void call_post_check();
-    // Placeholder
-  endfunction
+	extern function void print (uvm_printer printer=null);
+ 	extern function void copy (uvm_object rhs, uvm_copier copier=null);
+  extern function bit  compare (uvm_object rhs, uvm_comparer comparer=null);
+ 	extern function void record (uvm_recorder recorder=null);
+	...
 
 endclass
 ```
-2. Define a Custom Callback
+* This is a virtual base class for **all components and transactions** in the UVM testbench.
+* It's primary role is to define a set of methods for common operations like **print, copy, compare and record**.
+## uvm_report_object
 ```
-class custom_monitor_cb extends my_monitor_cb;		// 繼承剛剛定義好的 prototype, 實作裡面的 function
-  `uvm_object_utils(custom_monitor_cb)			// 註冊該 callback
-  function new(string name="custom_monitor_cb");
-    super.new(name);
-  endfunction
+// A report has 'severity', 'id_string', 'text_message', and 'verbosity_level'
+`uvm_info ("STAT", "Status register updated", UVM_HIGH")
 
-  // Override the callback method with custom behavior	// Ovrride 實作 function
-  virtual function void call_pre_check();
-    `uvm_info(get_type_name(), $sformatf("[call_pre_check] start pre_check"), UVM_LOW)
-  endfunction
-
-  virtual function void call_post_check();
-    `uvm_info(get_type_name(), $sformatf("[call_post_check] start post_check"), UVM_LOW)
-  endfunction
-
-endclass
+// severity  		: uvm_info
+// id_string 		: "STAT"
+// text_message 	: "Status register updated"
+// verbosity_level 	: UVM_HIGH
 ```
-3. Add Callback Hooks and Register the Callback (在需要使用到該 function 的地方, 註冊該 callback 並且呼叫)
-```
-class my_monitor extends uvm_monitor;
-
-  `uvm_component_utils(my_monitor)
-  function new(string name="my_monitor", uvm_component parent=null);
-    super.new(name, parent);
-  endfunction
-
-  // Register the callback class for this component
-  `uvm_register_cb(my_monitor, my_monitor_cb)		// 註冊 callback, 參數1: 使用 callback 的 component, 參數2: 欲使用 callback 的 base class (PS: 記得要註冊其 base class)
-
-  // Method that processes a transaction and uses the callback
-  function void check_transaction();
-    // Call the registered callback(s)
-    `uvm_do_callbacks(my_monitor, my_monitor_cb, call_pre_check());	// 呼叫已註冊的 callback, 參數1: 使用 callback 的 component, 參數2: 欲使用 callback 的 base class, 參數3: 欲呼叫的 function
-
-    // Normal checking logic
-    `uvm_info("MONITOR", "Checking transaction", UVM_MEDIUM)
-
-    // Or use a callback macro
-    `uvm_do_callbacks(my_monitor, my_monitor_cb, call_post_check());
-  endfunction
-
-  // Run phase where the transaction check happens
-  virtual task run_phase(uvm_phase phase);
-    super.run_phase(phase);
-
-    // Call the checking function, which triggers callbacks
-    check_transaction();
-  endtask
-endclass
-```
-4. Register the Callback in the Test (在 testcase 中, 註冊該 testcase 要使用哪種 custom monitor callback)
-```
-class my_test extends uvm_test;
-  `uvm_component_utils(my_test)
-  function new(string name="my_test", uvm_component parent=null);
-    super.new(name, parent);
-  endfunction
-
-  my_monitor          mon;
-  custom_monitor_cb   my_cb;	// 創建剛剛繼承 my_monitor_cb 的子類 custom_monitor_cb
-
-  virtual function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-
-    // Create the monitor
-    mon = my_monitor::type_id::create("mon", null);
-
-    // Create and register the custom callback
-    my_cb = custom_monitor_cb::type_id::create("my_cb");	// 實例化 custom_monitor_cb
-    uvm_callbacks#(my_monitor)::add(mon, my_cb);		// 將 custom_monitor_cb 與 my_monitor 中的 my_monitor_cb 連結
-
-  endfunction
-endclass
-```
-Finally create a module to run the test.  
-```
-module tb;
-  initial
-    run_test("my_test");
-endmodule
-```
-```
-UVM_INFO @ 0: reporter [RNTST] Running test my_test...
-UVM_INFO testbench.sv(60) @ 0: reporter [custom_monitor_cb] [call_pre_check] start pre_check
-UVM_INFO testbench.sv(37) @ 0: mon [MONITOR] Checking transaction
-UVM_INFO testbench.sv(64) @ 0: reporter [custom_monitor_cb] [call_post_check] start post_check
-UVM_INFO /xcelium23.09/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_server.svh(847) @ 0: reporter [UVM/REPORT/SERVER] 
---- UVM Report Summary ---
-```
+* Provides an interface to the **UVM reporting facility**. (在這一層有一些印 log 相關介面)
+  * **All messages, warnings, errors issued** by components go via this interface.
+  * An internal instance of uvm_report_handler
+    * **Store the reporting configuration**
+    * **Make decisions on whether the message should be printed or not**.
+    * Pass to a central uvm_report_server which does the **actual formatting and production of messages**.
+* The message is ignored if the **verbosity level is greater than the configured maximum verbosity level**.
+## uvm_component
+* All major verification components like agents and drivers are derived from uvm_component. It has the following interfaces:
+  * **Hierarchy**: Defines methods for searching and traversing the component hierarchy like env0.pci0.master1.drv
+    Component 有結構樹的概念, 所以在實例化 component 時, 會需要指定 parent 以便結構樹的建立, 方便未來 method 和 component 的搜尋和走訪
+  * **Phasing**: Defines a phasing system that all components can follow eg : **build, connect, run**, etc
+    Compnent 也有 Phases 機制, 將測試的工作模組化, developer 只需對 virtua method 去 Override 就可以方便的開發以及維護
+  * **Reporting** : Defines an interface to the Report Handler, and all messages, warnings and errors are processed through this interface (derived from uvm_report_object)
+  * **Recording** : Defines methods to record transactions produced/consumed by component to a transaction database.
+  * **Factory** : Defines an interface to the uvm_factory (used to create new components/objects based on instance/type)
+    Component 有 Factory 機制, 不只方便 Component 實例化, 同時也方便為 component 的置換 (透過 Override 機制)
+## uvm_transaction
+  * This is an extension of uvm_object and includes a timing and recording interface.
+  * Note that **simple transactions can be derived from uvm_transaction**, but **sequence-enabled transactions must be derived from uvm_sequence_item**.
+## uvm_root
+  * An **implicit top-level UVM component** that is **automatically created when the simulation is run**
+  * Users can access via the global uvm_pkg:: variable, uvm_top, which has the following properties:
+    * **Any component whose parent is set to null becomes a child of uvm_top**
+    * It manages the phasing for all components
+    * It is used to **search for components based on their hierarchical name** (在實例化 component 時, 第一個參數就是指定該 component 名稱)
+    * It is used to globally configure report verbosity
+    * UVM's reporting mechanism is accessible from anywhere outside uvm_component such as in modules and sequences
+It's worthwhile to note that uvm_top checks for errors during end_of_elaboration phase and issues a UVM_FATAL error to stop simulation from starting.
