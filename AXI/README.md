@@ -13,24 +13,45 @@
     * AXI4-Stream 完全取消了對位址階段的要求,並允許無限的資料突發大小。
 ## AXI的五個通道
 * AXI4 和 AXI4-Lite 介面都有 5 個不同的通道組成, 每個通道都有若干個介面訊號。
-  * **讀地址通道**
-  * **寫入地址通道**
-  * **讀數據通道**
-  * **寫入資料通道**
-  * **寫入響應通道**
+  * **讀地址通道 (Read Address Channel)**
+  * **寫入地址通道 (Write Address Channel)**
+  * **讀數據通道 (Read Data Channel)**
+  * **寫入資料通道 (Write Data Channel)**
+  * **寫入響應通道 (Write Response Channel)**
 ## AXI的時序
 為了理解 AXI 的讀寫時序, 首先需要理解基於 valid-ready 的握手機制, 然能理解 AXI 的讀/寫流程, 接著理解給出 AXI 所有接口信號的涵義。
 最後理解 AXI 讀寫的時序圖,並以一個簡單的 AXI 接口的 block design 為例進行仿真,查看波形圖。
 ## AXI的握手機制
 AXI 基於 valid-ready 的握手機制:
-發送方(主 master)透過置高 vaild 訊號表示位址/資料/控制訊息已準備好,並保持在訊息總線上。
-接收方(從 slave)透過置高 ready 訊號表示接收方已做好接收的準備。在 ACLK 上升沿,若vaild、ready同時為高, 則進行資料傳輸
-**注意 1**:
-valid 和 ready 無法互相依賴, 避免產生互相等待的死鎖, 通常建議 ready 和 valld 完全獨立, 這樣主從雙方都有終止通訊的能力。若想要從機接收全部的來自主機的數據, 可設ready=H。
-**注意 2**
+  * 發送方 (主 master) 透過置高 vaild 訊號表示位址/資料/控制訊息已準備好, 並保持在訊息總線上。  
+    接收方 (從 slave) 透過置高 ready 訊號表示接收方已做好接收的準備。在 ACLK 上升沿, 若 vaild、ready 同時為高, 則進行資料傳輸
+  * 每個 channel 都有自己的 handshake 機制，handshake 都是用 VALID/READY 來完成一次的傳輸。要傳輸資訊的一端不必等目的地是否有拉起 READY 就可以發送 VALID，但一旦發送 VALID 就必須等到目的地回 READY 才能結束 VALID。
+  * VALID/READY handshake 機制可以有兩種做法:
+    * 等有來源發送 VALID 後目的地若可以接收才回 READY。如下圖所示，T1 發送 VALID，T2 收到 VALID 後才回 READY，T3 完成此次的傳輸  
+![image](https://github.com/user-attachments/assets/f243780c-065a-4ca3-bd42-1ebd4aadbe45)
+    * 只要目的地可以接收資訊就一直拉著 READY。如下圖所示，T1 目的地可以接收資訊，T2 來源發送 VALID，T3 完成此次的傳輸  
+![image](https://github.com/user-attachments/assets/6f1a9c0a-2152-4456-86bc-a421a1991e62)  
+
+**注意 1**:  
+valid 和 ready 無法互相依賴, 避免產生互相等待的死鎖, 通常建議 ready 和 valld 完全獨立, 這樣主從雙方都有終止通訊的能力。若想要從機接收全部的來自主機的數據, 可設 ready = H。  
+**注意 2**  
 依 valid ready 到達時間,可分為3種情況, 如右圖所示, 應注意到, 在 vaid 置高的同時,發送方就應該給出有效數據, 並將有效數據保持在總線, 而在之後的 ACLK 上升沿,若 vaiid ready均有效, 則應更新有效數據。
 ![image](https://github.com/user-attachments/assets/246e232e-20b0-4472-b4a1-1ef11d5e15a9)
 ![image](https://github.com/user-attachments/assets/fdbb5018-dfa7-4508-92cd-207056647714)
 ![image](https://github.com/user-attachments/assets/6415181d-6791-4092-b4a3-f0529999d8d7)
+## 各 Channel Handshake Process 的訊號名稱
+![image](https://github.com/user-attachments/assets/bc5c3e59-e840-4ad5-b23f-0c6546da1e77)
+
 # AXI 讀寫流程
 ## 寫入操作
+流程如圖, 涉及**寫入地址通道 AWC**、**寫入資料通道 DWC**、**寫入回應通道RC**
+1. master 在寫入地地址通道上給予寫入地址和控制資訊
+2. 在寫入數據通道上傳輸數據, AXI 的數據傳輸是突發性的, 一次可傳輸多個數據, 在傳輸最後一個數據時, 須同步給出 Last 信號以表示數據傳輸即將終止。
+3. slave 將在寫入回應道上給予寫入回應訊息, 對本次資料傳輸表示確認
+![image](https://github.com/user-attachments/assets/9902e9e9-e173-476a-9cb2-df18d0ed2310)
+## 讀取操作
+讀取流程如圖, 涉及**讀取位址通道 ARC**、**讀取資料通道 DRC**
+1. master 在讀取址通道上給讀取位址和控制訊息
+2. slave 將在讀取資料通道上給予資料。
+Note: 讀取資料通道整合了讀取回應功能,且是從 slave 傳送給 master 的,在 slave 完成資料傳輸後, 會在讀取資料通道上給予回覆訊息, 標誌一次讀取結束。
+![image](https://github.com/user-attachments/assets/aa6c9972-ba90-4684-a319-fc25d70c1b53)
