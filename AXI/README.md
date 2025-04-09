@@ -55,3 +55,14 @@ valid 和 ready 無法互相依賴, 避免產生互相等待的死鎖, 通常建
 2. slave 將在**讀取資料通道 DRC**上給予資料。
 Note: 讀取資料通道整合了讀取回應功能,且是從 slave 傳送給 master 的,在 slave 完成資料傳輸後, 會在讀取資料通道上給予回覆訊息, 標誌一次讀取結束。
 ![image](https://github.com/user-attachments/assets/aa6c9972-ba90-4684-a319-fc25d70c1b53)
+# AXI-Full 的介面訊號
+## 寫入地址通道 (Write Address Channel) 訊號
+![image](https://github.com/user-attachments/assets/a6144be6-9512-4eeb-9d20-fa273f5f04d9)
+## 寫入資料通道 (Write Data Channel) 訊號
+![image](https://github.com/user-attachments/assets/d11b9a4a-db8c-4e0a-8fbb-1d6c90ae01e3)
+## 寫入響應通道 (Write Response Channel) 訊號
+![image](https://github.com/user-attachments/assets/99066072-44cb-4a82-a4a9-54a94b880245)
+## 讀地址通道 (Read Address Channel) 訊號
+![image](https://github.com/user-attachments/assets/ba8a6fbf-159b-4a97-9383-b7c4e9fe3c12)
+## 讀數據通道 (Read Data Channel) 訊號
+![image](https://github.com/user-attachments/assets/f87e8491-28f5-4627-a195-61a05ef167fd)
