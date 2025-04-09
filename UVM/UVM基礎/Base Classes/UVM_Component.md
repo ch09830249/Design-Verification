@@ -48,7 +48,7 @@ uvm_component class definition provides many functions and tasks that are used t
 // Depth of the current component from uvm_top=0, uvm_test=1, etc
   	extern function int unsigned get_depth();
 ```
-以下有個 apb example
+以下有個 apb example  
 ![image](https://github.com/user-attachments/assets/763d44b1-010b-469e-add6-653eb175edba)
 ```
 class apb_monitor extends uvm_component;
@@ -77,7 +77,7 @@ class top_comp extends uvm_component;
     		`uvm_info ("tag", $sformatf("get_parent=%s", l_comp_h.get_name()), UVM_LOW)
 
 		// Get all children and print them
-    		get_children(l_comp_q);
+    		get_children(l_comp_q);			// 將所有的 children 放到 queue
     		foreach (l_comp_q[i])
       			`uvm_info ("tag", $sformatf("child_%0d = %s", i, l_comp_q[i].get_name()), UVM_LOW)
 
@@ -107,8 +107,8 @@ endclass
 輸出
 ```
 UVM_INFO @ 0: reporter [RNTST] Running test my_test...
-UVM_INFO testbench.sv(67) @ 0: uvm_test_top.m_top_comp [tag] get_parent=uvm_test_top
-UVM_INFO testbench.sv(71) @ 0: uvm_test_top.m_top_comp [tag] child_0 = m_apb_agent
+UVM_INFO testbench.sv(67) @ 0: uvm_test_top.m_top_comp [tag] get_parent=uvm_test_top	// 這是 UVM 決定的
+UVM_INFO testbench.sv(71) @ 0: uvm_test_top.m_top_comp [tag] child_0 = m_apb_agent	// 有 m_apb_agent 和一個 child_comp array
 UVM_INFO testbench.sv(71) @ 0: uvm_test_top.m_top_comp [tag] child_1 = m_child_comp_0
 UVM_INFO testbench.sv(71) @ 0: uvm_test_top.m_top_comp [tag] child_2 = m_child_comp_1
 UVM_INFO testbench.sv(71) @ 0: uvm_test_top.m_top_comp [tag] child_3 = m_child_comp_2
@@ -123,7 +123,7 @@ UVM_WARNING /xcelium20.09/tools//methodology/UVM/CDNS-1.2/sv/src/base/uvm_compon
 UVM_INFO testbench.sv(89) @ 0: uvm_test_top.m_top_comp [tag] Found uvm_test_top.m_top_comp.m_apb_agent.m_apb_monitor
 ```
 ## Phasing Methods
-Components provide virtual methods for each UVM phase that can be overridden by child classes to implement functionality. For example, all testbench components are instantiated in their respective build_phase, connected in connect_phase and simulated in run_phase. There are a lot more pre-defined UVM phases that can be used to implement functionality.
+Components provide **virtual methods** for each UVM phase that can be **overridden by child classes to implement functionality**. For example, all testbench **components are instantiated in their respective build_phase**, **connected in connect_phase** and **simulated in run_phase**. There are a lot more pre-defined UVM phases that can be used to implement functionality.
 ```
 // This child class implements only build_phase and connect_phase methods
 // of uvm_component, while rest of the phase methods are left untouched and
@@ -174,7 +174,7 @@ class my_comp extends uvm_component;
 
 endclass
 ```
-Factory is a singleton object and there is only one instance of the factory in a UVM environment. uvm_component provide a set of convenience functions that call the uvm_factory member functions with a simplified interface.
+**Factory is a singleton object** and there is **only one instance of the factory in a UVM environment**. uvm_component provide a set of convenience functions that call the uvm_factory member functions with a simplified interface.
 ```
 // For example, "set_type_override_by_type" is actually a function defined in the class uvm_factory
 // A wrapper function with the same name is defined in uvm_component class and arguments are passed
