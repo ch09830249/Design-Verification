@@ -1,8 +1,8 @@
-# UVM Object
-## What is UVM Object?
-All components and object classes in a UVM environment are derived from uvm_object base class. The primary role of uvm_object class is to **define a set of common utility functions** like **print, copy, compare and record** which can be availed by any other class in a UVM testbench to save effort.
+# UVM Root
+## What is UVM Root?
+uvm_root is a singleton class that serves as the **top-level container for all UVM components** in a verification environment whose instance is called **uvm_top**. It is automatically created when UVM is initialized and is available throughout the entire simulation. Users should not create any other instance of uvm_root !
 ## Class Hierarchy
-![image](https://github.com/user-attachments/assets/ee9fc7f0-9976-4dfb-a84f-c3b34ea62051)
+![image](https://github.com/user-attachments/assets/83794304-0b18-4543-b2b8-c8e4bb41af9b)
 ## Class Definition
 ```
 virtual class uvm_object extends uvm_void;
