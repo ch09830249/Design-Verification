@@ -56,6 +56,17 @@ valid 和 ready 無法互相依賴, 避免產生互相等待的死鎖, 通常建
 Note: 讀取資料通道整合了讀取回應功能,且是從 slave 傳送給 master 的,在 slave 完成資料傳輸後, 會在讀取資料通道上給予回覆訊息, 標誌一次讀取結束。
 ![image](https://github.com/user-attachments/assets/aa6c9972-ba90-4684-a319-fc25d70c1b53)
 # AXI-Full 的介面訊號
+* 為了看時序圖, 需要先了解 AXI 五個通道具體有哪些介面訊號
+## 全域訊號
+* ACLK
+  * 所有訊號必須在時脈上升沿取樣
+* ARESETn
+AXI 使用低有效的重設訊號 ARESETn, 重設訊號可以非同步啟動
+在重設過程中,適用於下列介面需求:
+  * 主介面必須驅動 ARVALID, AWVALID 和 WVALID 為低
+  * 從介面必須驅動 RVALID 和 BVALID 為低
+  * 其他訊號可以被驅動為任意值。
+  * 去使能後, 主介面的 Valid 變高至少要等 ARESETn 為 high 的上升沿邊緣。
 ## 寫入地址通道 (Write Address Channel) 訊號
 ![image](https://github.com/user-attachments/assets/a6144be6-9512-4eeb-9d20-fa273f5f04d9)
 ![image](https://github.com/user-attachments/assets/400efd19-fa76-4cba-961f-8ce76ca6d0a2)
@@ -71,6 +82,28 @@ Note: 讀取資料通道整合了讀取回應功能,且是從 slave 傳送給 ma
 ## 讀數據通道 (Read Data Channel) 訊號
 ![image](https://github.com/user-attachments/assets/f87e8491-28f5-4627-a195-61a05ef167fd)
 ![image](https://github.com/user-attachments/assets/4927911d-e90a-4a86-9a57-11a569325450)
+# AXI-Full 的讀寫時序
+## 時序圖圖例
+了解各圖形的意義
+![image](https://github.com/user-attachments/assets/3bc4621c-32c3-4441-8779-63f8568fa93f)
+## 寫入時序
+如圖所示, AXI4 協定主從設備間的寫入操作使用寫入位址、寫入資料和寫入回應通道。只需要一個位址就可以執行最大為256的突發長度的的寫入操作。
+1.寫入位址:
+寫入操作開始時, 主機發送位址和控制訊息到寫入位址通道。當位址通道上 AWVALID 和 AWREADY 同時為高時, 位置 A 會被有效的傳給設備, 然後主機將寫入資料到寫入資料頻道。
+2.寫資料:
+當 WREADY 和 WVALID 同時高的時候表示一個有效的寫資料。當主機發發送最後一個資料時, WLAST 訊號變為高電位
+3.寫入回應:
+當裝置接收完所有資料之後, 裝置會向主機發送一個寫入回應 BRESP 來表示寫交易完成, 當 BVALID 和 BREADY 同時為高的時候表示是有效的回應。
+![image](https://github.com/user-attachments/assets/1248773e-a0a8-4116-95b6-e7027e3e3ed7)
+## 讀時序
+如圖所示, AXI4 協定主從設備間的讀取操作使用獨立的讀取位址和讀取資料通道,只需要一個位置就可以執行最大為256的突發長度的讀取操作。
+1. 讀取位址:
+主機發送位址和控制訊息到讀取位址通道中, 當位址通道上 ARVALID 和 ARREADY 同時為高時, 位址 ARADDR 被有效的傳給設備, 之後設備輸出的資料將出現在讀取資料通道上
+2.讀取資料:
+當 RREADY 和 RVALID 同時為高的時候表示有效的資料傳輸, 從圖中可以看到傳輸了4個資料。為了顯示一次突發式讀寫的完成, 裝置以 RLAST 訊號變高電位來表示最後一個被傳送的數據。
+D(A3) 是本次突發讀的最後一個讀取資料。
+**Note**: 在資料讀取時, 讀取的資料從圖中可以看到不是連續讀取, 說明 slave 是空間時才傳遞
+![image](https://github.com/user-attachments/assets/70e8df14-44d9-45e1-aac6-b297d6114b4f)
 # Reference
 https://blog.csdn.net/qq_42622433/article/details/134070812
 https://www.bilibili.com/video/BV1yP12YdErw/?spm_id_from=333.337.search-card.all.click
