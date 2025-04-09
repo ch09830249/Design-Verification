@@ -11,7 +11,7 @@
     * AXI4 適用於記憶體映射接口, 僅一個地址階段就允許高達256個資料傳輸週期的高吞吐量爆發
     * AXI4-Lite 是一個輕量級的傳輸接口, 邏輯占用很小, 在設計和使用上都是一個簡單的接口
     * AXI4-Stream 完全取消了對位址階段的要求,並允許無限的資料突發大小。
-## AXI的五個通道
+## AXI 的五個通道
 * AXI4 和 AXI4-Lite 介面都有 5 個不同的通道組成, 每個通道都有若干個介面訊號。
   * **讀地址通道 (Read Address Channel)**
   * **寫入地址通道 (Write Address Channel)**
@@ -82,6 +82,18 @@ AXI 使用低有效的重設訊號 ARESETn, 重設訊號可以非同步啟動
 ## 讀數據通道 (Read Data Channel) 訊號
 ![image](https://github.com/user-attachments/assets/f87e8491-28f5-4627-a195-61a05ef167fd)
 ![image](https://github.com/user-attachments/assets/4927911d-e90a-4a86-9a57-11a569325450)
+# Channel 間的關係
+Write response 必須要在最後一筆 write data 傳輸後才能回
+Read data 必須要有 read address 傳輸後才能回
+channel handshake 必須遵守下面的關係，其中單箭頭代表後者跟前著的關係沒有誰先誰後，雙箭頭代表前者一定要先發生後者才能發生
+![image](https://github.com/user-attachments/assets/c8d49c72-23f5-4c90-bd0c-57e19b0e27ae)
+上圖代表 read address channel 可以是 VALID 先拉起或 READY 先拉起，但 read address channel handshake 的訊號都必須要在 read data channel VALID 拉起前先拉起 (這其實也就是要傳輸 read data 前一定要先完成 read address 的傳輸)，而 read data channel 的 VALID 跟 READY 誰先拉起都可以。這邊並沒有要求 read data channel 的 READY 跟 read address channel 的 handshake 訊號的關係。
+![image](https://github.com/user-attachments/assets/4fbec8ff-8300-40e1-a8c8-a681a7f62836)
+上圖代表 write address channel 跟 write data channel 的 VALID 跟 READY 誰先拉起都可以，但這些訊號都必須在 write response channel 的 VALID 拉起前先拉起過 (這表示要有 write response 必須先完成 write address 跟 write data 的傳輸才行)，write response channel 的 VALID 跟 READY 誰先拉起都可以。
+
+write data channel 另外需要注意的是 VALID 要看的是最後一筆 data 的 VALID。
+
+另外，AXI3 的時候並沒有要求 write response channel 的 VALID 必須要在 write address channel handshake 完成之後，因為當時並沒有預期會有可能有 write response channel 拉起 VALID 但還沒有完成 write address 傳輸的情況。
 # AXI-Full 的讀寫時序
 ## 時序圖圖例
 了解各圖形的意義
@@ -105,7 +117,7 @@ D(A3) 是本次突發讀的最後一個讀取資料。
 **Note**: 在資料讀取時, 讀取的資料從圖中可以看到不是連續讀取, 說明 slave 是空間時才傳遞
 ![image](https://github.com/user-attachments/assets/70e8df14-44d9-45e1-aac6-b297d6114b4f)
 # Reference
-https://blog.csdn.net/qq_42622433/article/details/134070812
-https://www.bilibili.com/video/BV1yP12YdErw/?spm_id_from=333.337.search-card.all.click
-https://hackmd.io/@Ji0m0/S1aoQO-yt
-https://blog.csdn.net/weixin_45243340/article/details/126067982
+https://blog.csdn.net/qq_42622433/article/details/134070812  
+https://www.bilibili.com/video/BV1yP12YdErw/?spm_id_from=333.337.search-card.all.click  
+https://hackmd.io/@Ji0m0/S1aoQO-yt  
+https://blog.csdn.net/weixin_45243340/article/details/126067982  
