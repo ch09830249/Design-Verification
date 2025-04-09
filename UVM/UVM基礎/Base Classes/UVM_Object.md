@@ -1,118 +1,93 @@
-# Callback
-* The uvm_callback class serves as the base class for user-defined callback classes. Typically, a component developer creates an **application-specific callback class** by extending this base class. In the derived class, the developer defines one or more virtual methods, collectively known as the callback interface, which provide the hooks that users can override.
-![image](https://github.com/user-attachments/assets/1cf6b7b7-119a-49be-9e60-f543a08f28e3)
-* A callback is useful because it allows a **flexible and modular way to modify or extend the behavior of a system without altering the original code**. Callbacks decouple the code that triggers an action from the code that defines the action itself. It is required in scenarios where customization, or dynamic behavior is necessary.
-
-## Example
-* Let's create a callback mechanism that allows us to extend the behavior of a  monitor by adding custom code to a call_pre_check() and call_post_check() methods.
-1. Define the Callback Class 將需要實作的 function 
+# UVM Object
+## What is UVM Object?
+All components and object classes in a UVM environment are derived from uvm_object base class. The primary role of uvm_object class is to **define a set of common utility functions** like **print, copy, compare and record** which can be availed by any other class in a UVM testbench to save effort.
+## Class Hierarchy
+![image](https://github.com/user-attachments/assets/ee9fc7f0-9976-4dfb-a84f-c3b34ea62051)
+## Class Definition
 ```
-class my_monitor_cb extends uvm_callback;	// 繼承 uvm_callback
-  `uvm_object_utils(my_monitor_cb)		// 註冊該 callback
+virtual class uvm_object extends uvm_void;
 
-  function new(string name="my_monitor_cb");
-    super.new(name);
-  endfunction
+	// Creates a new uvm_object with the given name, empty by default
+	function new(string name="");
 
-  // 定義 call_pre_check 和 call_post_check 兩個需要被實作的 function
-  virtual function void call_pre_check();
-    // Placeholder
-  endfunction
+	// Utility functions
+	function void print (uvm_printer printer=null);
+ 	function void copy (uvm_object rhs, uvm_copier copier=null);
+  function bit  compare (uvm_object rhs, uvm_comparer comparer=null);
+ 	function void record (uvm_recorder recorder=null);
+	...
 
-  virtual function void call_post_check();
-    // Placeholder
-  endfunction
+	// These two functions have to be redefined by child classes
+  	virtual function uvm_object create (string name=""); return null; endfunction
+  	virtual function string get_type_name (); return ""; endfunction
 
 endclass
 ```
-2. Define a Custom Callback
+Classes that derive from uvm_object must implement the pure virtual methods such as **create** and **get_type_name**.  
+(繼承自 uvm_object 都需實作上述兩個 pure virtual function, 否則無法實例化)  
+These are taken care of by the inclusion of macros as set forth by the UVM coding guidelines.
+
+The create method allocates **a new object of the same type as this object** and **returns it via the base uvm_object handle**.  
+(以下案例, 實例化 my_object 物件, 回傳 uvm_object handle)  
+* **Create**: The difference between new and create is that the former allocates memory for the current object whereas the latter **returns the handle for a different object allocated elsewhere**.
 ```
-class custom_monitor_cb extends my_monitor_cb;		// 繼承剛剛定義好的 prototype, 實作裡面的 function
-  `uvm_object_utils(custom_monitor_cb)			// 註冊該 callback
-  function new(string name="custom_monitor_cb");
-    super.new(name);
-  endfunction
+class my_object extends uvm_object;
+	...
 
-  // Override the callback method with custom behavior	// Ovrride 實作 function
-  virtual function void call_pre_check();
-    `uvm_info(get_type_name(), $sformatf("[call_pre_check] start pre_check"), UVM_LOW)
-  endfunction
-
-  virtual function void call_post_check();
-    `uvm_info(get_type_name(), $sformatf("[call_post_check] start post_check"), UVM_LOW)
-  endfunction
+	// Implementation : Create an object of the new class type and return it
+	virtual function uvm_object create(string name="my_object");
+		my_object obj = new(name);
+		return obj;
+	endfunction
 
 endclass
 ```
-3. Add Callback Hooks and Register the Callback (在需要使用到該 function 的地方, 註冊該 callback 並且呼叫)
+* **get_type_name**: function returns the class type name of the object and is used for debugging functions and by the UVM factory to create objects of a particular type.
 ```
-class my_monitor extends uvm_monitor;
+class my_object extends uvm_object;
 
-  `uvm_component_utils(my_monitor)
-  function new(string name="my_monitor", uvm_component parent=null);
-    super.new(name, parent);
-  endfunction
+	// This static method is used to access via scope operator ::
+	// without having to create an object of the class
+	static function string type_name();
+		return "my_object";
+	endfunction
 
-  // Register the callback class for this component
-  `uvm_register_cb(my_monitor, my_monitor_cb)		// 註冊 callback, 參數1: 使用 callback 的 component, 參數2: 欲使用 callback 的 base class (PS: 記得要註冊其 base class)
-
-  // Method that processes a transaction and uses the callback
-  function void check_transaction();
-    // Call the registered callback(s)
-    `uvm_do_callbacks(my_monitor, my_monitor_cb, call_pre_check());	// 呼叫已註冊的 callback, 參數1: 使用 callback 的 component, 參數2: 欲使用 callback 的 base class, 參數3: 欲呼叫的 function
-
-    // Normal checking logic
-    `uvm_info("MONITOR", "Checking transaction", UVM_MEDIUM)
-
-    // Or use a callback macro
-    `uvm_do_callbacks(my_monitor, my_monitor_cb, call_post_check());
-  endfunction
-
-  // Run phase where the transaction check happens
-  virtual task run_phase(uvm_phase phase);
-    super.run_phase(phase);
-
-    // Call the checking function, which triggers callbacks
-    check_transaction();
-  endtask
+	virtual function string get_type_name();
+		return type_name;
+	endfunction
 endclass
 ```
-4. Register the Callback in the Test (在 testcase 中, 註冊該 testcase 要使用哪種 custom monitor callback)
+## Factory Interface
+UVM employs a new concept called factory where all classes that are **defined in the UVM environment** are **registered with this "factory"**, which can then return an object of any requested class type later on. User classes are expected to include certain macros within them that allow it to be registered with the factory.
 ```
-class my_test extends uvm_test;
-  `uvm_component_utils(my_test)
-  function new(string name="my_test", uvm_component parent=null);
-    super.new(name, parent);
-  endfunction
+// An object derived from uvm_object by itself does not get
+// registered with the UVM factory unless the macro is called
+// within the class definition
 
-  my_monitor          mon;
-  custom_monitor_cb   my_cb;	// 創建剛剛繼承 my_monitor_cb 的子類 custom_monitor_cb
+class my_object extends uvm_object;
 
-  virtual function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
+    // Register current object type with the factory
+	`uvm_object_utils (my_object)  // 註冊該 object 到 factory
 
-    // Create the monitor
-    mon = my_monitor::type_id::create("mon", null);
+   ...
 
-    // Create and register the custom callback
-    my_cb = custom_monitor_cb::type_id::create("my_cb");	// 實例化 custom_monitor_cb
-    uvm_callbacks#(my_monitor)::add(mon, my_cb);		// 將 custom_monitor_cb 與 my_monitor 中的 my_monitor_cb 連結
-
-  endfunction
 endclass
 ```
-Finally create a module to run the test.  
+## Utility Functions
+* **Print**
 ```
-module tb;
-  initial
-    run_test("my_test");
-endmodule
+function void print(uvm_printer printer = null);
 ```
+The print method **deep-prints the current object's variables** in a format determined by the UVM printer policy. As this function is not declared as virtual, **it cannot be overridden by a child class for a different implementation**. However, there is a hook/call-back function called **do_print to add custom information**.
+* **Copy**
 ```
-UVM_INFO @ 0: reporter [RNTST] Running test my_test...
-UVM_INFO testbench.sv(60) @ 0: reporter [custom_monitor_cb] [call_pre_check] start pre_check
-UVM_INFO testbench.sv(37) @ 0: mon [MONITOR] Checking transaction
-UVM_INFO testbench.sv(64) @ 0: reporter [custom_monitor_cb] [call_post_check] start post_check
-UVM_INFO /xcelium23.09/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_server.svh(847) @ 0: reporter [UVM/REPORT/SERVER] 
---- UVM Report Summary ---
+function void uvm_object::copy (uvm_object rhs, uvm_copier copier=null);
 ```
+Like the print method above, **copy cannot be overridden** and to copy fields of a derived class, hat class should **override do_copy method** instead.
+* **Compare**
+```
+function bit compare (uvm_object rhs, uvm_comparer comparer=null);
+```
+This method performs a **deep compare on members of this data object** with those of the object provided as an argument to this method, **returning a 1 on match and 0 otherwise**. This method cannot be overridden and custom code can be added to the user-definable hook called do_compare.  
+  
+In short, **uvm_object class is the parent class for other fundamental UVM classes**, such as **uvm_sequence_item (for transactions)** and **uvm_component (for testbench components)**. By inheriting from uvm_object, these classes inherit the essential functionalities and properties discussed above, making it a crucial building block for UVM verification environments.
