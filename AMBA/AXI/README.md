@@ -58,11 +58,21 @@ Note: 讀取資料通道整合了讀取回應功能,且是從 slave 傳送給 ma
 # AXI-Full 的介面訊號
 ## 寫入地址通道 (Write Address Channel) 訊號
 ![image](https://github.com/user-attachments/assets/a6144be6-9512-4eeb-9d20-fa273f5f04d9)
+![image](https://github.com/user-attachments/assets/400efd19-fa76-4cba-961f-8ce76ca6d0a2)
 ## 寫入資料通道 (Write Data Channel) 訊號
 ![image](https://github.com/user-attachments/assets/d11b9a4a-db8c-4e0a-8fbb-1d6c90ae01e3)
+![image](https://github.com/user-attachments/assets/22e1a3ed-0908-445b-b6f1-e42e7aee8c05)
 ## 寫入響應通道 (Write Response Channel) 訊號
 ![image](https://github.com/user-attachments/assets/99066072-44cb-4a82-a4a9-54a94b880245)
+![image](https://github.com/user-attachments/assets/9ff42c96-a95b-4e67-a5eb-ab5711fc7323)
 ## 讀地址通道 (Read Address Channel) 訊號
 ![image](https://github.com/user-attachments/assets/ba8a6fbf-159b-4a97-9383-b7c4e9fe3c12)
+![image](https://github.com/user-attachments/assets/0ff120dd-83f7-46e8-b969-3603ba01d07b)
 ## 讀數據通道 (Read Data Channel) 訊號
 ![image](https://github.com/user-attachments/assets/f87e8491-28f5-4627-a195-61a05ef167fd)
+![image](https://github.com/user-attachments/assets/4927911d-e90a-4a86-9a57-11a569325450)
+# Reference
+https://blog.csdn.net/qq_42622433/article/details/134070812
+https://www.bilibili.com/video/BV1yP12YdErw/?spm_id_from=333.337.search-card.all.click
+https://hackmd.io/@Ji0m0/S1aoQO-yt
+https://blog.csdn.net/weixin_45243340/article/details/126067982
