@@ -1,5 +1,5 @@
-**Advanced Microcontroller Bus Architecture, 即AMBA，是ARM公司提出的總線規範，被許多SoC設計所採用，常用的實作有AHB（Advanced High-Performance Bus）和APB（Advanced Peripheral Bus）。 AHB用於高效能係統，APB用於低速週邊。以下程式碼實例使用的是SystemVerilog描述。**  
-（一）AHB匯流排訊號介面： 包括 **AHB主設備**，**AHB從設備**，**AHB仲裁器**等。
+# AHB匯流排訊號介面
+包括 **AHB主設備**，**AHB從設備**，**AHB仲裁器**等。
 ## AHB主設備
 ```
 interface   ahb_msr_intf #(
@@ -310,17 +310,17 @@ endmodule: ahb_matrix
 （二）AHB匯流排工作時序：  
 無須多言，看圖。
 ![image](https://github.com/user-attachments/assets/a5c5e48b-b15d-4f76-a3a4-f4c2a47d589e)  
-基本傳輸模式
+基本傳輸模式  
 ![image](https://github.com/user-attachments/assets/e693d4cb-83ee-43b4-a157-187b4b5b2eae)  
-多重傳輸
+多重傳輸  
 ![image](https://github.com/user-attachments/assets/fda801e9-a586-4eeb-bd6e-27a7e9090e0e)  
-使用傳輸類型
+使用傳輸類型  
 ![image](https://github.com/user-attachments/assets/cd6e4259-29dc-4a68-8792-a7534879d659)  
-增量突發傳
+增量突發傳  
 ![image](https://github.com/user-attachments/assets/11cf8331-5e7a-4ed3-a780-364b0c0149b8)  
-回環突發傳輸
+回環突發傳輸  
 ![image](https://github.com/user-attachments/assets/cc9001b6-b2a6-4884-80fa-20bf6b25e057)  
-未定義長度的增量突發傳輸
+未定義長度的增量突發傳輸  
 # Reference
 https://aijishu.com/a/1060000000135497  
 https://aijishu.com/a/1060000000299181  
