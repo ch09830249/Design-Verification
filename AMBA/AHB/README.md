@@ -20,14 +20,14 @@
 * HREADY為高：從設備指出傳輸結束；為低：從設備需要延長傳輸週期。
 # 一次無需等待的 AHB 傳輸
 ![image](https://github.com/user-attachments/assets/e67f169b-fd1e-4a3b-b6d6-82cb5c458e27)
-* 寫入操作 HADDR 就是寫位址，把 HWDATA 訊號寫入，如果是讀，HADDR就是讀取位址，採 HRDATA 訊號讀出資料。
+* 寫入操作 HADDR 就是寫位址，把 HWDATA 訊號寫入，如果是讀，HADDR就是讀取位址，採樣 HRDATA 訊號讀出資料。
 * 如果 slave 沒有準備好接受訊號，那麼傳輸的資料就會延長到 HREADY 被拉高。但 master 不會一直無限等 slave，最多等 16 個週期，slave 在 HRESP 訊號裡回傳 RETRY。
 ![image](https://github.com/user-attachments/assets/d00763c9-afb8-4d4c-9892-814c7cddaa35)
 但上面這種傳輸速度不夠快，所以 AHB 採用的其實是 pipeline 結構的資料傳輸，如下圖
 ![image](https://github.com/user-attachments/assets/e9f75834-6e3e-469c-9ee3-427db07afd45)
 這樣一次傳輸一個地址，傳輸一個數據，那麼每來一次傳輸，都要decode一次，效率很低，提高傳輸效率的方法就是burst傳輸，每一次burst傳輸只需要decode一次，提高數據傳輸效率。
 # AHB匯流排訊號介面
-包括 **AHB主設備**，**AHB從設備**，**AHB仲裁器**等。
+包括 **AHB 主設備**，**AHB 從設備**，**AHB 仲裁器**等。
 ## AHB主設備
 ```
 interface   ahb_msr_intf #(
