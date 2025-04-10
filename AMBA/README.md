@@ -34,3 +34,9 @@
 
 
 ## APB 組成
+
+
+# Reference
+AHB總線筆記（一）: https://www.bilibili.com/opus/639338820199776256  
+AHB總線筆記（二）: https://www.bilibili.com/opus/639615918584889361?spm_id_from=333.1387.0.0
+AHB匯流排筆記（三）附AMBA2.0面試提問: https://www.bilibili.com/opus/639640082077188135?spm_id_from=333.1387.0.0
