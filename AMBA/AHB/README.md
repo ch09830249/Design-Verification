@@ -130,14 +130,14 @@ typedef enum logic [2:0] {
 * HBURST 突發傳輸類型，突發傳輸模式可以為增量傳輸或回環傳輸。
 ```
 typedef enum logic [2:0] {
-HBURST_SINGLE   = 3'b000,
-HBURST_INCR     = 3'b001,
-HBURST_WRAP4    = 3'b010,
-HBURST_INCR4    = 3'b011,
-HBURST_WRAP8    = 3'b100,
-HBURST_INCR8    = 3'b101,
-HBURST_WRAP16   = 3'b110,
-HBURST_INCR16   = 3'b111
+   HBURST_SINGLE   = 3'b000,
+   HBURST_INCR     = 3'b001,
+   HBURST_WRAP4    = 3'b010,
+   HBURST_INCR4    = 3'b011,
+   HBURST_WRAP8    = 3'b100,
+   HBURST_INCR8    = 3'b101,
+   HBURST_WRAP16   = 3'b110,
+   HBURST_INCR16   = 3'b111
  } HBURST_e;
 ```
 * HPROT 提供匯流排存取的額外資訊並且主要是打算給那些希望執行某種保護等級的模組
@@ -146,22 +146,22 @@ HBURST_INCR16   = 3'b111
 //   cacheable   |   bufferable   | privileged |  data
 // not-cacheable | not-bufferable |    user    | opcode
 typedef enum logic [3:0] {
-HPROT_NNUO      = 4'b0000,
-HPROT_NNUD      = 4'b0001,
-HPROT_NNPO      = 4'b0010,
-HPROT_NNPD      = 4'b0011,
-HPROT_NBUO      = 4'b0100,
-HPROT_NBUD      = 4'b0101,
-HPROT_NBPO      = 4'b0110,
-HPROT_NBPD      = 4'b0111,
-HPROT_CNUO      = 4'b1000,
-HPROT_CNUD      = 4'b1001,
-HPROT_CNPO      = 4'b1010,
-HPROT_CNPD      = 4'b1011,
-HPROT_CBUO      = 4'b1100,
-HPROT_CBUD      = 4'b1101,
-HPROT_CBPO      = 4'b1110,
-HPROT_CBPD      = 4'b1111
+  HPROT_NNUO      = 4'b0000,
+  HPROT_NNUD      = 4'b0001,
+  HPROT_NNPO      = 4'b0010,
+  HPROT_NNPD      = 4'b0011,
+  HPROT_NBUO      = 4'b0100,
+  HPROT_NBUD      = 4'b0101,
+  HPROT_NBPO      = 4'b0110,
+  HPROT_NBPD      = 4'b0111,
+  HPROT_CNUO      = 4'b1000,
+  HPROT_CNUD      = 4'b1001,
+  HPROT_CNPO      = 4'b1010,
+  HPROT_CNPD      = 4'b1011,
+  HPROT_CBUO      = 4'b1100,
+  HPROT_CBUD      = 4'b1101,
+  HPROT_CBPO      = 4'b1110,
+  HPROT_CBPD      = 4'b1111
 } HPROT_e;
 ```
 * HWDATA 寫資料。
