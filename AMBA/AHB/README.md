@@ -307,20 +307,19 @@ ahb_decoder #(
 
 endmodule: ahb_matrix
 ```
-（二）AHB匯流排工作時序：
-
-　　無須多言，看圖。
-  ![image](https://github.com/user-attachments/assets/a5c5e48b-b15d-4f76-a3a4-f4c2a47d589e)
+（二）AHB匯流排工作時序：  
+無須多言，看圖。
+![image](https://github.com/user-attachments/assets/a5c5e48b-b15d-4f76-a3a4-f4c2a47d589e)  
 基本傳輸模式
-![image](https://github.com/user-attachments/assets/e693d4cb-83ee-43b4-a157-187b4b5b2eae)
+![image](https://github.com/user-attachments/assets/e693d4cb-83ee-43b4-a157-187b4b5b2eae)  
 多重傳輸
-![image](https://github.com/user-attachments/assets/fda801e9-a586-4eeb-bd6e-27a7e9090e0e)
+![image](https://github.com/user-attachments/assets/fda801e9-a586-4eeb-bd6e-27a7e9090e0e)  
 使用傳輸類型
-![image](https://github.com/user-attachments/assets/cd6e4259-29dc-4a68-8792-a7534879d659)
+![image](https://github.com/user-attachments/assets/cd6e4259-29dc-4a68-8792-a7534879d659)  
 增量突發傳
-![image](https://github.com/user-attachments/assets/11cf8331-5e7a-4ed3-a780-364b0c0149b8)
+![image](https://github.com/user-attachments/assets/11cf8331-5e7a-4ed3-a780-364b0c0149b8)  
 回環突發傳輸
-![image](https://github.com/user-attachments/assets/cc9001b6-b2a6-4884-80fa-20bf6b25e057)
+![image](https://github.com/user-attachments/assets/cc9001b6-b2a6-4884-80fa-20bf6b25e057)  
 未定義長度的增量突發傳輸
 # Reference
 https://aijishu.com/a/1060000000135497  
