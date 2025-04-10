@@ -1,3 +1,31 @@
+# AHB 訊號
+![image](https://github.com/user-attachments/assets/b577dfd8-8f3f-4f04-b23b-421554ab5f47)
+* 這裡的訊號都是 H 開頭，因為是 AHB 匯流排的訊號，如果是 APB 的話，就會是 P 開頭。
+* HRESETn 表示低電位有效的複位
+* HADDR[31:0] 是 32 位元系統位址匯流排
+* HWDATA[31:0] 寫入資料匯流排，從主裝置寫到從裝置
+* HRDATA[31:0] 讀取資料匯流排，從從裝置讀到主裝置
+* HTRANS 是指目前傳輸的狀態，分為 **IDLE、BUSY、NONSEQ 和 SEQ**
+  * 00：IDLE: 主設備佔據總線，但沒進行傳輸，兩次 burst 中間主設備沒準備好的話發 IDLE
+  * 01：BUSY: 主設備佔用總線，但在 burst 傳輸過程中還沒準備好進行下一次傳輸，一次 burst 傳輸中間主設備發 BUSY
+  * 10：NONSEQ: 表示一次單一數據的傳輸，或一次 burst 傳輸的第一個數據，位址和控制訊號與上一次傳輸無關
+  * 11：SEQ: 顯示 burst 傳輸接下來的數據，地址和上一次傳輸的地址是相關的
+* HWRITE 訊號表示讀寫狀態，HWRITE=1 時表示寫，=0 時表示讀取狀態
+* HSIZE 指 BUS 的寬度目前傳輸大小，HSIZE=000 時為 8bit，HSIZE=001 時為 16bit，HSIZE=010 時為 32bit，以此類推
+* HBURST 指傳輸的 burst 類型，總共有8種：SINGLE、INCR、WRAP[4|8|16]、INCR[4|8|16]
+* HSELx 用來選擇 slave
+* HRESP 是從設備發給主設備的匯流排傳輸狀態，有四種狀態：ERROR、OKAY、SPLIT 和 RETRY
+  * RETRY 和 SPLIT 有區別。
+    * RETRY 不會影響被拒絕的 master 的優先級，但是如果用 SPLIT 拒絕了當前的 master，arbiter 會把目前被拒絕的 master 優先級降低。
+* HREADY為高：從設備指出傳輸結束；為低：從設備需要延長傳輸週期。
+# 一次無需等待的 AHB 傳輸
+![image](https://github.com/user-attachments/assets/e67f169b-fd1e-4a3b-b6d6-82cb5c458e27)
+* 寫入操作 HADDR 就是寫位址，把 HWDATA 訊號寫入，如果是讀，HADDR就是讀取位址，採 HRDATA 訊號讀出資料。
+* 如果 slave 沒有準備好接受訊號，那麼傳輸的資料就會延長到 HREADY 被拉高。但 master 不會一直無限等 slave，最多等 16 個週期，slave 在 HRESP 訊號裡回傳 RETRY。
+![image](https://github.com/user-attachments/assets/d00763c9-afb8-4d4c-9892-814c7cddaa35)
+但上面這種傳輸速度不夠快，所以 AHB 採用的其實是 pipeline 結構的資料傳輸，如下圖
+![image](https://github.com/user-attachments/assets/e9f75834-6e3e-469c-9ee3-427db07afd45)
+這樣一次傳輸一個地址，傳輸一個數據，那麼每來一次傳輸，都要decode一次，效率很低，提高傳輸效率的方法就是burst傳輸，每一次burst傳輸只需要decode一次，提高數據傳輸效率。
 # AHB匯流排訊號介面
 包括 **AHB主設備**，**AHB從設備**，**AHB仲裁器**等。
 ## AHB主設備
