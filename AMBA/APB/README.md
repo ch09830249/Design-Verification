@@ -28,8 +28,7 @@
 ![image](https://github.com/user-attachments/assets/bb1c8eeb-8714-4322-9092-2dfdc48fdc4f)  
 ![image](https://github.com/user-attachments/assets/b9d98834-7b49-4dea-916e-05a9cfa90ddc)  
 在文件中，對有等待週期的APB寫入傳輸描述如上，即：
-
-        一開始的setup phase和write with no wait沒有區別，psel拉高，penable為低；緊跟著第二週期，penable拉高之後，進入access phase，進入access phase之後，penable不會拉低，直到pready為高標誌著一次傳輸結束時，penable才會隨著pready一起拉低。 penable等待pready拉高的這段等待時間為additional cycles，在這個階段PADDR、PWRITE、PSEL、PENABLE、PWDATA都應該保持不變，可以說總線被hold住了。
+一開始的setup phase和write with no wait沒有區別，psel拉高，penable為低；緊跟著第二週期，penable拉高之後，進入access phase，進入access phase之後，penable不會拉低，直到pready為高標誌著一次傳輸結束時，penable才會隨著pready一起拉低。 penable等待pready拉高的這段等待時間為additional cycles，在這個階段PADDR、PWRITE、PSEL、PENABLE、PWDATA都應該保持不變，可以說總線被hold住了。
 # Reference
 https://cloud.tencent.com/developer/article/1689936  
 https://cloud.tencent.com.cn/developer/article/1689936  
