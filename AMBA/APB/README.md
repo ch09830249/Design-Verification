@@ -1,3 +1,6 @@
+## APB 總線特性
+* **低速匯流排，低功耗**
+* 介面簡單。在 bridge 中鎖存位址訊號和控制訊號。適用於多種週邊，採用上升沿觸發操作。
 # APB 連接埠介紹
 在介紹總線具體握手規則之前，需要先熟悉一下 APB 總線端口，APB的端口如下：
 ![image](https://github.com/user-attachments/assets/df62d5e5-4f5d-47be-8848-0883d0be88e9)  
