@@ -15,7 +15,7 @@
 * Arbiter 控制 mux 選擇哪個 master 有效。
 * 選取了 master 之後，HADDR 會被**送進 Decoder 判斷選中的是那個 slave**
 * 然後把對應 slave 的 **HSEL 訊號拉高**表示 slave 工作
-* 接著**讀入位址**和**資料訊號** (PS: 這裡其他的 slave 其實也能看到資料和位址訊號，但因為他們的HSEL訊號沒被拉高，所以不會運作)
+* 接著**讀入位址**和**資料訊號** (PS: 這裡其他的 slave 其實也能看到資料和位址訊號，但因為他們的HSEL訊號沒被拉高，所以不會運作)  
 **Note**: master 和 slave 中還有一對常用的 master 和 slave，就是 default master 和 default slave。當沒有 master 在工作的時候，就選擇 default master 來控制總線，這個 master 可以直接存取總線而不需要兩個仲裁週期的時間，他是最常用的 master。當沒有 slave 被控制的時候就選擇default slave 來被控制。
 # Reference
 AHB總線筆記（一）: https://www.bilibili.com/opus/639338820199776256  
