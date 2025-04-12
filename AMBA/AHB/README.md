@@ -11,10 +11,10 @@
   * 初始化一次讀取/寫入操作。**某一時刻只允許一個主設備使用總線**。例如 CPU、DMA、DSP、LCDC 等。
 * **AHB 從裝置 (slave)**
   * 響應一次讀取/寫入操作。**透過位址映射來選擇使用哪一個從設備**。外部記憶體控制 EMI、APB bridge 等。
-* **AHB 仲裁器 (arbiter)**
-  * 因為總線上只允許一個 master 訪問，所以**在多個 master 同時申請總線的時候就會引起衝突**，**這就需要仲裁器來選擇給哪個master總線的控制權**。
+* **AHB 仲裁器 (arbiter)** => (決定哪個 master 可以做事)
+  * 因為總線上只允許一個 master 訪問，所以**在多個 master 同時申請總線的時候就會引起衝突**，**這就需要仲裁器來選擇給哪個 master 總線的控制權**。
   * 但在 AMBA 協定中沒有定義仲裁演算法，所以具體分配可以自己客製化，循環優先也好 (Round Robin)、設定優先順序也好 (Priority)，都可以自己客製。
-* **AHB 譯碼器 (decoder)**
+* **AHB 譯碼器 (decoder)** => (確定 master 要對哪個 slave 做事)
   * 透過地址 decode 來決定哪一個從設備。它必須知道地址 map 訊息，知道後就會分析總線上的 address 是什麼值，落在那個 slave 的區域，就會把對應 slave 的 HSEL 訊號拉高 (意即 select 該 slave)。而作為 slave 而言，他就看自己的 HSEL 訊號是否被譯碼器拉高來判斷自己是否要工作。
 # AHB 訊號
 ![image](https://github.com/user-attachments/assets/b577dfd8-8f3f-4f04-b23b-421554ab5f47)
@@ -24,26 +24,71 @@
 * HWDATA[31:0] 寫入資料匯流排，從主裝置寫到從裝置
 * HRDATA[31:0] 讀取資料匯流排，從從裝置讀到主裝置
 * HTRANS 是指目前**傳輸的狀態**，分為 **IDLE、BUSY、NONSEQ 和 SEQ**
-  * 00：IDLE: 主設備佔據總線，但沒進行傳輸，兩次 burst 中間主設備沒準備好的話發 IDLE
-  * 01：BUSY: 主設備佔用總線，但在 burst 傳輸過程中還沒準備好進行下一次傳輸，一次 burst 傳輸中間主設備發 BUSY
-  * 10：NONSEQ: 表示一次單一數據的傳輸，或一次 burst 傳輸的第一個數據，位址和控制訊號與上一次傳輸無關
-  * 11：SEQ: 顯示 burst 傳輸接下來的數據，地址和上一次傳輸的地址是相關的
-* HWRITE 訊號表示讀寫狀態，HWRITE=1 時表示寫，=0 時表示讀取狀態
+  * 00：IDLE, 主設備佔據總線，但沒進行傳輸，兩次 burst 中間主設備沒準備好的話發 IDLE
+  * 01：BUSY, 主設備佔用總線，但在 burst 傳輸過程中還沒準備好進行下一次傳輸，一次 burst 傳輸中間主設備發 BUSY
+  * 10：NONSEQ, 表示一次單一數據的傳輸，或**一次 burst 傳輸的第一個數據**，位址和控制訊號與上一次傳輸無關
+  * 11：SEQ, **顯示 burst 傳輸接下來的數據**，地址和上一次傳輸的地址是相關的
+* HWRITE 訊號表示讀寫狀態，**HWRITE=1** 時表示**寫**，**=0** 時表示**讀取**狀態
 * HSIZE 指 BUS 的寬度目前傳輸大小，HSIZE=000 時為 8bit，HSIZE=001 時為 16bit，HSIZE=010 時為 32bit，以此類推
-* HBURST 指傳輸的 burst 類型，總共有8種：SINGLE、INCR、WRAP[4|8|16]、INCR[4|8|16]
+* HBURST 指傳輸的 burst 類型，總共有 8 種：SINGLE、INCR、WRAP[4|8|16]、INCR[4|8|16] (後續解釋 INCR 和 WRAP)
 * HSELx 用來選擇 slave
 * HRESP 是從設備發給主設備的匯流排傳輸狀態，有四種狀態：ERROR、OKAY、SPLIT 和 RETRY
   * RETRY 和 SPLIT 有區別。
     * RETRY 不會影響被拒絕的 master 的優先級，但是如果用 SPLIT 拒絕了當前的 master，arbiter 會把目前被拒絕的 master 優先級降低。
-* HREADY為高：從設備指出傳輸結束；為低：從設備需要延長傳輸週期。
+* HREADY為高：**從設備指出傳輸結束**；**為低：從設備需要延長傳輸週期**。
 # 一次無需等待的 AHB 傳輸
 ![image](https://github.com/user-attachments/assets/e67f169b-fd1e-4a3b-b6d6-82cb5c458e27)
-* 寫入操作 HADDR 就是寫位址，把 HWDATA 訊號寫入，如果是讀，HADDR就是讀取位址，採樣 HRDATA 訊號讀出資料。
-* 如果 slave 沒有準備好接受訊號，那麼傳輸的資料就會延長到 HREADY 被拉高。但 master 不會一直無限等 slave，最多等 16 個週期，slave 在 HRESP 訊號裡回傳 RETRY。
+* 寫入操作 HADDR 就是寫位址，把 HWDATA 訊號寫入，如果是讀，HADDR 就是讀取位址，採樣 HRDATA 訊號讀出資料。
+* 如果 slave 沒有準備好接受訊號，那麼傳輸的資料就會延長到 HREADY 被拉高。但 master 不會一直無限等 slave，**最多等 16 個週期**，slave 在 HRESP 訊號裡回傳 RETRY。
 ![image](https://github.com/user-attachments/assets/d00763c9-afb8-4d4c-9892-814c7cddaa35)
+![image](https://github.com/user-attachments/assets/c2870bb0-0b12-433d-9a76-f04fc2a294de)
 但上面這種傳輸速度不夠快，所以 AHB 採用的其實是 pipeline 結構的資料傳輸，如下圖
 ![image](https://github.com/user-attachments/assets/e9f75834-6e3e-469c-9ee3-427db07afd45)
 這樣一次傳輸一個地址，傳輸一個數據，那麼每來一次傳輸，都要 decode 一次，效率很低，提高傳輸效率的方法就是 burst 傳輸，每一次 burst 傳輸只需要 decode 一次，提高數據傳輸效率。
+# Burst
+## Example
+假設你要從記憶體讀 4 筆資料，地址從 0x1000 開始。
+* 使用 burst：
+  * 控制訊號設定一次
+  * 傳輸流程：0x1000 → 0x1004 → 0x1008 → 0x100C（假設每筆資料 4 bytes）
+* 使用非-burst：
+  * 每筆都需要重新設定控制訊號，效能較差
+* AHB BURST 操作 4 beat、8 beat、16 beat、單字節傳輸、未定義長度傳輸 (注意這裡是 beat，不是 bit，表示傳輸次數)
+  * **1 beat = 一筆資料傳輸**
+  * beat 的大小 = 資料匯流排（data bus）的寬度常
+    * 見資料寬度：
+      * 32-bit → 1 beat = 4 bytes
+      * 64-bit → 1 beat = 8 bytes
+      * 128-bit → 1 beat = 16 bytes
+      * 甚至可能是 256-bit 或更大
+* 支援 incrementing 和 wrapping (回環) 兩種 burst 傳輸
+  * incrementing burst 地址是上次的傳輸地址加一。
+  * Wrapping burst（回環）：例如4beat的wrapping burst字傳輸（4byte）
+    * Wrapping Burst 是什麼？
+      * Wrapping Burst 是一種地址在特定範圍內循環（wrap around） 的 burst 傳輸方式。**當 burst 長度達到設定值後，地址會回到 burst 開始的對齊邊界繼續傳輸**。這種方式常見於 cache line fill 的應用情境。(當 CPU 從 cache miss 時，要去記憶體抓一整個 cache line)
+      * EX1:
+        假設你有一個 4-beat 的 wrapping burst，每 beat 傳 4 bytes（data bus 為 32-bit）：  
+        那總共是 4 × 4 = 16 bytes  
+        起始地址是 0x24，這個地址不在 16 bytes 對齊邊界上  
+        wrapping burst 會「包回」到對齊的範圍，地址變成  
+```
+        地址傳輸順序（假設從 0x24 開始）：
+0x24 → 0x28 → 0x2C → 0x20（回繞到 16-byte 對齊的起點）
+```
+![image](https://github.com/user-attachments/assets/05c06048-7e1d-491d-91ad-2960cd39c3bd)
+WRAP4 的位址回環倍數是 0x10，WRAP8 的位址回環倍數是 0x20，WRAP16 的位址回環倍數是 0x40。因為HSIZE = 010，所以每次地址的遞增都是 4 個，也就是 4byte。上面就是 8 種burst型。Type 後面的數字表示傳輸的資料個數，也就是beat。  
+下面的是 INCR8 的波形圖：  
+![image](https://github.com/user-attachments/assets/b09ff790-b111-4a98-8ccf-887db48ace4f)  
+下面的是 WRAP8 的波形圖：  
+![image](https://github.com/user-attachments/assets/e8c16d32-632c-46f3-9775-eaea864d5cb2)
+上面是比較簡略的波形圖用來示意 INCR 和 WRAP 的差別，下面的 INCR4 和 WRAP4 的波形圖就正規一點了。  
+![image](https://github.com/user-attachments/assets/a88fb8f4-78d0-4872-be82-28fd02e3ea70)  
+看 HBURST 類型，上圖為 INCR4，下圖為 WRAP4。  
+![image](https://github.com/user-attachments/assets/ceb17d90-3607-4055-8341-aa9abf3e01f5)
+好，看了那麼多波形，對不同的burst傳輸應該有比較深的認識了。這裡還要補充一些burst的特色。burst傳輸不能超過1K邊界。一個從設備最小的位址間隙是1KB。 burst不能越過1KB的邊界，那遇到邊界該如何處理呢：  
+非序列 ->序列-> 1KB邊界 ->非序列 ->序列 
+![image](https://github.com/user-attachments/assets/ef0454ca-a286-4496-8bd6-436f9c9c279c)
+如圖，傳輸到0x400的倍數的時候就要再發起一個burst，不然就超過1K邊界了（4*16Byte^2=1024Byte = 1KB）
 # AHB匯流排訊號介面
 包括 **AHB 主設備**，**AHB 從設備**，**AHB 仲裁器**等。
 ## AHB主設備
