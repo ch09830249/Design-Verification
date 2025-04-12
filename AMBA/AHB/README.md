@@ -85,10 +85,40 @@ WRAP4 的位址回環倍數是 0x10，WRAP8 的位址回環倍數是 0x20，WRAP
 ![image](https://github.com/user-attachments/assets/a88fb8f4-78d0-4872-be82-28fd02e3ea70)  
 看 HBURST 類型，上圖為 INCR4，下圖為 WRAP4。  
 ![image](https://github.com/user-attachments/assets/ceb17d90-3607-4055-8341-aa9abf3e01f5)
-好，看了那麼多波形，對不同的burst傳輸應該有比較深的認識了。這裡還要補充一些burst的特色。burst傳輸不能超過1K邊界。一個從設備最小的位址間隙是1KB。 burst不能越過1KB的邊界，那遇到邊界該如何處理呢：  
+好，看了那麼多波形，對不同的 burst 傳輸應該有比較深的認識了。這裡還要補充一些 burst 的特色。**burst 傳輸不能超過 1K 邊界**。一個從設備最小的位址間隙是 1KB。 burst 不能越過 1KB 的邊界，那遇到邊界該如何處理呢：  
 非序列 ->序列-> 1KB邊界 ->非序列 ->序列 
 ![image](https://github.com/user-attachments/assets/ef0454ca-a286-4496-8bd6-436f9c9c279c)
-如圖，傳輸到0x400的倍數的時候就要再發起一個burst，不然就超過1K邊界了（4*16Byte^2=1024Byte = 1KB）
+如圖，傳輸到 0x400 的倍數的時候就要再發起一個 burst，不然就超過 1K 邊界了（4*16Byte^2=1024Byte=1KB） 
+![image](https://github.com/user-attachments/assets/2edfa778-d306-4ff2-8b51-e0cfdf0ba290)
+HSELx: 由 decoder 輸出，選擇從設備，指出由主設備選擇的從設備。由地址譯碼器來提供選擇訊號。一個從設備應該至少佔用 1KB 的儲存空間（0x400位址的倍數就得 NONSEQ）。需要一個額外的預設從設備來映射其他的儲存位址（default：），可以表現為當addr落在某個範圍的時候，HSELx等於多少，當addr落在另一個範圍的時候HSELx又等於多少，其他情況下（else or default），HSELx等於多少（有點類似於組合邏輯不能綜合出latch，涉及每一個分支都得被等於的意思）。
+
+        第一個MUX由Arbiter仲裁，選擇HADDR為哪個master的位址，然後把HADDR輸入到Decoder中，選擇把哪個slave的HSEL拉高。
+![image](https://github.com/user-attachments/assets/1c9175a6-8314-4fcf-88db-531fb24c31ac)
+ 如果slave被Decoder選中，也就是slave的HSEL被拉高，從裝置必須回應這次傳輸！
+
+        slave可能回傳的回應：1.完成這次傳輸（OKAY） 2.插入等待狀態（HREADY）3.發出錯誤訊號表示這次傳輸失敗（ERROR） 4.延時傳輸，使得匯流排可用於其他傳輸（RETRY、SPLIT）
+
+HRESP[1:0] ：
+
+00：OKAY     單週期響應
+
+01：ERROR  兩週期響應
+
+10：RETRY   兩週期響應
+
+11：SPLIT     兩週期響應
+
+        總線的流水特性，需要從設備兩個週期的響應。可以使得主設備有足夠的時間處理下一次傳輸。
+
+        SPLIT和RETRY的差別在於使用SPLIT拒絕請求後，會降低master在Arbiter的優先權。具體Arbiter用什麼優先策略可以自己客製。
+
+        總線主設備應該用同樣的方式處理RETRY響應和SPLIT響應。
+
+
+
+RETRY響應：
+![image](https://github.com/user-attachments/assets/733d632e-8b33-4f53-a300-d4ffe2951e45)
+
 # AHB匯流排訊號介面
 包括 **AHB 主設備**，**AHB 從設備**，**AHB 仲裁器**等。
 ## AHB主設備
