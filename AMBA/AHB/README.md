@@ -20,10 +20,10 @@
 ![image](https://github.com/user-attachments/assets/b577dfd8-8f3f-4f04-b23b-421554ab5f47)
 * 這裡的訊號都是 H 開頭，因為是 AHB 匯流排的訊號，如果是 APB 的話，就會是 P 開頭。
 * HRESETn 表示低電位有效的複位
-* HADDR[31:0] 是 32 位元系統位址匯流排
+* HADDR[31:0] 是 **32 bits 系統位址匯流排** (For Address)
 * HWDATA[31:0] 寫入資料匯流排，從主裝置寫到從裝置
 * HRDATA[31:0] 讀取資料匯流排，從從裝置讀到主裝置
-* HTRANS 是指目前傳輸的狀態，分為 **IDLE、BUSY、NONSEQ 和 SEQ**
+* HTRANS 是指目前**傳輸的狀態**，分為 **IDLE、BUSY、NONSEQ 和 SEQ**
   * 00：IDLE: 主設備佔據總線，但沒進行傳輸，兩次 burst 中間主設備沒準備好的話發 IDLE
   * 01：BUSY: 主設備佔用總線，但在 burst 傳輸過程中還沒準備好進行下一次傳輸，一次 burst 傳輸中間主設備發 BUSY
   * 10：NONSEQ: 表示一次單一數據的傳輸，或一次 burst 傳輸的第一個數據，位址和控制訊號與上一次傳輸無關
@@ -43,7 +43,7 @@
 ![image](https://github.com/user-attachments/assets/d00763c9-afb8-4d4c-9892-814c7cddaa35)
 但上面這種傳輸速度不夠快，所以 AHB 採用的其實是 pipeline 結構的資料傳輸，如下圖
 ![image](https://github.com/user-attachments/assets/e9f75834-6e3e-469c-9ee3-427db07afd45)
-這樣一次傳輸一個地址，傳輸一個數據，那麼每來一次傳輸，都要decode一次，效率很低，提高傳輸效率的方法就是burst傳輸，每一次burst傳輸只需要decode一次，提高數據傳輸效率。
+這樣一次傳輸一個地址，傳輸一個數據，那麼每來一次傳輸，都要 decode 一次，效率很低，提高傳輸效率的方法就是 burst 傳輸，每一次 burst 傳輸只需要 decode 一次，提高數據傳輸效率。
 # AHB匯流排訊號介面
 包括 **AHB 主設備**，**AHB 從設備**，**AHB 仲裁器**等。
 ## AHB主設備
