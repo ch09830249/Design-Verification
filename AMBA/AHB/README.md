@@ -13,9 +13,9 @@
   * 響應一次讀取/寫入操作。**透過位址映射來選擇使用哪一個從設備**。外部記憶體控制 EMI、APB bridge 等。
 * **AHB 仲裁器 (arbiter)**
   * 因為總線上只允許一個 master 訪問，所以**在多個 master 同時申請總線的時候就會引起衝突**，**這就需要仲裁器來選擇給哪個master總線的控制權**。
-  * 但在 AMBA 協定中沒有定義仲裁演算法，所以具體分配可以自己客製化，循環優先也好、設定優先順序也好，都可以自己客製。
-* **AHB譯碼器 (decoder)**
-  * 透過地址譯碼來決定哪一個從設備。它必須知道地址 map 訊息，知道後就會分析總線上的 address 是什麼值，落在那個 slave 的區域，就會把對應 slave 的 HSEL 訊號拉高 (意即 select 該 slave)。而作為 slave 而言，他就看自己的 HSE L訊號是否被譯碼器拉高來判斷自己是否要工作。
+  * 但在 AMBA 協定中沒有定義仲裁演算法，所以具體分配可以自己客製化，循環優先也好 (Round Robin)、設定優先順序也好 (Priority)，都可以自己客製。
+* **AHB 譯碼器 (decoder)**
+  * 透過地址 decode 來決定哪一個從設備。它必須知道地址 map 訊息，知道後就會分析總線上的 address 是什麼值，落在那個 slave 的區域，就會把對應 slave 的 HSEL 訊號拉高 (意即 select 該 slave)。而作為 slave 而言，他就看自己的 HSEL 訊號是否被譯碼器拉高來判斷自己是否要工作。
 # AHB 訊號
 ![image](https://github.com/user-attachments/assets/b577dfd8-8f3f-4f04-b23b-421554ab5f47)
 * 這裡的訊號都是 H 開頭，因為是 AHB 匯流排的訊號，如果是 APB 的話，就會是 P 開頭。
