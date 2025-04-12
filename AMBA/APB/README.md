@@ -157,6 +157,216 @@ spram_generic #(
 
 endmodule
 ```
+```
+`timescale 1ns/1ns
+`define MEM_PATH u_apb_sram.u_spram_generic
+module tb#(
+    parameter ADDR_BITS = 9,
+    parameter DATA_BITS = 32,
+    parameter MEM_DEPTH = 512
+)();
+
+reg clk, rstn;
+always #5 clk = ~clk;
+
+reg                     psel, penable, pwrite;
+reg     [DATA_BITS-1:0] pwdata, ref_data;
+reg     [ADDR_BITS-1:0] paddr ;
+wire                    pready;
+wire    [DATA_BITS-1:0] prdata;
+
+reg     [DATA_BITS-1:0] pwdata_rand;
+reg     [DATA_BITS-1:0] prdata_read;
+
+task apb_write;
+input [ADDR_BITS-1:0] addr;
+input [DATA_BITS-1:0] wdata;
+begin
+    @(posedge clk);#1;
+    penable = 0; psel = 1; pwrite = 1; paddr = addr; pwdata = wdata;
+    @(posedge clk);#1;
+    penable = 1;
+end
+endtask
+
+task apb_read;
+input [ADDR_BITS-1:0] addr;
+output [DATA_BITS-1:0] rdata;
+begin
+    @(posedge clk); #1;
+    penable = 0; psel = 1; pwrite = 0; paddr = addr;
+    @(posedge clk); #1;
+    penable = 1;
+    @(negedge clk); #1;
+    rdata = prdata;
+end
+endtask
+
+integer i,j;
+initial begin
+    clk     &lt;= 1&#39;b0;
+    rstn    &lt;= 1&#39;b0;
+    pwrite  &lt;= 1&#39;b1;
+    psel    &lt;= 1&#39;b0;
+    penable &lt;= 1&#39;b0;
+    pwdata  &lt;= 32&#39;d0;
+    repeat(2) @(posedge clk);
+    rstn    &lt;= 1&#39;b1;
+    repeat(3) @(posedge clk);
+    // SRAM data initial
+    for (i = 0; i &lt; MEM_DEPTH; i = i + 1)begin
+        pwdata = $random();
+        `MEM_PATH.mem[i] = pwdata;
+    end
+    repeat(5) @(posedge clk); #1;
+    $display(&quot;\ncontinuous writing&quot;);
+    // SRAM data continuous writing
+    fork
+        begin
+            @(posedge clk);#1
+            paddr = 32&#39;d0;
+            for (j = 0; j &lt; 10; j = j + 1)begin
+                repeat(2) @(posedge clk) #1;
+                paddr = paddr + 1;
+                @(negedge clk) #1;
+                ref_data = `MEM_PATH.mem[paddr-1];
+                $display(&quot;ref_data = %d, addr = %d&quot;, ref_data, paddr-1);
+            end
+        end
+        begin
+            for (i = 0; i &lt; 10; i = i + 1)begin
+                pwdata_rand = $random();
+                apb_write(paddr, pwdata_rand);
+                $display(&quot;pwdata = %d&quot;, pwdata);
+            end
+        end
+    join_none
+
+
+    repeat(21) @(posedge clk);#1;
+    penable = 1&#39;b0;psel = 1&#39;b0;pwrite = 1&#39;b0;
+
+    repeat(5) @(posedge clk);#1;
+    $display(&quot;\ncontinuous reading&quot;);
+    //SRAM continuous reading
+    fork
+        begin
+            @(posedge clk);#1;
+            paddr = 32&#39;d0;
+            for (j = 0; j &lt; 10; j = j + 1)begin
+                repeat(2) @(posedge clk);#1;
+                paddr = paddr + 1;
+            end
+        end
+        begin
+            for (i = 0; i &lt; 10; i = i + 1)begin
+                apb_read(paddr, prdata_read);
+                $display(&quot;prdata_read = %d&quot;, prdata_read);
+            end
+        end
+    join
+    penable = 0;psel = 0;
+
+    repeat(5) @(posedge clk);#1;
+    $display(&quot;\ncontinuos writing and reading&quot;);
+    //SRAM continuous write and read
+    fork
+        begin
+            @(posedge clk);#1;
+            paddr = 32&#39;d0;
+            for (j = 0; j &lt; 10; j = j + 1)begin
+                repeat (4) @(posedge clk); #1;
+                paddr = paddr + 1;
+            end
+        end
+        begin
+            for (i = 0; i &lt; 10; i = i + 1)begin
+                pwdata_rand = $random();
+                apb_write(paddr, pwdata_rand);
+                apb_read(paddr, prdata_read);
+                $display(&quot;write data is %d, read data is %d&quot;, pwdata_rand, prdata_read);
+            end
+        end
+    join
+    penable = 0;psel = 0;
+    // finish simulation
+    repeat(20) @(posedge clk);
+    $finish();
+end
+initial begin
+    $fsdbDumpfile(&quot;apb_sram.fsdb&quot;);
+    $fsdbDumpvars(0);
+end
+apb_sram #(
+    .ADDR_BITS(ADDR_BITS),
+    .DATA_BITS(DATA_BITS),
+    .MEM_DEPTH(MEM_DEPTH)
+) u_apb_sram(
+    .pclk   (clk    ),
+    .prstn  (rstn   ),
+
+    .psel   (psel   ),
+    .penable(penable),
+    .paddr  (paddr  ),
+    .pwrite (pwrite ),
+    .pwdata (pwdata ),
+    .pready (pready ),
+    .prdata (prdata )
+);
+endmodule
+```
+* 仿真結果如下
+```
+continuous writing
+pwdata = 620927818
+ref_data = 620927818, addr = 0
+pwdata = 1557269945
+ref_data = 1557269945, addr = 1
+pwdata = 160312595
+ref_data = 160312595, addr = 2
+pwdata = 164115731
+ref_data = 164115731, addr = 3
+pwdata = 853295461
+ref_data = 853295461, addr = 4
+pwdata = 684074833
+ref_data = 684074833, addr = 5
+pwdata = 3684186807
+ref_data = 3684186807, addr = 6
+pwdata = 3432517785
+ref_data = 3432517785, addr = 7
+pwdata = 2635204666
+ref_data = 2635204666, addr = 8
+pwdata = 3102358129
+ref_data = 3102358129, addr = 9
+
+continuous reading
+prdata_read = 620927818
+prdata_read = 1557269945
+prdata_read = 160312595
+prdata_read = 164115731
+prdata_read = 853295461
+prdata_read = 684074833
+prdata_read = 3684186807
+prdata_read = 3432517785
+prdata_read = 2635204666
+prdata_read = 3102358129
+
+continuos writing and reading
+write data is 830211938, read data is 830211938
+write data is 4063587044, read data is 4063587044
+write data is 353623338, read data is 353623338
+write data is 3201975421, read data is 3201975421
+write data is 753819481, read data is 753819481
+write data is 1925424101, read data is 1925424101
+write data is 1994288109, read data is 1994288109
+write data is 3836215497, read data is 3836215497
+write data is 2695810113, read data is 2695810113
+write data is 1472319919, read data is 1472319919
+```
+波形圖
+* 連續10次寫入、連續10次讀取、連續10次讀寫波形如下
+![image](https://github.com/user-attachments/assets/89fea5cf-6ec4-4be4-9eee-93f1528a8c64)
+
 # Reference
 https://cloud.tencent.com/developer/article/1689936  
 https://cloud.tencent.com.cn/developer/article/1689936  
