@@ -90,35 +90,73 @@ WRAP4 的位址回環倍數是 0x10，WRAP8 的位址回環倍數是 0x20，WRAP
 ![image](https://github.com/user-attachments/assets/ef0454ca-a286-4496-8bd6-436f9c9c279c)
 如圖，傳輸到 0x400 的倍數的時候就要再發起一個 burst，不然就超過 1K 邊界了（4*16Byte^2=1024Byte=1KB） 
 ![image](https://github.com/user-attachments/assets/2edfa778-d306-4ff2-8b51-e0cfdf0ba290)
-HSELx: 由 decoder 輸出，選擇從設備，指出由主設備選擇的從設備。由地址譯碼器來提供選擇訊號。一個從設備應該至少佔用 1KB 的儲存空間（0x400位址的倍數就得 NONSEQ）。需要一個額外的預設從設備來映射其他的儲存位址（default：），可以表現為當addr落在某個範圍的時候，HSELx等於多少，當addr落在另一個範圍的時候HSELx又等於多少，其他情況下（else or default），HSELx等於多少（有點類似於組合邏輯不能綜合出latch，涉及每一個分支都得被等於的意思）。
-
-        第一個MUX由Arbiter仲裁，選擇HADDR為哪個master的位址，然後把HADDR輸入到Decoder中，選擇把哪個slave的HSEL拉高。
-![image](https://github.com/user-attachments/assets/1c9175a6-8314-4fcf-88db-531fb24c31ac)
- 如果slave被Decoder選中，也就是slave的HSEL被拉高，從裝置必須回應這次傳輸！
-
-        slave可能回傳的回應：1.完成這次傳輸（OKAY） 2.插入等待狀態（HREADY）3.發出錯誤訊號表示這次傳輸失敗（ERROR） 4.延時傳輸，使得匯流排可用於其他傳輸（RETRY、SPLIT）
-
+HSELx: 由 decoder 輸出，選擇從設備，指出由主設備選擇的從設備。由地址譯碼器來提供選擇訊號。一個從設備應該至少佔用 1KB 的儲存空間 (0x400 位址的倍數就得 NONSEQ）。需要一個額外的預設從設備來映射其他的儲存位址（default：），可以表現為當 addr 落在某個範圍的時候，HSELx 等於多少，當 addr 落在另一個範圍的時候 HSELx 又等於多少，其他情況下（else or default），HSELx 等於多少（有點類似於組合邏輯不能綜合出 latch，涉及每一個分支都得被等於的意思）。  
+第一個 MUX 由 Arbiter 仲裁，選擇 HADDR 為哪個 master 的位址，然後把 HADDR 輸入到 Decoder 中，選擇把哪個 slave 的 HSEL 拉高。
+![image](https://github.com/user-attachments/assets/1c9175a6-8314-4fcf-88db-531fb24c31ac)  
+如果 slave 被 Decoder 選中，也就是 slave 的 HSEL 被拉高，從裝置必須回應這次傳輸！
+ * slave可能回傳的回應：
+   * 1. 完成這次傳輸（OKAY）
+   * 2. 插入等待狀態（HREADY）
+   * 3. 發出錯誤訊號表示這次傳輸失敗（ERROR）
+   * 4. 延時傳輸，使得匯流排可用於其他傳輸（RETRY、SPLIT）
 HRESP[1:0] ：
+00：OKAY   單週期響應  
+01：ERROR  兩週期響應  
+10：RETRY  兩週期響應  
+11：SPLIT  兩週期響應  
+總線的流水特性，需要從設備兩個週期的響應。可以使得主設備有足夠的時間處理下一次傳輸。SPLIT 和 RETRY 的差別在於使用 SPLIT 拒絕請求後，會降低 master 在 Arbiter 的優先權。具體 Arbiter 用什麼優先策略可以自己客製。總線主設備應該用同樣的方式處理 RETRY 響應和 SPLIT 響應。  
+## RETRY 響應
+![image](https://github.com/user-attachments/assets/733d632e-8b33-4f53-a300-d4ffe2951e45)  
+RETRY 要保持兩個 cycle 。如果錯誤的話，也就是回傳 HRESP 不是 OKAY，那 master 的 HTRANS 就要進入 IDLE 狀態，所以需要額外一個週期來進入 NONSEQ 狀態。資料匯流排不是三態匯流排，讀匯流排和寫匯流排是分開的。什麼是三態呢？只有在PAD部分，有三個埠INPUT、OUTPUT、INOUT，在這些輸出埠上會有三態狀態，在匯流排內部是沒有三態的。印第安序，印第安序用來表示總線有效的位數。主設備和從設備應該採用同樣的印第安序，不支援動態的印第安序，在AMBA協定中沒有定義。
+![image](https://github.com/user-attachments/assets/81da36f1-5f49-42a0-b5df-06e254ac665c)  
+32bit小印第安序資料匯流排有效位元組  
+![image](https://github.com/user-attachments/assets/a7e4eb4e-8b95-412e-bdc9-30f3e5f09a8c)
+32bit大印第安序資料匯流排有效位元組
+# AHB 仲裁訊號
+![image](https://github.com/user-attachments/assets/4ddb35c9-934d-4bde-bcb3-8fd97f79999b)
+因為最多支援16個master，所以HMASTER只需要四個bit就夠了。HBUSREQ 匯流排請求，master發送匯流排請求，然後Arbiter允許的話就回傳GRANT訊號。HLOCKx高電位：主裝置要求鎖定總線，因為不希望master原本要傳送一百個資料的，結果中途被打斷了，所以需要把總線lock住。HGRANTx指出主設備x 可存取匯流排，主設備x 控制匯流排條件：HGRANTx = 1 且HREADY = 1。HMASTER[3:0]指出哪個主設備正在進行傳輸。HMASTLOCK指出主設備正在進行一次鎖定傳輸。HSPLITx[15:0]從裝置用這個訊號告訴仲裁者哪個主裝置允許重新嘗試一次split傳輸，16bit每一位對應一個主裝置。 ，這裡既有x又有16bit，其中x代表哪一個slave，16bit從來選master，因為經過arbiter後，slave很清楚是哪一個master在請求他，所以如果要拒絕哪一個master的請求，由slave發出會比較準確
+# Example
+![image](https://github.com/user-attachments/assets/b6ab6dc0-c942-4e83-8d67-7b7eb00e54a4)
+上圖為沒有等待狀態的HGRANT拉高波形圖，HGRANT訊號一拉高，資料就開始傳輸（沒有等待是因為HREADY一直為高），所以HGRANT一拉高，滿足HREADY = 1 且HGRANTx = 1 匯流排就會把控制權交給HMASTER。但很多時候，HGRANT拉高的時候，HREADY並不是1，所以下面的波形圖比較普適性。
+![image](https://github.com/user-attachments/assets/7b7c979c-8d26-4cd5-a857-8975226a63fe)
+Arbiter在接收到master發送的HBUSREQx指令後，經過兩個週期給出GRANTx指令，然後在T4時刻，發現呢HREADY並不為高，所以masterx不能獲得總線控制權，在T5時刻，HGRANT和HREADY都為1，masterx獲得總線控制權，可以傳輸數據，但在T6時候HREADY在master用完總線後，需要把總線控制權還回去：
+![image](https://github.com/user-attachments/assets/f550d8c4-413e-4076-bc88-0e80d8271f4b)
+對M1來說，市區GRANT之後，還能再發一個地址與資料。 對於M2master來說，在T7時刻拿到資料匯流排控制權後，就可以開始傳輸所以在T7時刻後面的HADDR為一個數、HTRAN為NONSEQ，但是即使這樣傳輸的資料也得到下一個週期才到HWDATA，所以M1這個操作可以把HWDATA匯流排完全利用起來，因為本來M2取得控制權後的第一個週期，資料也浪費了一個週期上，資料
+![image](https://github.com/user-attachments/assets/5b533e6a-04a1-48ec-b6ad-67a5c715f733)
+Arbiter選擇Master，對master來說，master是知道自己有沒有被GRANT，但是他不知道HADDR輸出去後會被發給哪個slave。 Arbiter選擇哪一個HMASTER的HADDR送出去，送到哪裡呢？送到Decoder解碼，選取哪個slave。
 
-00：OKAY     單週期響應
+        補充：對於固定長度的burst傳輸，不必持續請求匯流排。對於未定義長度的burst傳輸，主設備應持續發送HBUSREQ訊號，直到開始最後一次傳輸。
 
-01：ERROR  兩週期響應
+        如果沒有主設備請求匯流排，則給缺省主設備（即default master）GRANT訊號，且HTRANS = IDLE。建議主設備在鎖定匯流排傳輸結束之後插入IDLE傳輸，以重新仲裁優先權、
 
-10：RETRY   兩週期響應
+split傳輸過程：
 
-11：SPLIT     兩週期響應
+① 由主設備開始傳輸。
 
-        總線的流水特性，需要從設備兩個週期的響應。可以使得主設備有足夠的時間處理下一次傳輸。
+② 如果從設備需要多個週期才能取得數據，則從設備給予一個SPLIT傳輸回應，從設備記錄主設備號碼：HMASTER。接著仲裁器改變主設備的優先權。
 
-        SPLIT和RETRY的差別在於使用SPLIT拒絕請求後，會降低master在Arbiter的優先權。具體Arbiter用什麼優先策略可以自己客製。
+③ 仲裁器GRANT其他的主設備，總線主設備移交。
 
-        總線主設備應該用同樣的方式處理RETRY響應和SPLIT響應。
+④ 當從設備準備結束本次傳輸，將設定給仲裁器的HSPLITx訊號的對應位元。
+
+⑤ 仲裁器恢復優先權，恢復到發送spilt訊號之前。
+
+⑥ 仲裁器GRANT主設備，這樣主設備可以重新開始傳輸。
+
+⑦ 結束。
 
 
 
-RETRY響應：
-![image](https://github.com/user-attachments/assets/733d632e-8b33-4f53-a300-d4ffe2951e45)
-
+        當多個不同的主設備存取同一個從設備，這個從設備發出了SPLIT或RETRY訊號，這時可能發生deadlock死鎖。從設備最多可以接收系統中16個主設備的請求。只需要記錄主設備號碼（忽略位址和控制訊號）。給出RETRY響應的從設備在某一時刻只能由一個主設備存取防止死鎖。
+下圖為AHB匯流排的主設備介面  
+![image](https://github.com/user-attachments/assets/b032762f-66d4-4415-a9cb-c660b7553bda)
+AHB從設備介面： 
+![image](https://github.com/user-attachments/assets/5c26247e-a652-4b59-85fe-73011ca6e13c)
+AHB Arbiter介面：
+![image](https://github.com/user-attachments/assets/fe361ce9-8723-4364-b15d-93266d4453f6)
+AHB Decoder介面：
+![image](https://github.com/user-attachments/assets/a6b05094-200e-4e2d-a17d-0e44c4f46430)
+學習AHB匯流排，需要學會繪製AHB匯流排上四個組成部分的介面框圖，並描述訊號作用。
 # AHB匯流排訊號介面
 包括 **AHB 主設備**，**AHB 從設備**，**AHB 仲裁器**等。
 ## AHB主設備
