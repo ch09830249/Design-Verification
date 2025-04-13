@@ -1,3 +1,4 @@
+![image](https://github.com/user-attachments/assets/c205fffb-6216-4e4c-8c5b-148ec296ae6d)
 ## APB 總線特性
 * **低速匯流排，低功耗**
 * 介面簡單。在 bridge 中鎖存位址訊號和控制訊號。適用於多種週邊，採用上升沿觸發操作。
@@ -22,16 +23,18 @@
 # APB 連接埠介紹
 在介紹總線具體握手規則之前，需要先熟悉一下 APB 總線端口，APB的端口如下：
 ![image](https://github.com/user-attachments/assets/df62d5e5-4f5d-47be-8848-0883d0be88e9)  
+![image](https://github.com/user-attachments/assets/10c1be32-aa69-4662-a2d9-43413116ae07)  
 大致可以分為以下三組：
 * **系統訊號**
   * PCLK (系統時脈)
   * PRESETn (系統重位，低有效)
 * **master 訊號**
-  * PADDR（位址訊號，確定讀取與寫入的位址）
-  * PSELx（選擇訊號，被拉出來接給搭載 APB 匯流排的 slave，選取 slave 時，PSELx 訊號拉高）
+  * PADDR（位址訊號，確定讀取與寫入的位址，由裝置匯流排的 bridge 單元所驅動）
+  * PSELx（選擇訊號，被拉出來接給搭載 APB 匯流排的 slave，選取 slave 時，PSELx 訊號拉高）(從譯碼器來的訊號，到每個匯流排從設備x)
   * PNEABLE（啟用訊號，在 PSELx 拉高一個週期後，必定拉高）
   * PWRITE（High: APB write access, Low: APB read acess）
-  * PWRDATA（Write data）
+  * PWRDATA（Write data） 
+    Note: PRDATA 和PWDATA 最多 32 位元寬
 * **slave 訊號**
   * PREADY（ready 為高時，代表著一次 APB 資料傳輸的結束）
   * PRDATA（讀取資料）
