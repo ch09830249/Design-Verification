@@ -72,3 +72,47 @@ In a dynamic array, the elements are accessed using an index, which refers to th
 
 # Race condition in SV
 ![484633121_1026278449403756_1107950053659493403_n](https://github.com/user-attachments/assets/56d70134-378a-413f-89c9-a270a283ac85)
+
+# 什麼是 Callback？
+Callback (回呼)是指更改驗證元件（driver、sequencer或monitor）的行為而不更改元件程式碼的機制。它可以用於功能覆蓋率建模，錯誤注入等功能
+
+# 什麼是 factory pattern 工廠模式？
+factory 方法通常用來指建立物件的方法，物件的類型已經事先註冊到表中。
+一般物件創建方案
+
+# 資料型別logic、reg 和wire有什麼差別？
+* 從賦值的角度：
+  * Logic：支援連續賦值、阻塞賦值與非阻塞賦值
+  * Reg：阻塞賦值與非阻塞賦值
+  * Wire：支援連續賦值
+* 從儲存的角度：
+  * Wire 不能儲存值，Logic 和 Reg 都能儲存值
+ 
+# clocking 語句塊的作用是什麼？
+1. 指定設計的同步特性
+2. 提供了一種乾淨的方式來驅動和取樣訊號
+3. 指定skew，避免競爭冒險
+```
+module M1(ck, enin, din, enout, dout);
+	input ck;
+	input [31:0] din ;
+	output [31:0] dout ;
+	clocking sd @(posedge ck);
+		input #2ns din ;
+		output #3ns dout;
+	endclocking:
+	sd reg [7:0] sab ;
+	initial begin
+		sab = sd.din[7:0];
+	end
+endmodule:M1
+```
+
+# 有什麼方法可以避免 testbench 和 RTL 之間的競爭冒險？
+1.使用program
+2.使用clocking語句塊
+3.使用非阻塞賦值
+monitor 和 driver 應該完全分開，並行執行，方便在驗證平台中復用模組級的 agent。
+
+# 闡述 SV 中的 Event regions？
+systemverilog event是同步物件的句柄，可以將其傳遞給各個子程序，用於事件同步。
