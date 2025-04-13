@@ -114,16 +114,24 @@ RETRY 要保持兩個 cycle 。如果錯誤的話，也就是回傳 HRESP 不是
 32bit大印第安序資料匯流排有效位元組
 # AHB 仲裁訊號
 ![image](https://github.com/user-attachments/assets/4ddb35c9-934d-4bde-bcb3-8fd97f79999b)
-因為最多支援16個master，所以HMASTER只需要四個bit就夠了。HBUSREQ 匯流排請求，master發送匯流排請求，然後Arbiter允許的話就回傳GRANT訊號。HLOCKx高電位：主裝置要求鎖定總線，因為不希望master原本要傳送一百個資料的，結果中途被打斷了，所以需要把總線lock住。HGRANTx指出主設備x 可存取匯流排，主設備x 控制匯流排條件：HGRANTx = 1 且HREADY = 1。HMASTER[3:0]指出哪個主設備正在進行傳輸。HMASTLOCK指出主設備正在進行一次鎖定傳輸。HSPLITx[15:0]從裝置用這個訊號告訴仲裁者哪個主裝置允許重新嘗試一次split傳輸，16bit每一位對應一個主裝置。 ，這裡既有x又有16bit，其中x代表哪一個slave，16bit從來選master，因為經過arbiter後，slave很清楚是哪一個master在請求他，所以如果要拒絕哪一個master的請求，由slave發出會比較準確
+因為最多支援 16 個 master，所以 HMASTER 只需要四個 bit 就夠了。
+* HBUSREQ 匯流排請求，master 發送匯流排請求，然後 Arbiter 允許的話就回傳 GRANT 訊號
+* HLOCKx 高電位：主裝置要求鎖定總線，因為不希望 master 原本要傳送一百個資料的，結果中途被打斷了，所以需要把總線lock住
+* HGRANTx 指出主設備 x 可存取匯流排，主設備 x 控制匯流排條件：HGRANTx = 1 且 HREADY = 1
+* HMASTER[3:0] 指出哪個主設備正在進行傳輸
+* HMASTLOCK 指出主設備正在進行一次鎖定傳輸
+* HSPLITx[15:0] 從裝置用這個訊號告訴仲裁者哪個主裝置允許重新嘗試一次 split 傳輸，16bit 每一位對應一個主裝置。 ，這裡既有x又有16bit，其中x代表哪一個slave，16bit從來選master，因為經過arbiter後，slave很清楚是哪一個master在請求他，所以如果要拒絕哪一個master的請求，由slave發出會比較準確
 # Example
-![image](https://github.com/user-attachments/assets/b6ab6dc0-c942-4e83-8d67-7b7eb00e54a4)
-上圖為沒有等待狀態的HGRANT拉高波形圖，HGRANT訊號一拉高，資料就開始傳輸（沒有等待是因為HREADY一直為高），所以HGRANT一拉高，滿足HREADY = 1 且HGRANTx = 1 匯流排就會把控制權交給HMASTER。但很多時候，HGRANT拉高的時候，HREADY並不是1，所以下面的波形圖比較普適性。
-![image](https://github.com/user-attachments/assets/7b7c979c-8d26-4cd5-a857-8975226a63fe)
-Arbiter在接收到master發送的HBUSREQx指令後，經過兩個週期給出GRANTx指令，然後在T4時刻，發現呢HREADY並不為高，所以masterx不能獲得總線控制權，在T5時刻，HGRANT和HREADY都為1，masterx獲得總線控制權，可以傳輸數據，但在T6時候HREADY在master用完總線後，需要把總線控制權還回去：
-![image](https://github.com/user-attachments/assets/f550d8c4-413e-4076-bc88-0e80d8271f4b)
+## 沒有等待狀態的 HGRANT 拉高
+![image](https://github.com/user-attachments/assets/b6ab6dc0-c942-4e83-8d67-7b7eb00e54a4)  
+上圖為沒有等待狀態的 HGRANT 拉高波形圖，HGRANT 訊號一拉高，資料就開始傳輸（沒有等待是因為 HREADY 一直為高），所以 HGRANT 一拉高，滿足 HREADY = 1 且HGRANTx = 1 匯流排就會把控制權交給 HMASTER。但很多時候，HGRANT 拉高的時候，HREADY 並不是1，所以下面的波形圖比較普適性。
+## 等待狀態的 HGRANT 拉高
+![image](https://github.com/user-attachments/assets/7b7c979c-8d26-4cd5-a857-8975226a63fe)  
+Arbiter 在接收到 master 發送的 HBUSREQx 指令後，經過兩個週期給出 GRANTx 指令，然後在 T4 時刻，發現呢 HREADY 並不為高，所以masterx 不能獲得總線控制權，在 T5 時刻，HGRANT 和 HREADY 都為1，masterx 獲得總線控制權，可以傳輸數據，但在 T6 時候 HREADY 在master 用完總線後，需要把總線控制權還回去：
+![image](https://github.com/user-attachments/assets/f550d8c4-413e-4076-bc88-0e80d8271f4b)  
 對M1來說，市區GRANT之後，還能再發一個地址與資料。 對於M2master來說，在T7時刻拿到資料匯流排控制權後，就可以開始傳輸所以在T7時刻後面的HADDR為一個數、HTRAN為NONSEQ，但是即使這樣傳輸的資料也得到下一個週期才到HWDATA，所以M1這個操作可以把HWDATA匯流排完全利用起來，因為本來M2取得控制權後的第一個週期，資料也浪費了一個週期上，資料
-![image](https://github.com/user-attachments/assets/5b533e6a-04a1-48ec-b6ad-67a5c715f733)
-Arbiter選擇Master，對master來說，master是知道自己有沒有被GRANT，但是他不知道HADDR輸出去後會被發給哪個slave。 Arbiter選擇哪一個HMASTER的HADDR送出去，送到哪裡呢？送到Decoder解碼，選取哪個slave。
+![image](https://github.com/user-attachments/assets/5b533e6a-04a1-48ec-b6ad-67a5c715f733)  
+Arbiter 選擇 Master，對 master 來說，master 是知道自己有沒有被GRANT，但是他不知道 HADDR 輸出去後會被發給哪個 slave。 Arbiter選擇哪一個 HMASTER 的 HADDR 送出去，送到哪裡呢？送到 Decoder 解碼，選取哪個 slave。
 
         補充：對於固定長度的burst傳輸，不必持續請求匯流排。對於未定義長度的burst傳輸，主設備應持續發送HBUSREQ訊號，直到開始最後一次傳輸。
 
