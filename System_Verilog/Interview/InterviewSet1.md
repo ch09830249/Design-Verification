@@ -1,27 +1,32 @@
-# 甚麼是 Semaphore 且何時需要使用它?
+# How will you test the functionality of interrupts using functional coverage?
   Testing the functionality of interrupts using functional coverage involves the following steps:
-Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
-Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also monitor the behavior of the design under test (DUT) in response to the interrupts.
-Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
-Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
+* Define functional coverage goals: First, you need to define your functional coverage goals. These goals should be specific to the interrupts you want to test. For example, you might define goals for interrupt latency, interrupt frequency, or interrupt priority handling.
+* Create a testbench for interrupts: Next, you need to create a testbench that generates interrupts with different characteristics. This testbench should also  monitor the behavior of the design under test (DUT) in response to the interrupts.
+* Implement functional coverage: You can then implement functional coverage in your testbench to track how often each of the defined functional goals is achieved. You can use standard SystemVerilog constructs like covergroups, coverpoints, and bins to define and track the functional coverage.
+* Analyze the functional coverage results: Finally, you can analyze the functional coverage results to determine how well your testbench tests the desired interrupt functionality. Based on the results, you can make adjustments to your testbench to improve the tests.
 
-# 甚麼是 Semaphore 且何時需要使用它?
-The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to specify the scope in which an identifier is defined or should be searched for.
+# What is the use of scope resolution operator?
+The scope resolution operator in SystemVerilog is denoted by the double colon '::' symbol. The basic purpose of this operator is to **specify the scope in which an identifier is defined or should be searched for**.
 Here are some common uses of the scope resolution operator:
-Accessing variables or modules within a hierarchy: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
-Resolving naming conflicts: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
+* **Accessing variables or modules within a hierarchy**: When a design has a hierarchy of modules or sub-modules, the scope resolution operator can be used to access variables or modules that are defined in different scopes. For example, if a variable 'clk' is defined in a top-level module and is used in a lower-level module, then we use the scope resolution operator to specify the scope of 'clk'.
+* **Resolving naming conflicts**: When a design has two or more variables or modules with the same name, the scope resolution operator can be used to differentiate the variables or modules by specifying their scope.
+```
 package ahb_pkg;
 	typedef enum {READ, WRITE} e_access;
 endpackage
+
 package wishbone_pkg;
 	typedef enum {WRITE, READ} e_access;
 endpackage
-ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
-Accessing static variables and functions: The scope resolution operator is also used to access static properties and methods in a class.
-Accessing items in package: Elements in a package can be imported using import with scope resolution operator.
-import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
-import enum_pkg::global; 	// Imports everything under "global" from enum_pkg
 
+ahb_pkg::e_access 	m_access; 		// m_access = 1 indicates WRITE
+```
+* **Accessing static variables and functions**: The scope resolution operator is also used to **access static properties and methods in a class**.
+* **Accessing items in package**: Elements in a package can be imported using import with scope resolution operator.
+```
+import ahb_pkg::*; 	 		// Imports everything in the package called "ahb_pkg"
+import enum_pkg::global; 		// Imports everything under "global" from enum_pkg
+```
 # 如何使用 randc in SV?
 
 The randc keyword in SystemVerilog will first exhaust all combinations possible before repeating a value. This is different from rand keyword where the same value may repeat even before all combinations are exercised.
