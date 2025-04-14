@@ -43,6 +43,10 @@ PS：舉的例子和 APB 不是一一完全對應，但表達的意思相同
 是否需要 APB_interconnect 根據應用而定，如果只是單一的周邊連接 CPU（很少出現），可以直接連接 CPU 和周邊透過 APB 匯流排。不需要APB_Interconect，但是當外設數目變多，自然而然的就引入了不同外設的區分，所以當多個外設的時候，需要引入 APB_Interconect 來做這些相關的處理。  
 用水果店類比：水果店用大喇叭發出訂單，所有的水果廠家進行偵聽，然後響應訂單，或者假如水果廠家沒有偵聽裝置，可以在水果店和水果廠家之間加一個 Interconect，這個 Interconect 的作用是當收到某一個廠家的名字時，根據廠商名稱，把需求單獨給對應廠的名稱。
 ![image](https://github.com/user-attachments/assets/c205fffb-6216-4e4c-8c5b-148ec296ae6d)
+## APB Bridge 示意介面（APB_Interconect）
+依AMBA APB手冊，截取APB Bridge介面：
+![image](https://github.com/user-attachments/assets/132d3d29-6869-4dc9-9651-98a5a8fe8581)
+圖左邊的介面 System Bus Slave Interface，連接 APB 主機（即上面的 CPU），這個接口也是 APB 完整的接口，包含上面舉例的訊號。圖右邊和左下面的介面連接多個 SLAVE，其中 PSELn 有多個，每個對應不同的 SLAVE。其他訊號對於 SLAVE 是一致的，因為 PSELn 已經可以選取不同的SLAVE來接收傳送的共享訊號了。
 ## APB 總線特性
 * **低速匯流排，低功耗**
 * 介面簡單。在 bridge 中鎖存位址訊號和控制訊號。適用於多種週邊，採用上升沿觸發操作。
@@ -78,11 +82,11 @@ PS：舉的例子和 APB 不是一一完全對應，但表達的意思相同
   * PSELx（選擇訊號，被拉出來接給搭載 APB 匯流排的 slave，選取 slave 時，PSELx 訊號拉高）(從譯碼器來的訊號，到每個匯流排從設備x) => 根據地址產生選中的信號
   * PNEABLE（啟用訊號，在 PSELx 拉高一個週期後，必定拉高）=> 根據位址產生使能的訊號（APB 協定要求）
   * PWRITE（High: APB write access, Low: APB read acess）=> 傳輸APB主機的讀寫操作，1寫0讀
-  * PWRDATA（Write data）=> 外設給主機返回的資料通道  
+  * PWRDATA（Write data）=> 主機需要給外設寫入的資料通道  
     Note: PRDATA 和PWDATA 最多 32 位元寬
 * **slave 訊號**
   * PREADY（ready 為高時，代表著一次 APB 資料傳輸的結束）
-  * PRDATA（讀取資料）
+  * PRDATA（讀取資料）=> 外設給主機返回的資料通道
   * PSLVERR（錯誤資料，由 slave 發出，具體邏輯由 slave 內部決定，當 slave 發現內部邏輯出現故障，譬如狀態機狀態出錯、計數器數位異常等，slave 都可以​​使用內部邏輯故障，譬如狀態機狀態出錯、BmasterBmasterB，都可以使用內部邏輯也能將該訊號結束，否則就可以使用內部邏輯來完成這個訊號該次傳輸或做出其他因應策略）
 # APB 寫入傳輸
 ![image](https://github.com/user-attachments/assets/98934dc7-6319-4ccf-99fd-8f67de8b4860)  
