@@ -2,7 +2,15 @@
 # What is UVM (Universal Verification Methodology)?
 * A standardized methodology for **verifying digital designs and systems-on-chip (SoCs)** in the semiconductor industry
 * UVM is built on top of the **SystemVerilog** language and provides a framework for **creating modular**, **reusable testbench components** that can be easily integrated into the design verification process
-
+# UVM 有什麼優缺點?
+* UVM的優點
+  * UVM 有各個機制、促進驗證平台的標準化
+  * UVM 中 test sequence 和驗證平台是隔離獨立的,可以更好的控制激勵而不需要重新設計 agent
+  * 改變 test sequence 可以簡單高校提高程式碼覆蓋率。
+  * UVM支援工業標準,這會促進驗證平台標準化。
+  * 此外,UVM透透過OOP(物件導向程式設計)的特點(例如繼承)以及使用覆蓋組件提高了重複使用率。
+  * 因此 UVM 環境方便移植,架構清晰,組件連接方便,有利於進行大規模的驗證
+2.UVM 的缺點:程式碼冗餘,工作量大,運作速度有缺失。
 # What was used before UVM?
 * **OVM (Open Verification Methodology)** was introduced in 2008 as an open-source verification methodology for digital designs and systems-on-chip (SoCs) and was based on SystemVerilog
 * UVM was introduced in 2011 as **a successor to OVM**, and it built upon the concepts and principles of OVM. UVM was designed to be a **more standardized** and **flexible methodology** that could be easily adapted to different verification environments and use cases.
