@@ -5,6 +5,15 @@
   * Run time phases
   * Clean-Up phases  
 ![image](https://github.com/user-attachments/assets/95557858-122d-4add-b08d-cb5e6a49d7cd)
+## 為甚麼要引入這 12 個小的 phase? 
+* 分成小的 phase 是為了實現更精細的控制
+* reset、configure、main、shutdown 四個 phase 是核心,這四個 phase 通常模擬 DUT 的正常運作方式
+式:  
+(1)在 reset_phase 對 DUT 進行重設、初始化等操作  
+(2)在 configure_phase 則進行 DUT 的設定  
+(3)在 main_phase 主要是 DUT 的運行  
+(4)在 shutdown_phase 主要是一些與 DUT 斷電相關的操作  
+透過這種細分實現對 DUT 更加精確的控制,同時也讓我們實現在 phase 間的跳轉,更方便建構一些場景
 ## Main Phases
 ![image](https://github.com/user-attachments/assets/fecf14e8-1fe9-48f7-8ca0-4f7d401f376a)
 * Logically, the first thing to be done is to **create testbench component objects so that they can be connected together**. This is the reason for the **build_phase**. It is better to not start connecting them while other testbench components are still building their sub-components. So we have **connect_phase** which will **connect all the components that were built in the previous phase**. Although the next two phases are rarely used or are typically used to display UVM hierhachy information. **Test stimulus is driven to the design during the run_phase** which is launched in parallel with other run-time phases that are described shown below.
