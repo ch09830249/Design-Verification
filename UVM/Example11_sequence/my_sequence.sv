@@ -32,7 +32,7 @@ endclass
     uvm_do
         1. 創建一個 my_transaction 的實例 m_trans
         2. 將其隨機化
-        3.最終將其送給 sequencer。
+        3. 最終將其送給 sequencer。
         
     如果不使用uvm_do宏，也可以直接使用 start_item 與 finish_item 的方式產生 transaction。
 

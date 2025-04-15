@@ -15,7 +15,10 @@ class my_driver extends uvm_driver;
     extern virtual task main_phase(uvm_phase phase);
 
 endclass
-
+/*
+    在每個 phase 中，UVM 會檢查是否有 objection 被提起（raise_objection），如果有，那麼等待這個 objection 被撤銷（drop_objection）後停止模擬；
+    如果沒有，則馬上結束當前 phase。
+*/
 task my_driver::main_phase(uvm_phase phase);
     phase.raise_objection(this);                                // 多加這個, 控制仿真的開始
     `uvm_info("my_driver", "main_phase is called", UVM_LOW);

@@ -9,7 +9,7 @@ module top_tb;
     reg clk;
     reg rst_n;
 
-    my_if input_if(clk, rst_n);         // 定義了 interface 後，在 top_tb 中實例化DUT時，就可以直接使用
+    my_if input_if(clk, rst_n);         // 定義了 interface 後，在 top_tb 中實例化 DUT 時，就可以直接使用，並將 interface 傳給其他組件來驅動或採樣 DUT
     my_if output_if(clk, rst_n);
 
     dut my_dut(.clk(clk),

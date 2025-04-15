@@ -26,7 +26,7 @@ task my_driver::main_phase(uvm_phase phase);
     while(!vif.rst_n)
         @(posedge vif.clk);
     /*
-        了while（1）循環因為 driver 只負責驅動 transaction，而不負責產生，只要有 transaction 就驅動，
+        while（1）循環因為 driver 只負責驅動 transaction，而不負責產生，只要有 transaction 就驅動，
         所以必須做成一個無限循環的形式。這與 monitor、reference model 和 scoreboard 的情況非常類似。
     */
     while(1) begin
