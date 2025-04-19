@@ -1,3 +1,4 @@
+# SVA
 ```
 always_comb
 begin
@@ -78,3 +79,41 @@ endproperty
 a13: assert property(p13);
 ```
 ![image](https://github.com/user-attachments/assets/cd61df9e-0f3e-485b-92ef-36c6177fd117)  
+```
+sequence s15a;
+  @(poseedge clk) a ##1 b;
+endsequence
+
+sequence s15b;
+  @(poseedge clk) c ##1 d;
+endsequence
+
+property p15a;
+  s15a |=> s15b;
+endproperty
+
+property p15b;
+  s15a.ended |-> ##2 s15b.ended;  // 前一個 sequence 結束的點當作連接點, s15a 結束的點, 就是延遲的第一拍
+endproperty
+
+// s15a 和 s15b 是同樣的意思
+
+a15a: assert property(p15a);
+a15b: assert property(p15b);
+```
+```
+property p17;
+  @(poseedge clk) c ? d == a : d == b;
+endproperty
+
+a17: assert property(p17);
+```
+![image](https://github.com/user-attachments/assets/4968979c-4931-48f0-a14b-f32afa971da5)  
+# $past
+![image](https://github.com/user-attachments/assets/24153a20-0169-4cbd-a70a-b63c055e82d8)  
+![image](https://github.com/user-attachments/assets/61c8927f-57b7-4cc2-a164-a1973357c8b1)  
+# 連續重複運算
+![image](https://github.com/user-attachments/assets/f421d00e-317a-4842-9e86-8d25e8766aab)  
+![image](https://github.com/user-attachments/assets/77386488-61fe-4874-974e-13f7da8adf0e)  
+![image](https://github.com/user-attachments/assets/9e2df2ed-ec59-4b62-b717-226f7a788a40)
+
