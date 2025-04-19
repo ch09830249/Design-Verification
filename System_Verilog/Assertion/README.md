@@ -112,8 +112,14 @@ a17: assert property(p17);
 # $past
 ![image](https://github.com/user-attachments/assets/24153a20-0169-4cbd-a70a-b63c055e82d8)  
 ![image](https://github.com/user-attachments/assets/61c8927f-57b7-4cc2-a164-a1973357c8b1)  
+
 # 連續重複運算
 ![image](https://github.com/user-attachments/assets/f421d00e-317a-4842-9e86-8d25e8766aab)  
 ![image](https://github.com/user-attachments/assets/77386488-61fe-4874-974e-13f7da8adf0e)  
-![image](https://github.com/user-attachments/assets/9e2df2ed-ec59-4b62-b717-226f7a788a40)
+![image](https://github.com/user-attachments/assets/9e2df2ed-ec59-4b62-b717-226f7a788a40)  
+![image](https://github.com/user-attachments/assets/c5822bbf-42d3-432e-bb55-58285678cb32)  
+![image](https://github.com/user-attachments/assets/214202ee-ccb7-4d58-be4c-17c796dd28f0)  
 
+# 跟隨重複
+![image](https://github.com/user-attachments/assets/b5b7898f-cdc8-48a8-a25d-6f97f0ac0a6b)  
+![image](https://github.com/user-attachments/assets/2b31cda3-b233-4a4b-8e8e-8d0dd18cdec7)  
