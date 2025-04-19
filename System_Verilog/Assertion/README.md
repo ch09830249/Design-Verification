@@ -156,3 +156,12 @@ a 拉高三次後有多隔一拍, 才 ##1
 ![image](https://github.com/user-attachments/assets/9ad18c59-6975-4c1d-87ae-e96d9174944c)  
 ![image](https://github.com/user-attachments/assets/79542841-0c5b-47cd-94ab-e112da6720c2)  
 
+# disable iff
+![image](https://github.com/user-attachments/assets/b6b62fbd-8acd-4bc4-b8bb-2361623ea5d8)  
+可以在某些條件滿足的情況下, 禁止屬性檢查
+
+# if..else
+![image](https://github.com/user-attachments/assets/59d5aaef-f446-4f67-88a9-a18721b31af5)
+PS: 只能用在後續算子中
+
+# expect
