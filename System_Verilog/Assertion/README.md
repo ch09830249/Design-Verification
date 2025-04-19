@@ -126,5 +126,33 @@ a17: assert property(p17);
 a 三次拉起後, 緊接著 ##1
 # 非連續非跟隨重複
 ![image](https://github.com/user-attachments/assets/7072c071-3c3c-49e9-b8fc-dd0b30aefea3)  
-![image](https://github.com/user-attachments/assets/dd1779e5-8266-4b67-a6b0-fdcef5a8377d)
+![image](https://github.com/user-attachments/assets/dd1779e5-8266-4b67-a6b0-fdcef5a8377d)  
 a 拉高三次後有多隔一拍, 才 ##1
+
+# And
+![image](https://github.com/user-attachments/assets/001d9ed2-9f96-45cf-ba2c-bc93e52994ce)  
+![image](https://github.com/user-attachments/assets/a5139046-4143-4441-8f78-3d601337fcc9)  
+
+# Intersect
+![image](https://github.com/user-attachments/assets/f388f57d-9028-4c29-ad07-eed589916f01)
+![image](https://github.com/user-attachments/assets/efef1abb-00aa-4133-9f03-81a58bdec27d)  
+![image](https://github.com/user-attachments/assets/6f34291a-2d4a-44b5-8723-68f92836ae77)  
+
+# Or
+![image](https://github.com/user-attachments/assets/6e1a8594-6345-4a4e-a9ff-7876815cdfbe)  
+![image](https://github.com/user-attachments/assets/138391c3-8823-4c7d-9bbf-2a76acc390c4)  
+
+# first_match
+![image](https://github.com/user-attachments/assets/4b6fc907-a67b-49d4-831c-8a4d9563f5a0)  
+![image](https://github.com/user-attachments/assets/0097e673-bf67-4043-9272-0ac321bd8c9e)  
+
+# throughout
+某條件或是某信號要一直為高
+![image](https://github.com/user-attachments/assets/1203b0c5-bfca-4926-bddf-bf34e9001b2a)  
+![image](https://github.com/user-attachments/assets/e746db31-3153-40c2-9a46-7bacfe772ce8)  
+![image](https://github.com/user-attachments/assets/e01b1ce7-64fe-4ff1-9988-8ac96a3052a2)  
+
+# Within
+![image](https://github.com/user-attachments/assets/9ad18c59-6975-4c1d-87ae-e96d9174944c)  
+![image](https://github.com/user-attachments/assets/79542841-0c5b-47cd-94ab-e112da6720c2)  
+
