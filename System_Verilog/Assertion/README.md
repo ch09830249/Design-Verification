@@ -1,4 +1,5 @@
 # SVA
+![image](https://github.com/user-attachments/assets/cec0bea4-7997-49e2-bd62-8fd1acf4c1fe)  
 ```
 always_comb
 begin
@@ -165,3 +166,14 @@ a 拉高三次後有多隔一拍, 才 ##1
 PS: 只能用在後續算子中
 
 # expect
+cpu ready 拉高後
+![image](https://github.com/user-attachments/assets/9ea2acb8-50f6-4bac-b471-eb6694c87d49)
+
+# SVA local variable
+![image](https://github.com/user-attachments/assets/849c1f97-c588-431c-9f10-f485e0fb051f)  
+![image](https://github.com/user-attachments/assets/dbaa75ff-52bc-445c-8518-04561e780fde)  
+PS: 放到 sequence 最後去暫存 (逗號之後)
+
+# SVA 子程序
+![image](https://github.com/user-attachments/assets/db33d30e-bd66-47cc-842d-7633441394fe)  
+
