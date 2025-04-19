@@ -45,6 +45,7 @@ a6: assert property(p6);
 ```
 ![image](https://github.com/user-attachments/assets/9931da76-b2c0-48d1-aa57-e4db8dcc0828)  
 ![image](https://github.com/user-attachments/assets/d2f65df9-2ad8-437f-ae2b-26df06cb3cd8)  
+## Implication
 ```
 property p8;
   @(poseedge clk) a |-> b;  // 在先行條件滿足時 (a), 在同一拍看後續表達式是否也滿足 (b)
@@ -53,3 +54,27 @@ endproperty
 a8: assert property(p8);
 ```
 ![image](https://github.com/user-attachments/assets/9ceb345b-990d-461b-aef6-8f0c8772d7af)  
+```
+property p9;
+  @(poseedge clk) a |=> b;  // 在先行條件滿足時 (a), 在下一拍看後續表達式是否也滿足 (b)
+endproperty
+
+a9: assert property(p9);
+```
+![image](https://github.com/user-attachments/assets/e03d2e75-ec96-45ec-b198-aa51bb25f3f7)  
+```
+property p12;
+  @(poseedge clk) (a && b) |-> ##[1:3] c;  // 在任何一拍看 a 和 b 是否同時為高, 接下來 1 到 3 拍之間, c 應該至少在一個時間周期內為高
+endproperty
+
+a12: assert property(p12);
+```
+![image](https://github.com/user-attachments/assets/783817b2-8a29-4540-9245-3b13d0288680)  
+```
+property p13;
+  @(poseedge clk) a |-> ##[1:$] b #[0:$] c;  // 無限時序 (不建議使用)
+endproperty
+
+a13: assert property(p13);
+```
+![image](https://github.com/user-attachments/assets/cd61df9e-0f3e-485b-92ef-36c6177fd117)  
