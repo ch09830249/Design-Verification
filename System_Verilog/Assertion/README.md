@@ -120,6 +120,11 @@ a17: assert property(p17);
 ![image](https://github.com/user-attachments/assets/c5822bbf-42d3-432e-bb55-58285678cb32)  
 ![image](https://github.com/user-attachments/assets/214202ee-ccb7-4d58-be4c-17c796dd28f0)  
 
-# 跟隨重複
+# 非連續跟隨重複
 ![image](https://github.com/user-attachments/assets/b5b7898f-cdc8-48a8-a25d-6f97f0ac0a6b)  
 ![image](https://github.com/user-attachments/assets/2b31cda3-b233-4a4b-8e8e-8d0dd18cdec7)  
+a 三次拉起後, 緊接著 ##1
+# 非連續非跟隨重複
+![image](https://github.com/user-attachments/assets/7072c071-3c3c-49e9-b8fc-dd0b30aefea3)  
+![image](https://github.com/user-attachments/assets/dd1779e5-8266-4b67-a6b0-fdcef5a8377d)
+a 拉高三次後有多隔一拍, 才 ##1
