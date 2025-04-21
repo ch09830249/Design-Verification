@@ -8,6 +8,7 @@ unique-if/unique0-if evaluates conditions in any order and does the following : 
 module tb;
 	int x = 4;
 
+  // 所有 condition 平行檢查, 所以可以看出會不會有超過 1 個 condition 滿足
   initial begin
     // This if else if construct is declared to be "unique"
     // Error is not reported here because there is a "else"
@@ -25,7 +26,7 @@ module tb;
     unique if (x == 3)
       $display ("x is %0d", x);
     else if (x == 5)
-        $display ("x is %0d", x);
+      $display ("x is %0d", x);
   end
 endmodule
 
