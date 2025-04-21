@@ -16,6 +16,10 @@
   If a default skew is not specified, then all input signals will be sampled #1step and output signlas driven 0ns after the specified event.
 */
 
+/*
+  input 是從 testbench 的角度看：我「讀」DUT 的資料（DUT 輸出 → testbench 讀）
+  output 是我「寫」資料給 DUT（testbench 輸出 → DUT 接收）
+*/
 clocking ck1 @ (posedge clk);
 	default input #5ns output #2ns;               // Default: positive edge 前 5ns sample (input), 後 2ns driven (output)
 	input data, valid, ready = top.ele.ready;     // 沒特別另外說明就是跟著 default
