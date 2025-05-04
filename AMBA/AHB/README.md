@@ -543,6 +543,7 @@ endmodule: ahb_matrix
 ![image](https://github.com/user-attachments/assets/cc9001b6-b2a6-4884-80fa-20bf6b25e057)  
 未定義長度的增量突發傳輸  
 # Reference
+漫談AMBA總線-AHB: https://mp.weixin.qq.com/s?__biz=MzU1NzgxMDU3OQ==&mid=2247483709&idx=1&sn=33534de2815cf362d9823d1c3eb2a672&chksm=fc3157c1cb46ded7d0c98f9efd5a27c84ab1d5261d2f59ffc6dcb7e5bcb69a0ba2d1262f064f&cur_album_id=2261926741449539597&scene=189#wechat_redirect
 https://aijishu.com/a/1060000000135497  
 https://aijishu.com/a/1060000000299181  
 https://aijishu.com/a/1060000000229903  
