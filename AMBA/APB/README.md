@@ -441,6 +441,7 @@ write data is 1472319919, read data is 1472319919
 ![image](https://github.com/user-attachments/assets/89fea5cf-6ec4-4be4-9eee-93f1528a8c64)
 
 # Reference
+漫談AMBA匯流排-APB: https://mp.weixin.qq.com/s?__biz=MzU1NzgxMDU3OQ==&mid=2247483697&idx=1&sn=cfa52a9eccb98d1c3a97ec3f572e977d&chksm=fc3157cdcb46dedb501ec28c217d1d11d2b148fa1ca6c6b99eecfe45c8821909452061fb8e4d&cur_album_id=2261926741449539597&scene=189#wechat_redirect  
 https://cloud.tencent.com/developer/article/1689936  
 https://cloud.tencent.com.cn/developer/article/1689936  
 https://blog.csdn.net/TommiWei/article/details/134811535  
