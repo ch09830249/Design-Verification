@@ -117,6 +117,7 @@ D(A3) 是本次突發讀的最後一個讀取資料。
 **Note**: 在資料讀取時, 讀取的資料從圖中可以看到不是連續讀取, 說明 slave 是空間時才傳遞
 ![image](https://github.com/user-attachments/assets/70e8df14-44d9-45e1-aac6-b297d6114b4f)
 # Reference
+漫談AMBA總線-AXI4[概述]: https://mp.weixin.qq.com/s?__biz=MzU1NzgxMDU3OQ==&mid=2247484239&idx=1&sn=bbfcc8352842d80045c1562cd13bdb6c&chksm=fc3155b3cb46dca5470f93ce1554122c0780be0637b123f889f885f05e6a18c93ac811924a8e&cur_album_id=2261926741449539597&scene=189#wechat_redirect  
 https://blog.csdn.net/qq_42622433/article/details/134070812  
 https://www.bilibili.com/video/BV1yP12YdErw/?spm_id_from=333.337.search-card.all.click  
 https://hackmd.io/@Ji0m0/S1aoQO-yt  
