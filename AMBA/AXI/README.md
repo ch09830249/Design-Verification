@@ -13,18 +13,19 @@
     * AXI4-Stream 完全取消了對位址階段的要求,並允許無限的資料突發大小。
 ## AXI 的五個通道
 * AXI4 和 AXI4-Lite 介面都有 5 個不同的通道組成, 每個通道都有若干個介面訊號。
-  * **讀地址通道 (Read Address Channel)**
-  * **寫入地址通道 (Write Address Channel)**
-  * **讀數據通道 (Read Data Channel)**
-  * **寫入資料通道 (Write Data Channel)**
-  * **寫入響應通道 (Write Response Channel)**
+  * **讀地址通道 AR (Read Address Channel)**
+  * **寫入地址通道 AW (Write Address Channel)**
+  * **讀數據通道 R (Read Data Channel)**
+  * **寫入資料通道 W (Write Data Channel)**
+  * **寫入響應通道 B (Write Response Channel)**
 ## AXI的時序
 為了理解 AXI 的讀寫時序, 首先需要理解基於 valid-ready 的握手機制, 然能理解 AXI 的讀/寫流程, 接著理解給出 AXI 所有接口信號的涵義。
 最後理解 AXI 讀寫的時序圖,並以一個簡單的 AXI 接口的 block design 為例進行仿真,查看波形圖。
 ## AXI的握手機制
 AXI 基於 valid-ready 的握手機制:
-  * 發送方 (主 master) 透過置高 vaild 訊號表示位址/資料/控制訊息已準備好, 並保持在訊息總線上。  
-    接收方 (從 slave) 透過置高 ready 訊號表示接收方已做好接收的準備。在 ACLK 上升沿, 若 vaild、ready 同時為高, 則進行資料傳輸
+  * 發送方 (主 master) 透過**置高 vaild 訊號表示位址/資料/控制訊息已準備好, 並保持在訊息總線上**。
+  * 接收方 (從 slave) 透過**置高 ready 訊號表示接收方已做好接收的準備**。
+    * 在 ACLK 上升沿, 若 vaild、ready 同時為高, 則進行資料傳輸。
   * 每個 channel 都有自己的 handshake 機制，handshake 都是用 VALID/READY 來完成一次的傳輸。要傳輸資訊的一端不必等目的地是否有拉起 READY 就可以發送 VALID，但一旦發送 VALID 就必須等到目的地回 READY 才能結束 VALID。
   * VALID/READY handshake 機制可以有兩種做法:
     * 等有來源發送 VALID 後目的地若可以接收才回 READY。如下圖所示，T1 發送 VALID，T2 收到 VALID 後才回 READY，T3 完成此次的傳輸  
