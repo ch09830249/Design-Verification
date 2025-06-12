@@ -102,34 +102,37 @@ write data channel 另外需要注意的是 VALID 要看的是最後一筆 data 
 另外，AXI3 的時候並沒有要求 write response channel 的 VALID 必須要在 write address channel handshake 完成之後，因為當時並沒有預期會有可能有 write response channel 拉起 VALID 但還沒有完成 write address 傳輸的情況。
 # AXI-Full 的讀寫時序
 ## 時序圖圖例
-了解各圖形的意義
+了解各圖形的意義  
 ![image](https://github.com/user-attachments/assets/3bc4621c-32c3-4441-8779-63f8568fa93f)
 ## 寫時序
-* **Write Transcation: single data**
+* **Write Transcation: Single data**
   * Manager 向 Subordinate 寫數據時，Manager 先發送寫位址，再發送寫數據，最後等待 Subordinate 的回應。
 ![image](https://github.com/user-attachments/assets/9368c5c3-c455-4cb0-8062-79beb64662e9)
 
-* **Write Transcation: multi data**
+* **Write Transcation: Multi data**
   * 如圖所示, AXI4 協定主從設備間的寫入操作使用寫入位址、寫入資料和寫入回應通道。只需要一個位址就可以執行最大為 256 的 burst 長度的的寫入操作。
     * 1. 寫入位址: 寫入操作開始時, 主機發送位址和控制訊息到寫入位址通道。當位址通道上 AWVALID 和 AWREADY 同時為高時, 位置 A 會被有效的傳給設備, 然後主機將寫入資料到寫入資料頻道。
     * 2. 寫資料: 當 WREADY 和 WVALID 同時高的時候表示一個有效的寫資料。**當主機發發送最後一個資料時, WLAST 訊號變為高電位**
     * 3. 寫入回應: 當裝置接收完所有資料之後, 裝置會向主機發送一個寫入回應 BRESP 來表示寫交易完成, 當 BVALID 和 BREADY 同時為高的時候表示是有效的回應。
 ![image](https://github.com/user-attachments/assets/1248773e-a0a8-4116-95b6-e7027e3e3ed7)  
-![image](https://github.com/user-attachments/assets/0e263f8f-9c25-441d-8085-35f9aebb3b17)
-PS: 從第一個寫數據到最後一個寫數據（data1~data8），在一個 Transaction 中，整個 W 通道的數據過程稱為一次寫 Burst; 寫 Burst 內部每一拍的數據稱為一個寫 Beat。
+![image](https://github.com/user-attachments/assets/0e263f8f-9c25-441d-8085-35f9aebb3b17)  
+![image](https://github.com/user-attachments/assets/3d8367ba-7a14-401e-9737-b91db2edbf89)
+**Note**: 從第一個寫數據到最後一個寫數據（data1~data8），在一個 Transaction 中，整個 W 通道的數據過程稱為一次寫 Burst; 寫 Burst 內部每一拍的數據稱為一個寫 Beat。
 ## 讀時序
-* **Read Transcation ： single data**
+* **Read Transcation ： Single data**
   * Manager 向 Subordinate 讀數據時，Manager 先發送讀位址，然後等待 Subordinate 的回應。
 ![image](https://github.com/user-attachments/assets/877eebb3-5d7b-4be8-9efe-fb4ba659afde)
 
-* **Read Transcation ： multi data**
+* **Read Transcation ： Multi data**
   * 如圖所示, AXI4 協定主從設備間的讀取操作使用獨立的讀取位址和讀取資料通道, 只需要一個位置就可以執行最大為 256 的 burst 長度的讀取操作。
     * 1. 讀取位址: 主機發送位址和控制訊息到讀取位址通道中, 當位址通道上 ARVALID 和 ARREADY 同時為高時, 位址 ARADDR 被有效的傳給設備, 之後設備輸出的資料將出現在讀取資料通道上
     * 2. 讀取資料: 當 RREADY 和 RVALID 同時為高的時候表示有效的資料傳輸, 從圖中可以看到傳輸了4個資料。為了顯示一次突發式讀寫的完成, 裝置以 RLAST 訊號變高電位來表示最後一個被傳送的數據。
-D(A3) 是本次突發讀的最後一個讀取資料。
+D(A3) 是本次突發讀的最後一個讀取資料。  
 **Note**: 在資料讀取時, 讀取的資料從圖中可以看到不是連續讀取, 說明 slave 是空間時才傳遞
-![image](https://github.com/user-attachments/assets/70e8df14-44d9-45e1-aac6-b297d6114b4f)
+![image](https://github.com/user-attachments/assets/70e8df14-44d9-45e1-aac6-b297d6114b4f)  
 ![image](https://github.com/user-attachments/assets/2df9a99a-a555-4f1e-97bd-aaad7a71fcae)
+![image](https://github.com/user-attachments/assets/c6559990-2da3-4f8d-adf3-c1aa6f5e0042)
+
 對比讀操作和寫操作的波形可以明顯看出讀寫通道的不對稱。 可以看到每一個讀數據都有一個匹配的讀回應伴隨，讀回應藉助讀數據通道返回。 而寫操作波形圖中，有專門的通道（B通道）進行寫操作的回應。
 寫回應在寫數據操作完成之後返回一個寫回應，而對讀操作來說，伴隨著每個數據都有一個讀回應。 這也能體現兩者不對稱。
 # Reference
