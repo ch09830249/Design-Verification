@@ -251,3 +251,31 @@ print(calc.calculate(5, 3))  # 輸出 2
 2. 將這些演算法做分類，並為該類的演算法建立 interface
 3. 繼承該 interface，並實作這些演算法
 4. 使用者類別建立 interface 的 setter，供動態設定演算法 (這裡有用到多型)
+
+## (補充) 類的合成（Class Composition）
+* 定義：一個類別（class）透過擁有另一個類別的實例作為成員變數，來實現其功能。這是面向對象設計中「組合優於繼承」的實踐之一。
+![image](https://github.com/user-attachments/assets/a43b58b1-1a33-4ff4-abb4-05e492678c43)
+* 優點：
+  * 鬆耦合（Low coupling）：元件更容易重用與維護。
+  * 更好的封裝性：內部結構不會暴露給外部。
+  * 彈性高：可以在執行期間替換組成部分。
+```
+class Engine:
+    def start(self):
+        print("Engine started")
+
+class Car:
+    def __init__(self):
+        self.engine = Engine()  # 透過合成來使用 Engine 類
+
+    def start(self):
+        self.engine.start()
+        print("Car is ready to go")
+
+my_car = Car()
+my_car.start()
+```
+```
+Engine started
+Car is ready to go
+```
