@@ -170,3 +170,84 @@ public class PriceCalculator {
     }
 }
 ```
+## Example3
+```
+from abc import ABC, abstractmethod
+
+# 付款策略介面
+class PayStrategy(ABC):
+    @abstractmethod
+    def pay(self, amount):
+        pass
+
+# 信用卡付款
+class CreditCardPay(PayStrategy):
+    def pay(self, amount):
+        print(f"用信用卡付款：{amount} 元")
+
+# Line Pay 付款
+class LinePay(PayStrategy):
+    def pay(self, amount):
+        print(f"用 Line Pay 付款：{amount} 元")
+
+# 結帳上下文
+class Checkout:
+    def __init__(self, strategy: PayStrategy):
+        self.strategy = strategy
+
+    def set_strategy(self, strategy: PayStrategy):
+        self.strategy = strategy
+
+    def pay_bill(self, amount):
+        self.strategy.pay(amount)
+
+# 使用範例
+checkout = Checkout(CreditCardPay())
+checkout.pay_bill(500)  # 👉 用信用卡付款：500 元
+
+checkout.set_strategy(LinePay())
+checkout.pay_bill(300)  # 👉 用 Line Pay 付款：300 元
+```
+## Example4
+```
+from abc import ABC, abstractmethod
+
+# 策略介面
+class Strategy(ABC):
+    @abstractmethod
+    def execute(self, a, b):
+        pass
+
+# 策略 A：加法
+class AddStrategy(Strategy):
+    def execute(self, a, b):
+        return a + b
+
+# 策略 B：減法
+class SubtractStrategy(Strategy):
+    def execute(self, a, b):
+        return a - b
+
+# 上下文
+class Calculator:
+    def __init__(self, strategy: Strategy):
+        self.strategy = strategy
+
+    def set_strategy(self, strategy: Strategy):
+        self.strategy = strategy
+
+    def calculate(self, a, b):
+        return self.strategy.execute(a, b)
+
+# 用法
+calc = Calculator(AddStrategy())
+print(calc.calculate(5, 3))  # 輸出 8
+
+calc.set_strategy(SubtractStrategy())
+print(calc.calculate(5, 3))  # 輸出 2
+```
+## 心得
+1. 將程式中容易變動的行為 (演算法)，獨立出來，不要和不需要變動的程式碼混在一起
+2. 將這些演算法做分類，並為該類的演算法建立 interface
+3. 繼承該 interface，並實作這些演算法
+4. 使用者類別建立 interface 的 setter，供動態設定演算法 (這裡有用到多型)
