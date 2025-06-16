@@ -247,7 +247,7 @@ calc.set_strategy(SubtractStrategy())
 print(calc.calculate(5, 3))  # 輸出 2
 ```
 ## 心得
-1. 將程式中容易變動的行為 (演算法)，獨立出來，不要和不需要變動的程式碼混在一起
+1. 將程式中容易變動的行為 (演算法)，獨立出來並封裝，不要和不需要變動的程式碼混在一起
 2. 將這些演算法做分類，並為該類的演算法建立 interface
 3. 繼承該 interface，並實作這些演算法
 4. 使用者類別建立 interface 的 setter，供動態設定演算法 (這裡有用到多型)
