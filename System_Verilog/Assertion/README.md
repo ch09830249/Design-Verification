@@ -123,8 +123,61 @@ assert property(no_write_when_full);
 | 驗證「某信號成立後，幾個 clock 內需反應」 | Concurrent           |
 | 驗證 FIFO 不可滿時寫入、協定握手      | Concurrent           |
 | formal tool 建模與輸入約束      | Concurrent（用 assume） |
+## Sequence vs Property
+| 名稱             | 說明                                         |
+| -------------- | ------------------------------------------ |
+| **`sequence`** | 描述一串事件「**如何**」在時間上發生（即時序行為）                |
+| **`property`** | 用來定義某個「**時序條件**」是否該成立，可使用一個或多個 sequence 組成 |
+# Sequence
+* 定義事件之間的 時序規則（例如：信號在幾個 cycle 後發生、是否連續發生等）
+* 常用在握手、延遲、持續等時序驗證情境
+* 可重複使用，也可嵌套其他 sequence
+## 語法
+```
+sequence <sequence_name>;
+  @(posedge clk) expression1 ##delay expression2 ...;
+endsequence
+```
+```
+sequence handshake_seq;
+  @(posedge clk)
+  req ##1 ack;
+endsequence
+```
+req 為真後，下一個週期（##1） ack 必須為真。
+# Property
+* 用來描述「如果發生 A，就要看到 B」這類因果條件
+* 可以套用 sequence 或邏輯條件來形成完整的驗證目標
+* 與 assert property / assume property / cover property 搭配使用
+## 語法
+```
+property <property_name>;
+  @(posedge clk)
+  antecedent |-> consequent;
+endproperty
+```
+* |-> 表示非重疊 implies（「如果」前面為真，則「之後」後面要為真）
+```
+sequence handshake_seq;
+  @(posedge clk) req ##1 ack;
+endsequence
 
-##
+property handshake_prop;
+  @(posedge clk) handshake_seq;
+endproperty
+
+assert property (handshake_prop);
+```
+property 是使用 sequence 的容器，實際驗證條件是 req -> ack 的時序。
+| 比較項目     | `sequence`                     | `property`                          |
+| -------- | ------------------------------ | ----------------------------------- |
+| 功能       | 定義一連串事件的時序關係                   | 定義時序條件（可以包含 `sequence`）             |
+| 是否能直接斷言  | ❌ 不行，需放在 property 中使用          | ✅ 可以直接用 `assert property()`         |
+| 結構層次     | 通常較低層（建構用）                     | 較高層（驗證用）                            |
+| 可否組合其他語法 | ✅ 可以用 `and`, `or`, `##`, `[*]` | ✅ 可結合 `sequence`, `disable iff` 等語法 |
+| 用途       | 建模時序行為                         | 驗證是否滿足特定時序行為                        |
+
+## MISC
 ![image](https://github.com/user-attachments/assets/cec0bea4-7997-49e2-bd62-8fd1acf4c1fe)  
 ```
 always_comb
