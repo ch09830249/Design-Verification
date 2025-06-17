@@ -1,4 +1,130 @@
 # SVA
+* SystemVerilog Assertions (SVA) 是 SystemVerilog 語言的一部分，專門用來**對設計的行為進行形式化的驗證和檢查**。它是一套功能強大且語意清楚的機制，可幫助硬體設計者和驗證工程師**在模擬、形式驗證中驗證時序與邏輯條件是否正確達成**。
+* Assertion 被放在 verilog 設計中，方便在模擬時查看異常情況。當異常出現時，斷言會報警。一般在數位電路設計中都要加入斷言，斷言占整個設計的比例應不少於 30%。
+# 立即斷言 Immediate Assertions
+用來在模擬時「立即」檢查某個條件是否為真。這類斷言是在程式語句（例如 initial、always、task 或 function）中執行時就立即求值，不涉及時序或延遲行為。
+## Immediate Assertion 的三種類型
+| 類型       | 說明              | 主要用途     |
+| -------- | --------------- | -------- |
+| `assert` | 條件不成立時報錯        | 驗證條件是否正確 |
+| `assume` | 假設條件成立（多用於形式驗證） | 限制環境條件   |
+| `cover`  | 條件是否曾經成立過（覆蓋點）  | 蒐集覆蓋率    |
+## 語法格式
+```
+assert (expression) [action_block];
+assume (expression) [action_block];
+cover  (expression) [action_block];
+```
+* expression：要檢查的條件。
+* action_block：當條件不成立時要執行的動作（可選），通常是錯誤訊息或自定動作。
+## 範例
+1. assert：檢查條件，否則報錯
+```
+always @(posedge clk) begin
+  assert (data_valid == 1'b1)
+    else $fatal("錯誤：data_valid 沒有被拉高！");
+end
+```
+2. assume：假設條件為真（形式驗證用）
+```
+always @(posedge clk) begin
+  assume (reset_n == 1'b1);
+end
+```
+3. cover：檢查條件是否曾經發生過
+```
+initial begin
+  cover (start == 1'b1);
+end
+```
+## 錯誤等級
+| 等級   | 系統任務       | 說明                        |
+| ---- | ---------- | ------------------------- |
+| 致命錯誤 | `$fatal`   | 立即終止模擬。用於無法繼續模擬的重大錯誤。     |
+| 錯誤   | `$error`   | 報告錯誤，不終止模擬。用於需關注的邏輯錯誤。    |
+| 警告   | `$warning` | 報告警告，不會終止模擬。通常為非預期但非致命行為。 |
+| 資訊   | `$info`    | 報告資訊性訊息。用於除錯與記錄模擬事件。      |
+# 併發斷言 Concurrent Assertions
+* 併發斷言檢查跨越多個時鐘週期的事件序列。
+* SystemVerilog Assertions（SVA）中最強大也最常用的一種斷言形式，**主要用來描述和驗證設計的時序行為**。
+* 與 Immediate Assertions 不同，Concurrent Assertions **不是在一個瞬間求值**，而是**描述跨時鐘週期發生的序列（sequence）或屬性（property）**，例如「如果某個信號發生，接下來幾個週期內應該看到另一個信號」。
+* 併發斷言僅在有時鐘周期的情況下出現
+* 測試表達式是基於所涉及變數的採樣值在時鐘邊緣進行計算的
+* 它可以放在過程塊、模組、介面或程式定義中
+* 區別併發斷言和立即斷言的關鍵字是property
+## 基本結構
+```
+property <property_name>;
+  @(clocking_event) <sequence_expression>;
+endproperty
+assert property (<property_name>);
+```
+| 組件                | 說明                              |
+| ----------------- | ------------------------------- |
+| `property`        | 定義時序屬性，可重複使用                    |
+| `@()`             | 指定檢查的時鐘邊緣（通常是 `@(posedge clk)`） |
+| `sequence`        | 定義事件的發生順序與時間間隔                  |
+| `assert property` | 觸發並行斷言，進行驗證                     |
+## 三種關鍵用途
+| 關鍵字               | 用途                   |
+| ----------------- | -------------------- |
+| `assert property` | 驗證 property 是否成立     |
+| `assume property` | 假設 property 在形式驗證中成立 |
+| `cover property`  | 檢查是否曾經滿足過 property   |
+## 常用時序操作符（Temporal Operators）
+| 操作符           | 說明              |                          |
+| ------------- | --------------- | ------------------------ |
+| `##n`         | 延遲 n 個時鐘週期      |                          |
+| \`            | ->\`            | 非重疊 implies（前項發生後，後項才開始） |
+| \`            | =>\`            | 重疊 implies（前項和後項可同時開始）   |
+| `[*n]`        | 重複 n 次          |                          |
+| `[->n]`       | 在 n 個時鐘週期內發生一次  |                          |
+| `throughout`  | 表示整個區間內某條件一直成立  |                          |
+| `within`      | 某序列發生在另一序列時間範圍內 |                          |
+| `first_match` | 比對序列中第一個符合條件的事件 |                          |
+## 範例
+1. 簡單握手協定
+```
+property handshake;
+  @(posedge clk)
+  req |-> ##1 ack;
+endproperty
+
+assert property(handshake);
+```
+* 在 posedge clk 發現 req 為真後，下一個時鐘週期（##1） ack 必須為真。
+2. FIFO 滿時禁止寫入
+```
+property no_write_when_full;
+  @(posedge clk)
+  fifo_full |-> ##1 !write;
+endproperty
+
+assert property(no_write_when_full);
+```
+* 若 fifo_full 為真，下一個 cycle write 必須為假。
+## Immediate Assertions vs Concurrent Assertions
+| 比較項目                 | Immediate Assertions（即時斷言）      | Concurrent Assertions（並行斷言）                          |
+| -------------------- | ------------------------------- | ---------------------------------------------------- |
+| 📌 **語法位置**          | 嵌入在程序區塊中（如 `initial`, `always`） | 定義為 `property` 或 `sequence` 並用 `assert property` 等調用 |
+| 🕒 **執行時機**          | **立即求值**（模擬時瞬間執行）               | **延遲求值**（根據時序、在多個 clock cycle 之間進行）                  |
+| ⏱ **時序能力**           | 無法描述跨時間點行為，只能驗證某一時刻的條件          | 可描述事件之間的時序關係（如延遲、重複、持續等）                             |
+| 🧠 **適合用途**          | 驗證簡單條件、參數範圍、即時錯誤檢查              | 協定驗證、流程驗證、複雜時序條件                                     |
+| 💬 **語法簡單度**         | 簡單，直覺（類似 C 語言條件判斷）              | 較複雜，需要熟悉序列（sequence）與屬性（property）語法                  |
+| 🔁 **可重複使用**         | 不易模組化或重複使用                      | 支援定義 `sequence` 和 `property`，便於封裝與重用                 |
+| 🔄 **覆蓋分析**          | 可用 `$coverage`, `cover` 收集資訊    | 使用 `cover property` 精確收集時序行為覆蓋                       |
+| ❌ **reset 忽略**       | 需額外用 `if (~reset)` 包住           | 可使用 `disable iff` 忽略 reset 期間的錯誤報告                   |
+| 🧪 **與 Formal 工具搭配** | 支援，但功能有限                        | 完整支援，可直接套用於形式驗證環境                                    |
+## 使用時機
+| 使用場景                     | 建議斷言類型               |
+| ------------------------ | -------------------- |
+| 檢查變數是否符合某個邏輯或範圍          | Immediate            |
+| 驗證在 reset 後 flag 一定為 0   | Immediate            |
+| 驗證「某信號成立後，幾個 clock 內需反應」 | Concurrent           |
+| 驗證 FIFO 不可滿時寫入、協定握手      | Concurrent           |
+| formal tool 建模與輸入約束      | Concurrent（用 assume） |
+
+##
 ![image](https://github.com/user-attachments/assets/cec0bea4-7997-49e2-bd62-8fd1acf4c1fe)  
 ```
 always_comb
