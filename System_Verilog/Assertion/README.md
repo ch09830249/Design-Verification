@@ -356,3 +356,8 @@ PS: 放到 sequence 最後去暫存 (逗號之後)
 # SVA 子程序
 ![image](https://github.com/user-attachments/assets/db33d30e-bd66-47cc-842d-7633441394fe)  
 
+# Reference
+https://blog.csdn.net/bleauchat/article/details/90415146#t0  
+https://www.cnblogs.com/lyc-seu/p/12718412.html#2sva-system-verilog-assertion  
+https://picture.iczhiku.com/resource/eetop/wykeeyuapZRZJNBn.pdf  
+https://zhuanlan.zhihu.com/p/626346304
