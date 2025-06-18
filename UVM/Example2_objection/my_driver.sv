@@ -1,8 +1,7 @@
 /*
     main_phase 是一個完整的任務，沒有理由只執行第一句，而後面的程式碼不執行。看起來似乎 main_phase 在執行的過程中被外力「殺死」了，
     事實上也確實如此。UVM 中透過 objection 機制來控制驗證平台的關閉。細心的讀者可能會發現，在上節的例子中，並沒有如2.2.1節所示明確地調用
-    finish 語句來結束仿真。但是在運行上節範例時，模擬平台確實關閉了。在每個 phase 中，UVM 會檢查是否有 objection 被提起
-    （raise_objection），如果有，那麼等待這個 objection 被撤銷（drop_objection）後停止模擬；如果沒有，則馬上結束當前 phase。
+    finish 語句來結束仿真。但是在運行上節範例時，模擬平台確實關閉了。
 */
 class my_driver extends uvm_driver;
 
@@ -38,7 +37,7 @@ task my_driver::main_phase(uvm_phase phase);
 endtask
 
 /*
-    raise_objection 語句必須在 main_phase 中第一個消耗模擬時間的語句之前。如 $display 語句是不消耗仿真時間的，這些語句可
+    PS: raise_objection 語句必須在 main_phase 中第一個消耗模擬時間的語句之前。如 $display 語句是不消耗仿真時間的，這些語句可
     以放在 raise_objection 之前，但是類似 @posedge top.clk）等語句是要消耗模擬時間的。照如下的方式使用 raise_objection 是無法
     起到作用的
 */

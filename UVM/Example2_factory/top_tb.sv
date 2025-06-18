@@ -28,11 +28,14 @@ module top_tb;
         // drv = new("drv", null);
         // drv.main_phase(null);
         // $finish();
-        run_test("my_driver");      // 改成這個
+        run_test("my_driver");      // 改成這個  PS: UVM 根據 "my_driver" 這個字串創建了其所代表類別的一個實例
         /*
         一個 run_test 語句會建立一個 my_driver 的實例，並且會自動呼叫 my_driver 的 main_phase (要透過 uvm_component_utils 註冊過才行)
         1. 自動實例化已註冊的 class
         2. 自動呼叫該 class 的 _phase 函數
+        */
+        /*
+        在 UVM 驗證平台中，只要一個類別使用 uvm_component_utils 註冊且此類被實例化，那麼這個類別的 main_phase 就會自動被呼叫。
         */
     end
 
