@@ -15,7 +15,7 @@ class my_env extends uvm_env;
         drv = my_driver::type_id::create("drv", this);  // factory 機制所帶來的獨特的實例化方式。只有使用 factory 機制註冊過的類別才能使用這種方式實例化
     endfunction
 
-    `uvm_component_utils(my_env)    // 使用 uvm_component_utils 宏來實現 factory 的註冊。
+    `uvm_component_utils(my_env)    // 容器類別在模擬中也是一直存在的，使用 uvm_component_utils 宏來實現 factory 的註冊。
 
 endclass
 
