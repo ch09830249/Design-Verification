@@ -20,6 +20,12 @@ module top_tb;
                .tx_en(output_if.valid));
 
     initial begin
+        /* 
+            因為是用 run_test 去實例化 my_driver, 所以無法像操控 dut 一樣 
+            (top_tb.my_dut.xxx 是可以的，但是 top_tb.my_driver.xxx 是不可以的)
+            原因在於 UVM 透過 run_test 語句實例化了一個脫離了 top_tb 層次結構的實例，建立了一個新的層次結構
+            所以需透過 config db 機制, set 寄信 get 收信
+        */
         run_test("my_driver");
     end
 
