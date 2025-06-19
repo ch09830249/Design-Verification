@@ -11,6 +11,7 @@ class my_env extends uvm_env;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         drv = my_driver::type_id::create("drv", this);
+        // 一個用來監測 DUT 的輸入口，一個用來監測 DUT 的輸出口
         i_mon = my_monitor::type_id::create("i_mon", this);     // 當完成 monitor 的定義後，可以在 env 中進行實例化
         o_mon = my_monitor::type_id::create("o_mon", this);
     endfunction
