@@ -10,6 +10,10 @@ class my_env extends uvm_env;
         super.new(name, parent);
     endfunction
 
+    /*
+        在 UVM 的樹狀結構中，build_phase 的執行遵照從樹根到樹葉的順序，也就是先執行 my_env 的 build_phase，再執行 my_driver 的 build_phase。
+        當把整棵樹的 build_phase 都執行完畢後，再執行後面的 phase。
+    */
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         drv = my_driver::type_id::create("drv", this);  // factory 機制所帶來的獨特的實例化方式。只有使用 factory 機制註冊過的類別才能使用這種方式實例化
