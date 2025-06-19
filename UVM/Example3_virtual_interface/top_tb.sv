@@ -49,7 +49,7 @@ module top_tb;
         set:
             virtual my_if:      uvm_config_db#（virtual my_if）則是一個參數化的類，其參數就是要寄信的類型，這裡是 virtual my_if
             null:
-            "uvm_test_top":     表示的是路徑索引
+            "uvm_test_top":     表示的是路徑索引 (無論傳遞給 run_test 的參數是什麼，UVM 透過 run_test 語句建立一個名字為 uvm_test_top 的實例。)
             "vif":              此參數必須和 get 的第三個參數一致
             input_if:           表示要將哪個 interface 透過 config_db 傳遞給 my_driver
         */
