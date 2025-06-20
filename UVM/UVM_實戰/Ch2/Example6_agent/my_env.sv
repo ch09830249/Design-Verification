@@ -1,3 +1,10 @@
+/*
+    1. 只有 uvm_component 才能作為樹的結點，像 my_transaction 這種使用 uvm_object_utils 宏實現的類別是不能作為 UVM 樹的結點的。
+    2. UVM 要求 UVM 樹最晚在 build_phase 時段完成，如果在 build_phase 後的某個 phase 實例化一個 component，UVM 會給出以下錯誤提示。
+       那麼是不是只能在 build_phase 中執行實例化的動作呢？答案是否定的。
+       其實還可以在 new 函數中執行實例化的動作
+       EX: 可以在 my_agent 的 new 函數中實例化 driver 和 monitor
+*/
 class my_env extends uvm_env;
 
     my_agent i_agt;
