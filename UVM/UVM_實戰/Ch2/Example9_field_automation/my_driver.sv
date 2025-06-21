@@ -37,6 +37,14 @@ task my_driver::drive_one_pkt(my_transaction tr);
         第 42 行呼叫 pack_bytes 將 tr 中所有的欄位變成 byte 流放入 data_q 中，在2.3.1節中是手動地將所有欄位放入 data_q 中的。
         pack_bytes 大大減少了程式碼量。在把所有的欄位變成 byte 流放入 data_q 中時，欄位依照 uvm_field 系列巨集書寫的順序排列。
         是先放入 dmac，再依序放入 smac、ether_type、pload、crc。
+        如果是以下 case
+        `uvm_object_utils_begin(my_transaction)
+            `uvm_field_int(smac, UVM_ALL_ON)
+            `uvm_field_int(dmac, UVM_ALL_ON)
+            `uvm_field_int(ether_type, UVM_ALL_ON)
+            `uvm_field_array_int(pload, UVM_ALL_ON)
+            `uvm_field_int(crc, UVM_ALL_ON)
+        `uvm_object_utils_end
         那麼將會先放入smac，再依序放入dmac、ether_type、pload、crc。
     */
     data_size = tr.pack_bytes(data_q) / 8;

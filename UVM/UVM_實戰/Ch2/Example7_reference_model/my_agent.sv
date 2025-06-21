@@ -32,4 +32,8 @@ function void my_agent::connect_phase(uvm_phase phase);
         賦給它，換句話說，這相當於是指向 my_monitor 的 ap 的指標
     */
     ap = mon.ap;
+    /*
+        根據前面介紹的 connect_phase 的執行順序，my_agent 的 onnect_phase 的執行順序早於 my_env 的 connect_phase 的執行順序，
+        從而可以保證執行到 i_agt.ap.connect 語句時，i_agt.ap 不是一個空指標。
+    */
 endfunction

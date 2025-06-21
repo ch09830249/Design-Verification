@@ -35,6 +35,7 @@ class my_transaction extends uvm_sequence_item;
         $display("crc = %0h", crc);
     endfunction
 
+    // 這裡多實現兩個 my_transaction 的複製
     function void my_copy(my_transaction tr);
         if(tr == null)
             `uvm_fatal("my_transaction", "tr is null!!!!")

@@ -54,7 +54,11 @@ task my_scoreboard::main_phase(uvm_phase phase);
                     get_actual.my_print();
                 end
             end
-            else begin  // Expect Queue 為空的
+            else begin  
+                /* 
+                    Expect Queue 為空的, 採用這種比較處理方式的前提是 exp_port 要比 act_port 先收到數據。由於 DUT 處理資料需要延時，
+                    而 reference model 是基於高階語言的處理，一般不需要延時，因此可以確保 exp_port 的資料在 act_port 的資料之前到來。
+                */
                 `uvm_error("my_scoreboard", "Received from DUT, while Expect Queue is empty");
                 $display("the unexpected pkt is");
                 get_actual.my_print();
