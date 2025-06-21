@@ -34,11 +34,11 @@ endclass
         2. 將其隨機化
         3. 最終將其送給 sequencer。
         
-    如果不使用uvm_do宏，也可以直接使用 start_item 與 finish_item 的方式產生 transaction。
+    如果不使用 uvm_do 宏，也可以直接使用 start_item 與 finish_item 的方式產生 transaction。
 
     一個 sequence 在向 sequencer 發送 transaction 前，要先向 sequencer 發送一個請求，sequencer 把這個請求放在一個仲裁佇列中。作
     為 sequencer，它需做兩件事：
-        第一，偵測仲裁佇列裡是否有某個 sequence 發送 transaction 的請求；
+        第一，偵測仲裁佇列裡是否有某個 sequence 發送 transaction 的請求
         ​​第二，偵測 driver 是否申請 transaction
 
     1）如果仲裁佇列裡有發送請求，但是 driver 沒有申請 transaction，那麼 sequencer 將會一直處於等待 driver 的狀態，直到 driver 申

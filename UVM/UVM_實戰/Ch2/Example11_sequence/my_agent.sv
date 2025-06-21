@@ -28,8 +28,8 @@ endfunction
 
 /*
     在 uvm_driver 中有成員變數 seq_item_port，而在 uvm_sequencer 中有成員變數 seq_item_export，
-    這兩者之間可以建立一個“通道”，通道中傳遞的 transaction 類型就是定義 my_sequencer 和 my_driver 時指定的
-    transaction 類型，這裡是 my_transaction，當然了，這裡並不需要明確地指定「通道」的類型，UVM已經做好了。
+    這兩者之間可以建立一個 “通道”，通道中傳遞的 transaction 類型就是定義 my_sequencer 和 my_driver 時指定的
+    transaction 類型，這裡是 my_transaction，當然了，這裡並不需要明確地指定「通道」的類型，UVM 已經做好了。
     在 my_agent 中，使用 connect 函數把兩者連結在一起：
 */
 

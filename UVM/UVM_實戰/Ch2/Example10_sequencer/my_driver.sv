@@ -1,4 +1,9 @@
-class my_driver extends uvm_driver#(my_transaction);    // 由於 uvm_driver 也是一個參數化的類，應該在定義 driver 時指明此 driver 要驅動的 transaction 的類型
+/* 
+    由於 uvm_driver 也是一個參數化的類，應該在定義 driver 時指明此 driver 要驅動的 transaction 的類型
+    這樣定義是可以直接使用 uvm_driver 中的某些預先定義好的成員變量，如 uvm_driver 中有成員變量 req，它的類型就是
+    傳遞給 uvm_driver 的參數
+*/
+class my_driver extends uvm_driver#(my_transaction);
     virtual my_if vif;
 
     `uvm_component_utils(my_driver)
@@ -19,8 +24,7 @@ class my_driver extends uvm_driver#(my_transaction);    // 由於 uvm_driver 也
 endclass
 
 /*
-    這樣定義的好處是可以直接使用 uvm_driver 中的某些預先定義好的成員變量，如 uvm_driver 中有成員變量 req，
-    它的類型就是傳遞給 uvm_driver 的參數，在這裡就是 my_transaction，可以直接使用 req，所以 main phase 可以調整
+    在這裡就是 my_transaction，可以直接使用 req，所以 main phase 可以調整
 */
 task my_driver::main_phase(uvm_phase phase);
     phase.raise_objection(this);

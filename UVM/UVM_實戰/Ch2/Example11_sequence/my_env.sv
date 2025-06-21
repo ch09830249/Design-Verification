@@ -35,12 +35,16 @@ class my_env extends uvm_env;
         scb.act_port.connect(agt_scb_fifo.blocking_get_export);
     endfunction
 
+    /*
+        sequence 如何向 sequencer 中送出 transaction呢？
+        只需要在某個 component（如 my_sequencer、my_env）的 main_phase 中啟動這個 sequence 即可
+    */
     // 啟動 sequence 並且設定 sequence 將 transaction 送給哪個 sequencer (也可以在 sequencer 設定)
     // task my_env::main_phase(uvm_phase phase);
     //     my_sequence seq;
-    //     phase.raise_objection(this);
+    //     phase.raise_objection(this);     // objection 一般伴隨著 sequence，通常只在 sequence 出現的地方才提起和撤銷 objection
     //     seq = my_sequence::type_id::create("seq");
-    //     seq.start(i_agt.sqr);           // start 任務的參數是一個 sequencer 指針，如果不指明此指針，則 sequence 不知道將產生的 transaction 交給哪個 sequencer。
+    //     seq.start(i_agt.sqr);            // start 任務的參數是一個 sequencer 指針，如果不指明此指針，則 sequence 不知道將產生的 transaction 交給哪個 sequencer。
     //     phase.drop_objection(this);
     // endtask
 
