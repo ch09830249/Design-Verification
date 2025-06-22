@@ -16,8 +16,9 @@ module top_tb;
                 .txd(output_if.data),
                 .tx_en(output_if.valid));
 
+    // top_tb 中 run_test 的參數從 my_env 變成了 base_test
     initial begin
-        run_test("my_env");
+        run_test("base_test");
     end
 
     initial begin
@@ -33,10 +34,11 @@ module top_tb;
         rst_n = 1'b1;
     end
 
+    // 並且 config_db 設定 virtual interface 的路徑參數要做如下改變：
     initial begin
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_agt.drv", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.i_agt.mon", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.o_agt.mon", "vif", output_if);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.drv", "vif", input_if);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.mon", "vif", input_if);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.o_agt.mon", "vif", output_if);
     end
 
 endmodule

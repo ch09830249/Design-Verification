@@ -23,11 +23,12 @@ class my_env extends uvm_env;
         agt_mdl_fifo = new("agt_mdl_fifo", this);
         mdl_scb_fifo = new("mdl_scb_fifo", this);
         agt_scb_fifo = new("agt_scb_fifo", this);
-
-        uvm_config_db#(uvm_object_wrapper)::set(this,
-                                                "i_agt.sqr.main_phase",     
-                                                "default_sequence",
-                                                my_sequence::type_id::get());
+        
+        // 改在 base_test 設定
+        // uvm_config_db#(uvm_object_wrapper)::set(this,
+        //                                         "i_agt.sqr.main_phase",     
+        //                                         "default_sequence",
+        //                                         my_sequence::type_id::get());
 
     endfunction
 
