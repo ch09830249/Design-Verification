@@ -100,3 +100,25 @@ PS: get_config_int 是 uvm_config_db#（int）：：get 的另一種寫法，這
     * 與 uvm_component_utils_begin 宏一樣，只是它適用於參數化的，且其中某些成員變數要使用 field_automation 機制實作的類別
 * **uvm_component_utils_end**
     * 它總是與 uvm_component_*_begin 成對出現，作為 factory 註冊的結束標誌
+# uvm_component 的限制
+uvm_component 是從 uvm_object 派生來的。從理論上來說，uvm_component 應該具有 uvm_object 的所有的行為特徵。但是，由於 uvm_component 是作為 UVM 樹的結點存在的，這一特性使得它**失去了 uvm_object 的某些特徵**。
+* 在 uvm_object 中有 **clone 函數，它用來分配一塊記憶體空間，並把另一個實例複製到這塊新的記憶體空間**。  
+clone 函數的使用方式如下：
+```
+class A extends uvm_object;
+…
+endclass
+class my_env extends uvm_env;
+    virtual function void build_phase(uvm_phase phase);
+        A a1;
+        A a2;
+        a1 = new("a1");
+        a1.data = 8'h9;
+        $cast(a2, a1.clone());
+    endfunction
+endclass
+```
+**上述的 clone 函數無法用於 uvm_component 中，因為一旦使用後，新 clone 出來的類，其 parent 參數無法指定。**
+* **copy 函數也是 uvm_object 的一個函數，在使用 copy 前，目標實例必須已經使用new函數分配好了記憶體空間**，而使用 clone 函數時，目標實例可以只是一個空指標。換言之，**clone = new + copy**。
+* **雖然uvm_component無法使用clone函數，但可以使用copy函數** 因為在呼叫 copy 之前，目標實例已經完成了實例化，其 parent 參數已經指定了。
+* uvm_component 的另一個限制是，**位於同一個父結點下的不同的 component，在實例化時不能使用相同的名字**
