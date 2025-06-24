@@ -1,3 +1,5 @@
+* 使用樹狀結構主要目的是，要讓 parent 能掌握它底下有哪些 children，同時 child 知道自己的 parent 是誰，parent 就不會用到一個根本不存在的 child
+* 當 child 實例化的時候，指定一個 parent 的變量，同時在每一個 component 的內部維護一個數組 m_children，當 child 實例化時，就把 child 的指標加入 parent 的 m_children 陣列中。這樣才能讓 parent 知道 child 是自己的孩子，同時也才能讓 child 知道 parent 是自己的父母。
 # uvm_component 中的 parent 參數
 UVM 透過 uvm_component 來實現樹狀結構。所有的 UVM 樹的結點本質上都是一個 uvm_component。每個 uvm_component 都有一個特點：它們在 new 的時候，需要指定一個類型為 uvm_component、名字是 parent 的變數：
 ```
