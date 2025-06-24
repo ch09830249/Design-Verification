@@ -100,4 +100,3 @@ PS: get_config_int 是 uvm_config_db#（int）：：get 的另一種寫法，這
     * 與 uvm_component_utils_begin 宏一樣，只是它適用於參數化的，且其中某些成員變數要使用 field_automation 機制實作的類別
 * **uvm_component_utils_end**
     * 它總是與 uvm_component_*_begin 成對出現，作為 factory 註冊的結束標誌
-# uvm_component 的限制
