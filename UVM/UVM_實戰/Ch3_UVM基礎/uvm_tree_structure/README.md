@@ -10,3 +10,20 @@ UVM 是以樹的形式組織在一起的，作為一棵樹來說，其樹根在�
 driver 和 monitor。 scoreboard、reference model、sequencer、driver 和 monitor 都是樹的葉子，樹到此為止，沒有更多的葉子了。關於葉子的判斷是正確的，但是關於樹根的推論是錯誤的。
 UVM 中真正的樹根是一個稱為 uvm_top 的東西
 ![image](https://github.com/user-attachments/assets/1de98988-7eee-4186-8e89-83247d2bdfdf)
+# 層次結構相關函數
+* **get_parent 函數**
+  * 用於得到目前實例的parent
+```
+extern virtual function uvm_component get_parent ();
+```
+* **get_child 函數**
+  * 與 get_parent 不同的是，get_child 需要一個 string 類型的參數 name，表示此 child 實例在實例化時指定的名字。因為一個component
+只有一個 parent，所以 get_parent 不需要指定參數；而可能有多個 child，所以必須指定 name 參數。
+```
+extern function uvm_component get_child (string name);
+```
+* **get_children 函數**
+  * 得到所有的child
+```
+extern function void get_children(ref uvm_component children[$]);
+```
