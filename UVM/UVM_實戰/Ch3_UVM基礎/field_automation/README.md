@@ -104,3 +104,4 @@ extern function int unpack_ints (ref int unsigned intstream[], input uvm_packer 
 extern virtual function uvm_object clone ();
 ```
 # field automation 機制中標誌位的使用
+# field automation 中宏與 if 的結合
