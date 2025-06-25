@@ -27,3 +27,19 @@ extern function uvm_component get_child (string name);
 ```
 extern function void get_children(ref uvm_component children[$]);
 ```
+* **get_first_child 和 get_next_child 函數**
+  * 除了一次得到所有的 child 外，還可以使用 get_first_child 和 get_next_child 的組合依序得到所有的 child
+```
+# extern function int get_first_child (ref string name);
+# extern function int get_next_child (ref string name);
+
+string name;
+uvm_component child;
+if (comp.get_first_child(name))
+   do begin
+      child = comp.get_child(name);
+      child.print();
+   end while (comp.get_next_child(name));
+```
+* **get_num_children 函數**
+  * 用於傳回目前 component 所擁有的child的數量
