@@ -58,9 +58,9 @@ PS: 對於 enum 類型來說，也只需要兩個參數
 `define uvm_field_aa_string_int(ARG, FLAG)
 `define uvm_field_aa_object_int(ARG, FLAG)
 ```
-這裡一共出現了15種。聯合數組有兩大識別標誌，一是索引的類型，二是儲存資料的類型。在這一系列uvm_field系列巨集中，
-出現的第一個類型是儲存資料類型，第二個類型是索引類型，如uvm_field_aa_int_string用於聲明那些儲存的資料是int，而其索引
-是string類型的聯合數組。
+* 聯合數組有兩大識別標誌，一是索引的類型，二是儲存資料的類型
+* 在這一系列 uvm_field 系列巨集中，出現的**第一個類型是儲存資料類型，第二個類型是索引類型**
+  * 如 uvm_field_aa_int_string 用於聲明那些儲存的資料是 int，而其索引是 string 類型的聯合數組
 # field automation 機制的常用函數
 * **copy 函數用於實例的複製**
   * 如果要把某個 A 實例複製到 B 實例中，那麼應該使用 B.copy（A）
@@ -104,4 +104,59 @@ extern function int unpack_ints (ref int unsigned intstream[], input uvm_packer 
 extern virtual function uvm_object clone ();
 ```
 # field automation 機制中標誌位的使用
+```
+//A=ABSTRACT Y=PHYSICAL
+//F=REFERENCE, S=SHALLOW, D=DEEP
+//K=PACK, R=RECORD, P=PRINT, M=COMPARE, C=COPY
+//--------------------------- AYFSD K R P M C
+parameter UVM_ALL_ON = 'b000000101010101;
+parameter UVM_COPY = (1<<0);
+parameter UVM_NOCOPY = (1<<1);
+parameter UVM_COMPARE = (1<<2);
+parameter UVM_NOCOMPARE = (1<<3);
+parameter UVM_PRINT = (1<<4);
+parameter UVM_NOPRINT = (1<<5);
+parameter UVM_RECORD = (1<<6);
+parameter UVM_NORECORD = (1<<7);
+parameter UVM_PACK = (1<<8);
+parameter UVM_NOPACK = (1<<9);
+```
+* UVM_ALL_ON 的值是’b000000101010101，表示開啟 copy、compare、print、record、pack 功能
+## Example
+考慮實現這樣一種功能：給 DUT 施加一種 CRC 錯誤的異常激勵。實作這個功能的一種方法是在 my_transaction 中加入一個 crc_err 的標誌位：
+```
+class my_transaction extends uvm_sequence_item;
+
+  rand bit[47:0] dmac;
+  rand bit[47:0] smac;
+  rand bit[15:0] ether_type;
+  rand byte pload[];
+  rand bit[31:0] crc;
+  rand bit crc_err;  // 但是這個 bit 不應該包入 transaction
+  …
+
+  function void post_randomize();
+    if(crc_err)
+      ; // do nothing
+    else
+      crc = calc_crc;
+  endfunction
+
+  …
+
+endclass
+```
+**Q:** 對於多出來的這個字段，是不是也應該用 uvm_field_int 巨集來註冊呢？如果不使用巨集註冊的話，那麼當呼叫 print 函數時，在顯示結果中就看不到其值，但是如果使用了宏，結果就是這個根本就不需要在 pack 和 unpack 操作中出現的欄位出現了
+**A:** 在後面的控制域中加入 UVM_NOPACK 的形式來實現
+```
+`uvm_object_utils_begin(my_transaction)
+  `uvm_field_int(dmac, UVM_ALL_ON)
+  `uvm_field_int(smac, UVM_ALL_ON)
+  `uvm_field_int(ether_type, UVM_ALL_ON)
+  `uvm_field_array_int(pload, UVM_ALL_ON)
+  `uvm_field_int(crc, UVM_ALL_ON)
+  `uvm_field_int(crc_err, UVM_ALL_ON | UVM_NOPACK)
+`uvm_object_utils_end
+```
+* **UVM_ALL_ON|UVM_NOPACK 的結果就是 ‘b000001101010101。這樣 UVM 在執行 pack 操作時，先檢查 bit9，發現其為 1，直接忽略 bit8 所代表的 UVM_PACK**
 # field automation 中宏與 if 的結合
