@@ -160,7 +160,7 @@ endclass
 ```
 * **UVM_ALL_ON|UVM_NOPACK 的結果就是 ‘b000001101010101。這樣 UVM 在執行 pack 操作時，先檢查 bit9，發現其為 1，直接忽略 bit8 所代表的 UVM_PACK**
 # field automation 中宏與 if 的結合
-在乙太網路中，有一種幀是 VLAN 幀，這種幀是在普通乙太網路幀基礎上擴展而來的。而且並不是所有的乙太網路幀都是 VLAN 幀，如果一個幀是 VLAN幀，那麼其中就會有 vlan_id 等字段（具體可以詳見乙太網路的相關協定），否則不會有這些欄位。**類似 vlan_id 等字段是屬於幀結構的一部分，但是這個字段可能有，也可能沒有**。由於讀者已經習慣了使用 uvm_field 系列巨集來進行 pack 和 unpack 操作，那麼很直觀的想法是使用動態數組的形式來實現：
+在乙太網路中，有一種幀是 VLAN 幀，這種幀是在普通乙太網路幀基礎上擴展而來的。而且並不是所有的乙太網路幀都是 VLAN 幀，如果一個幀是 VLAN 幀，那麼其中就會有 vlan_id 等字段（具體可以詳見乙太網路的相關協定），否則不會有這些欄位。**類似 vlan_id 等字段是屬於幀結構的一部分，但是這個字段可能有，也可能沒有**。由於讀者已經習慣了使用 uvm_field 系列巨集來進行 pack 和 unpack 操作，那麼很直觀的想法是使用動態數組的形式來實現：
 ```
 class my_transaction extends uvm_sequence_item;
       rand bit[47:0] smac;
@@ -172,9 +172,68 @@ class my_transaction extends uvm_sequence_item;
       `uvm_object_utils_begin(my_transaction)
           `uvm_field_int(smac, UVM_ALL_ON)
           `uvm_field_int(dmac, UVM_ALL_ON)
-          `uvm_field_array_int(vlan, UVM_ALL_ON)
+          `uvm_field_array_int(vlan, UVM_ALL_ON)   // 這是可有可無的
           `uvm_field_int(eth_type, UVM_ALL_ON)
           `uvm_field_array_int(pload, UVM_ALL_ON)
       `uvm_object_utils_end
 endclass
 ```
+在隨機化普通乙太網路幀時，可以使用如下的方式：**(不需要 VLAN)**
+```
+my_transaction tr;
+tr = new();
+assert(tr.randomize() with {vlan.size() == 0;});
+```
+協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN )**
+```
+my_transaction tr;
+tr = new();
+assert(tr.randomize() with {vlan.size() == 1;});
+```
+**協定中規定 vlan 的 4 個位元組各自有其不同的意義**，這 4 個位元組分別代表 4 個不同的欄位。如果使用上面的方式，問題雖然解決了，但是這 4 個字段的意思不太明確。
+一個可行的解決方案是：
+```
+class my_transaction extends uvm_sequence_item;
+
+  rand bit[47:0] dmac;
+  rand bit[47:0] smac;
+  rand bit[15:0] vlan_info1;
+  rand bit[2:0]  vlan_info2;
+  rand bit       vlan_info3;
+  rand bit[11:0] vlan_info4;
+  rand bit[15:0] ether_type;
+  rand byte      pload[];
+  rand bit[31:0] crc;
+
+  rand bit is_vlan;
+ ...
+  `uvm_object_utils_begin(my_transaction)
+    `uvm_field_int(dmac, UVM_ALL_ON)
+    `uvm_field_int(smac, UVM_ALL_ON)
+    if (is_vlan) begin         // 根據 is_vlan 決定這些 field 是否要註冊
+      `uvm_field_int(vlan_info1, UVM_ALL_ON)
+      `uvm_field_int(vlan_info2, UVM_ALL_ON)
+      `uvm_field_int(vlan_info3, UVM_ALL_ON)
+      `uvm_field_int(vlan_info4, UVM_ALL_ON)
+    end
+    `uvm_field_int(ether_type, UVM_ALL_ON)
+    `uvm_field_array_int(pload, UVM_ALL_ON)
+    `uvm_field_int(crc, UVM_ALL_ON | UVM_NOPACK)
+    `uvm_field_int(is_vlan, UVM_ALL_ON | UVM_NOPACK)
+  `uvm_object_utils_end
+ ...
+endclass
+```
+在隨機化普通乙太網路幀時，可以使用如下的方式：**(不需要 VLAN)**
+```
+my_transaction tr;
+tr = new();
+assert(tr.randomize() with {is_vlan == 0;});     // 有個 flag 去控制
+```
+協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN )**
+```
+my_transaction tr;
+tr = new();
+assert(tr.randomize() with {is_vlan == 1;});
+```
+使用這種方式的 VLAN 幀，在執行 print 操作時，4 個字段的資訊將會非常明顯；在呼叫 compare 函數時，如果兩個 transaction 不同，將會更明確地指明是哪個欄位不一樣。
