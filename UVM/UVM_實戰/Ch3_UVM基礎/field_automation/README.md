@@ -146,7 +146,7 @@ class my_transaction extends uvm_sequence_item;
 
 endclass
 ```
-**Q:** 對於多出來的這個字段，是不是也應該用 uvm_field_int 巨集來註冊呢？如果不使用巨集註冊的話，那麼當呼叫 print 函數時，在顯示結果中就看不到其值，但是如果使用了宏，結果就是這個根本就不需要在 pack 和 unpack 操作中出現的欄位出現了
+**Q:** 對於多出來的這個字段，是不是也應該用 uvm_field_int 巨集來註冊呢？如果不使用巨集註冊的話，那麼當呼叫 print 函數時，在顯示結果中就看不到其值，但是如果使用了宏，結果就是這個根本就不需要在 pack 和 unpack 操作中出現的欄位出現了  
 **A:** 在後面的控制域中加入 UVM_NOPACK 的形式來實現
 ```
 `uvm_object_utils_begin(my_transaction)
@@ -160,3 +160,21 @@ endclass
 ```
 * **UVM_ALL_ON|UVM_NOPACK 的結果就是 ‘b000001101010101。這樣 UVM 在執行 pack 操作時，先檢查 bit9，發現其為 1，直接忽略 bit8 所代表的 UVM_PACK**
 # field automation 中宏與 if 的結合
+在乙太網路中，有一種幀是 VLAN 幀，這種幀是在普通乙太網路幀基礎上擴展而來的。而且並不是所有的乙太網路幀都是 VLAN 幀，如果一個幀是 VLAN幀，那麼其中就會有 vlan_id 等字段（具體可以詳見乙太網路的相關協定），否則不會有這些欄位。**類似 vlan_id 等字段是屬於幀結構的一部分，但是這個字段可能有，也可能沒有**。由於讀者已經習慣了使用 uvm_field 系列巨集來進行 pack 和 unpack 操作，那麼很直觀的想法是使用動態數組的形式來實現：
+```
+class my_transaction extends uvm_sequence_item;
+      rand bit[47:0] smac;
+      rand bit[47:0] dmac;
+      rand bit[31:0] vlan[];
+      rand bit[15:0] eth_type;
+      rand byte pload[];
+      rand bit[31:0] crc;
+      `uvm_object_utils_begin(my_transaction)
+          `uvm_field_int(smac, UVM_ALL_ON)
+          `uvm_field_int(dmac, UVM_ALL_ON)
+          `uvm_field_array_int(vlan, UVM_ALL_ON)
+          `uvm_field_int(eth_type, UVM_ALL_ON)
+          `uvm_field_array_int(pload, UVM_ALL_ON)
+      `uvm_object_utils_end
+endclass
+```
