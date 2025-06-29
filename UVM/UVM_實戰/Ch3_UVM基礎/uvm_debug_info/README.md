@@ -124,3 +124,51 @@ Quit count reached!
 ```
 PS: 其中第一個參數 6 表示退出閾值，而第二個參數 NO 表示此值是不可以被後面的設定語句重載，其值還可以是 YES
 # 設定計數的目標
+## set_report_severity_action 函式
+在上一節中，當 UVM_ERROR 達到一定數量時，可以自動退出模擬。在計數當中，是不含 UVM_WARNING 的。可以透過設定 set_report_severity_action 函式來把 UVM_WARNING 加入計數目標：
+```
+virtual function void connect_phase(uvm_phase phase);
+      set_report_max_quit_count(5);
+      env.i_agt.drv.set_report_severity_action(UVM_WARNING, UVM_DISPLAY|UVM_COUNT);    // 可以把 env.i_agt.drv 的 UVM_WARNING 加入計數目標中
+…
+endfunction
+```
+## set_report_severity_action_hier 函式
+```
+env.i_agt.set_report_severity_action_hier(UVM_WARNING, UVM_DISPLAY| UVM_COUNT);    // env.i_agt 及其下所有結點的 UVM_WARNING 加入計數目標中
+```
+在預設情況下，UVM_ERROR 已經加入了統計計數。如果要把其從統計計數目標中移除
+```
+env.i_agt.drv.set_report_severity_action(UVM_ERROR, UVM_DISPLAY);  // Only display
+```
+## set_report_id_action 函式
+```
+env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY| UVM_COUNT);
+```
+上述程式碼將 ID 為 my_drv 的所有資訊加入計數中，無論是 UVM_INFO，或是 UVM_WARNING 或是 UVM_ERROR、UVM_FATAL
+## set_report_id_action_hier 函式
+```
+env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_COUNT);    // set_report_id_action同樣有其遞歸呼叫方式
+```
+## set_report_severity_id_action 函式
+UVM 還支援將它們聯合起來 (嚴重性和 ID) 進行設置
+```
+env.i_agt.drv.set_report_severity_id_action(UVM_WARNING, "my_driver", UVM_DISPLAY| UVM_COUNT);
+```
+## set_report_severity_id_action_hier 函式
+```
+env.i_agt.set_report_severity_id_action_hier(UVM_WARNING, "my_driver", UVM_DISPLAY| UVM_COUNT);
+```
+## 命令列中設定計數目標
+格式
+```
+<sim command> +uvm_set_action=<comp>,<id>,<severity>,<action>
+```
+```
+<sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv, my_driver, UVM_NG, UVM_DISPLAY|UVM_COUNT"
+```
+對所有的 ID 設置，可以使用 _ALL_ 來代替 ID
+```
+<sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv, _ALL_, UVM_WARNING, UVM_DISPLAY|UVM_COUNT"
+```
+# UVM 的斷點功能
