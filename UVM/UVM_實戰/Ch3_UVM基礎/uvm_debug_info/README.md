@@ -172,3 +172,145 @@ env.i_agt.set_report_severity_id_action_hier(UVM_WARNING, "my_driver", UVM_DISPL
 <sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv, _ALL_, UVM_WARNING, UVM_DISPLAY|UVM_COUNT"
 ```
 # UVM 的斷點功能
+* 在程式運作時，預先在某語句處設定一斷點。當程式執行到此處時，停止仿真，進入交互模式，從而進行調試。
+* 斷點功能需要從模擬器的角度進行設置，不同模擬器的設置方式不同。為了消除這些設定方式的不同，UVM支援內建的斷點功能，執行到斷點時，自動停止仿真，進入互動模式
+## UVM_STOP
+```
+virtual function void connect_phase(uvm_phase phase);
+      env.i_agt.drv.set_report_severity_action(UVM_WARNING, UVM_DISPLAY| UVM_STOP);
+…
+endfunction
+```
+當 env.i_agt.drv 中出現 UVM_WARNING 時，立即停止仿真，進入交互模式。這裡用到了 set_report_severity_action 函數
+只要將其中的 UVM_COUNT 替換為 UVM_STOP，就可以實現對應的斷點功能
+## 命令列中設定 UVM 斷點
+```
+<sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv,my_driver,UVM_WARNING,UVM_DISPLAY|UVM_STOP"
+```
+# 將輸出資訊導入文件中
+* 預設情況下，UVM 會將 UVM_INFO 等資訊顯示在標準輸出（終端螢幕）上。各個仿真器提供將顯示在標準輸出的資訊同時輸出到一個日誌檔 (log) 中的功能。但是這個日誌檔混雜了所有的 UVM_INFO、UVM_WARNING、UVM_ERROR及UVM_FATAL。
+* UVM 提供將特定資訊輸出到特定日誌檔案的功能
+## set_report_severity_file 函式
+```
+UVM_FILE info_log;
+UVM_FILE warning_log;
+UVM_FILE error_log;
+UVM_FILE fatal_log;
+
+virtual function void connect_phase(uvm_phase phase);
+  // 開檔案
+  info_log = $fopen("info.log", "w");
+  warning_log = $fopen("warning.log", "w");
+  error_log = $fopen("error.log", "w");
+  fatal_log = $fopen("fatal.log", "w");
+
+  // 設定要寫入的檔案
+  env.i_agt.drv.set_report_severity_file(UVM_INFO, info_log);
+  env.i_agt.drv.set_report_severity_file(UVM_WARNING, warning_log);
+  env.i_agt.drv.set_report_severity_file(UVM_ERROR, error_log);
+  env.i_agt.drv.set_report_severity_file(UVM_FATAL, fatal_log);
+
+  // UVM_LOG 記得要舉
+  env.i_agt.drv.set_report_severity_action(UVM_INFO, UVM_DISPLAY | UVM_LOG);
+  env.i_agt.drv.set_report_severity_action(UVM_WARNING, UVM_DISPLAY | UVM_LOG);
+  env.i_agt.drv.set_report_severity_action(UVM_ERROR, UVM_DISPLAY | UVM_COUNT | UVM_LOG);
+  env.i_agt.drv.set_report_severity_action(UVM_FATAL, UVM_DISPLAY | UVM_EXIT | UVM_LOG);
+......
+endfunction
+```
+將 env.i_agt.drv 的 UVM_INFO 輸出到 info.log，UVM_WARNING 輸出到 warning.log，UVM_ERROR 輸出到 error.log，UVM_FATAL 輸出到 fatal.log
+## set_report_severity_action_hier 函式
+```
+// 將 env.i_agt 及其下所有結點的輸出資訊分類輸出到不同的日誌檔案中
+env.i_agt.set_report_severity_file_hier(UVM_INFO, info_log);
+env.i_agt.set_report_severity_file_hier(UVM_WARNING, warning_log);
+env.i_agt.set_report_severity_file_hier(UVM_ERROR, error_log);
+env.i_agt.set_report_severity_file_hier(UVM_FATAL, fatal_log);
+env.i_agt.set_report_severity_action_hier(UVM_INFO, UVM_DISPLAY| UVM_LOG);
+env.i_agt.set_report_severity_action_hier(UVM_WARNING, UVM_DISPLAY| UVM_LOG);
+env.i_agt.set_report_severity_action_hier(UVM_ERROR, UVM_DISPLAY| UVM_COUNT |UVM_LOG);
+env.i_agt.set_report_severity_action_hier(UVM_FATAL, UVM_DISPLAY| UVM_EXIT | UVM_LOG);
+```
+## set_report_id_file 函數
+UVM 中也可以根據不同的 ID 來設定不同的日誌文件
+```
+UVM_FILE driver_log;
+UVM_FILE drv_log;
+
+virtual function void connect_phase(uvm_phase phase);
+  driver_log = $fopen("driver.log", "w");
+  drv_log = $fopen("drv.log", "w");
+
+  env.i_agt.drv.set_report_id_file("my_driver", driver_log);
+  env.i_agt.drv.set_report_id_file("my_drv", drv_log);
+
+  env.i_agt.drv.set_report_id_action("my_driver", UVM_DISPLAY | UVM_LOG);
+  env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY | UVM_LOG);
+......
+endfunction
+
+virtual function void final_phase(uvm_phase phase);
+  $fclose(driver_log);
+  $fclose(drv_log);
+endfunction
+```
+## set_report_id_action_hier 函式 (不贅述)
+## set_report_severity_id_file 函式
+```
+UVM_FILE driver_log;
+UVM_FILE drv_log;
+
+virtual function void connect_phase(uvm_phase phase);
+  driver_log = $fopen("driver.log", "w");
+  drv_log = $fopen("drv.log", "w");
+
+  env.i_agt.drv.set_report_severity_id_file(UVM_WARNING, "my_driver", driver_log);
+  env.i_agt.drv.set_report_severity_id_file(UVM_INFO, "my_drv", drv_log);
+
+  env.i_agt.drv.set_report_id_action("my_driver", UVM_DISPLAY | UVM_LOG);
+  env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY | UVM_LOG);
+endfunction
+```
+## set_report_severity_id_file_hier 函式 (不贅述)
+# 控制列印訊息的行為
+控制列印資訊行為系列函數 set_*_action 的典型應用。無論是 UVM_DISPLAY，還是 UVM_COUNT 或者是 UVM_LOG，都是 UVM 內部定義的一種行為
+```
+typedef enum
+{
+  UVM_NO_ACTION = 'b000000,
+  UVM_DISPLAY = 'b000001,
+  UVM_LOG = 'b000010,
+  UVM_COUNT = 'b000100,
+  UVM_EXIT = 'b001000,
+  UVM_CALL_HOOK = 'b010000,
+  UVM_STOP = 'b100000
+} uvm_action_type;
+```
+不同的行為有不同的位偏移，所以不同的行為可以用「或」的方式組合在一起
+```
+UVM_DISPLAY| UVM_COUNT | UVM_LOG
+```
+* UVM_NO_ACTION 是不做任何操作
+* UVM_DISPLAY 是輸出到標準輸出上
+* UVM_LOG 是輸出到日誌檔案中，它能運作的前提是設定好了日誌檔
+* UVM_COUNT 是作為計數目標
+* UVM_EXIT 是直接退出模擬
+* UVM_CALL_HOOK 是呼叫一個回調函數
+* UVM_STOP 是停止仿真，進入命令列交互模式
+在預設的情況下，UVM 設定瞭如下的行為：
+```
+set_severity_action(UVM_INFO, UVM_DISPLAY);
+set_severity_action(UVM_WARNING, UVM_DISPLAY);
+set_severity_action(UVM_ERROR, UVM_DISPLAY | UVM_COUNT);
+set_severity_action(UVM_FATAL, UVM_DISPLAY | UVM_EXIT);
+```
+* 從 UVM_INFO 到 UVM_FATAL，都會輸出到標準輸出中
+* UVM_ERROR 會作為模擬退出計數器的計數目標
+* 出現 UVM_FATAL 時會自動退出模擬
+透過設定為 UVM_NO_ACTION 來實現關閉某些資訊的輸出
+```
+virtual function void connect_phase(uvm_phase phase);
+      env.i_agt.drv.set_report_severity_action(UVM_INFO, UVM_NO_ACTION);
+endfunction
+```
+無論原本的冗餘度是什麼，經過上述設定後，env.i_agt.drv 的所有的 uvm_info 資訊都不會輸出
