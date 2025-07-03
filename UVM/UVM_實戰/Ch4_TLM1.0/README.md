@@ -71,21 +71,151 @@ uvm_transport_export#(REQ, RSP);
 PORT 和 EXPORT 體現的是一種控制流，在這種控制流中，PORT 具有高優先級，而 EXPORT 具有低優先級。只有高優先級的連接埠才能向低優先權的連接埠發起三種操作
 # UVM 中各種連接埠的互連
 ## PORT 與 EXPORT 的連接
-UVM 中使用 connect 函數來建立連線關係。如 A 要和 B 通訊（A 是發起者），那麼可以這麼寫：
-A.port.connect（B.export），但是不能寫成 B.export.connect（A.port）。
-只有發起者才能呼叫 connect 函數，而被動承擔者則作為 connect 的參數。
+* UVM 中使用 connect 函數來建立連線關係。  
+  如 A 要和 B 通訊（A 是發起者），那麼可以這麼寫：  
+  A.port.connect（B.export），但是不能寫成 B.export.connect（A.port）。
+* 只有發起者才能呼叫 connect 函數，而被動承擔者則作為 connect 的參數。
+* **Class A 的 code**
 ```
 class A extends uvm_component;
   `uvm_component_utils(A)
-  uvm_blocking_put_port#(my_transaction) A_port;
+  uvm_blocking_put_port#(my_transaction) A_port;  // 宣告該 PUT PORT
 …
 endclass
 
 function void A::build_phase(uvm_phase phase);
   super.build_phase(phase);
-  A_port = new("A_port", this);
+  A_port = new("A_port", this);    // 實例化該 PUT PORT，第一個參數是名字，第二個參數則是一個 uvm_component 類型的父結點變數
 endfunction
 
 task A::main_phase(uvm_phase phase);
 endtask
 ```
+以下為 PORT 的 new 函數
+```
+function new(string name,
+             uvm_component parent,
+             int min_size = 1;
+             int max_size = 1);
+```
+new 函數中的 min_size 和 max_size 指的是必須連接到這個 PORT 的下級連接埠數量的最小值和最大值，也即這一個 PORT 應該呼叫的connect 函數的最小值和最大值。如果採用默認值，即 min_size = max_size = 1，則只能連接一個 EXPORT
+* **Class B 的 code**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_blocking_put_export#(my_transaction) B_export;  // 宣告該 PUT EXPORT
+  …
+endclass
+
+function void B::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  B_export = new("B_export", this);    // 一樣實例化
+endfunction
+
+task B::main_phase(uvm_phase phase);
+endtask
+```
+在 env 中建立兩者之間的連結：
+```
+class my_env extends uvm_env;
+
+  A A_inst;
+  B B_inst;
+  …
+
+  virtual function void build_phase(uvm_phase phase);
+    …
+    A_inst = A::type_id::create("A_inst", this);
+    B_inst = B::type_id::create("B_inst", this);
+  endfunction
+  …
+
+endclass
+
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_inst.A_port.connect(B_inst.B_export);  // 連接兩個 component
+endfunction
+```
+## UVM 中的 IMP
+IMP 承擔了 UVM 中 TLM 的絕大部分實作程式碼
+```
+uvm_blocking_put_imp#(T, IMP);
+uvm_nonblocking_put_imp#(T, IMP);
+uvm_put_imp#(T, IMP);
+uvm_blocking_get_imp#(T, IMP);
+uvm_nonblocking_get_imp#(T, IMP);
+uvm_get_imp#(T, IMP);
+uvm_blocking_peek_imp#(T, IMP);
+uvm_nonblocking_peek_imp#(T, IMP);
+uvm_peek_imp#(T, IMP);
+uvm_blocking_get_peek_imp#(T, IMP);
+uvm_nonblocking_get_peek_imp#(T, IMP);
+uvm_get_peek_imp#(T, IMP);
+uvm_blocking_transport_imp#(REQ, RSP, IMP);
+uvm_nonblocking_transport_imp#(REQ, RSP, IMP);
+uvm_transport_imp#(REQ, RSP, IMP);
+```
+* IMP 定義中的 blocking、nonblocking、put、get、peek、get_peek、transport 等關鍵字不是它們發起做對應類型的操作，而只意味著它們可以和相應類型的 PORT 或 EXPORT 進行通信，且通信時作為被動承擔者
+* 依照控制流的優先排序，IMP的優先權最低，一個 PORT 可以連接到一個 IMP，並發起三種操作，反之則不行
+* 前六個 IMP 定義中的**第一個參數 T 是這個 IMP 傳輸的資料型態**。**第二個參數 IMP，為實現這個介面的一個 component (就是該 port 所在 component 的 pointer)**
+* **Class A 的 code**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_blocking_put_port#(my_transaction) A_port;
+  …
+endclass
+…
+
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat(10) begin
+    #10;
+    tr = new("tr");
+    assert(tr.randomize());
+    A_port.put(tr);    // 發送 transaction
+  end
+endtask
+```
+* **Class B 的 code**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_blocking_put_export#(my_transaction) B_export;
+  uvm_blocking_put_imp#(my_transaction, B) B_imp;
+  …
+endclass
+…
+function void B::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  B_export.connect(B_imp);    // 將 B 的 export 連接到 imp
+endfunction
+
+function void B::put(my_transaction tr);      // Class B 實作 put 函數, 單純 print 出來
+  `uvm_info("B", "receive a transaction", UVM_LOW)
+  tr.print();
+endfunction
+```
+PS: 在 B 的程式碼中，關鍵是要實作一個 put 函數/任務。如果不實現，將會給出如下的錯誤提示：
+```
+# ** Error: /home/landy/uvm/uvm-1.1d/src/tlm1/uvm_imps.svh(85): No field named 'put'.
+# Region: /uvm_pkg::uvm_blocking_put_imp #(top_tb_sv_unit::my_transact
+ion, top_tb_sv_unit::B)
+```
+* env 的 code 相同，連接 A 的 port 到 B 的 export
+* IMP 是作為連結的終點。在 UVM 中，只有 IMP 才能作為連結關係的終點。如果是 PORT 或 EXPORT 作為終點，則會報錯
+## port export imp 比較
+* **imp (Implementation)**
+  * 真正實作介面方法的端口
+  * 是最底層，實作者端
+  * 常見於 monitor、driver 或實際功能模組中。
+* **export**
+  * 代表一個實作了 interface 的元件（例如有 imp）
+  * 是一個**中介轉接點**，不實作方法，只是轉發到 imp
+  * 可以在層級架構中向上暴露 imp 的功能，讓其他元件可以透過 export 呼叫
+* **port**
+  * 主動方：會呼叫一個介面方法（例如 put()）
+  * 通常由上層元件發起呼叫  
+![image](https://github.com/user-attachments/assets/e722a5ed-6524-4fa4-8aef-491a8961297a)
+
