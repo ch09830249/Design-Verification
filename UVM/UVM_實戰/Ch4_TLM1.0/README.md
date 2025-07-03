@@ -205,6 +205,112 @@ ion, top_tb_sv_unit::B)
 ```
 * env 的 code 相同，連接 A 的 port 到 B 的 export
 * IMP 是作為連結的終點。在 UVM 中，只有 IMP 才能作為連結關係的終點。如果是 PORT 或 EXPORT 作為終點，則會報錯
+## PORT 與 IMP 的連接
+![image](https://github.com/user-attachments/assets/07eb0e42-0acb-4ebb-b7bc-fa5002fd108b)  
+| **Port 類型 (`A_port`)**           | **Imp 類型 (`B_imp`)**            | **B 中需定義的方法**                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `uvm_nonblocking_put_port`       | `uvm_nonblocking_put_imp`       | `function bit try_put(input T t);` <br> `function bit can_put();`                                                                                                                                       |
+| `uvm_put_port`                   | `uvm_put_imp`                   | `task put(input T t);` <br> `function bit try_put(input T t);` <br> `function bit can_put();`                                                                                                           |
+| `uvm_blocking_get_port`          | `uvm_blocking_get_imp`          | `task get(output T t);`                                                                                                                                                                                 |
+| `uvm_nonblocking_get_port`       | `uvm_nonblocking_get_imp`       | `function bit try_get(output T t);` <br> `function bit can_get();`                                                                                                                                      |
+| `uvm_get_port`                   | `uvm_get_imp`                   | `task get(output T t);` <br> `function bit try_get(output T t);` <br> `function bit can_get();`                                                                                                         |
+| `uvm_blocking_peek_port`         | `uvm_blocking_peek_imp`         | `task peek(output T t);`                                                                                                                                                                                |
+| `uvm_nonblocking_peek_port`      | `uvm_nonblocking_peek_imp`      | `function bit try_peek(output T t);` <br> `function bit can_peek();`                                                                                                                                    |
+| `uvm_peek_port`                  | `uvm_peek_imp`                  | `task peek(output T t);` <br> `function bit try_peek(output T t);` <br> `function bit can_peek();`                                                                                                      |
+| `uvm_blocking_get_peek_port`     | `uvm_blocking_get_peek_imp`     | `task get(output T t);` <br> `task peek(output T t);`                                                                                                                                                   |
+| `uvm_nonblocking_get_peek_port`  | `uvm_nonblocking_get_peek_imp`  | `function bit try_get(output T t);` <br> `function bit can_get();` <br> `function bit try_peek(output T t);` <br> `function bit can_peek();`                                                            |
+| `uvm_get_peek_port`              | `uvm_get_peek_imp`              | `task get(output T t);` <br> `function bit try_get(output T t);` <br> `function bit can_get();` <br> `task peek(output T t);` <br> `function bit try_peek(output T t);` <br> `function bit can_peek();` |
+| `uvm_blocking_transport_port`    | `uvm_blocking_transport_imp`    | `task transport(input T req, output T rsp);`                                                                                                                                                            |
+| `uvm_nonblocking_transport_port` | `uvm_nonblocking_transport_imp` | `function bit nb_transport(input T req, output T rsp);`                                                                                                                                                 |
+| `uvm_transport_port`             | `uvm_transport_imp`             | `task transport(input T req, output T rsp);` <br> `function bit nb_transport(input T req, output T rsp);`                                                                                               |
+
+在前述的這些規律中，對於所有blocking系列的連接埠來說，可以定義對應的任務或函數，如對於blocking_put連接埠來說，可以定
+義名字為put的任務，也可以定義名字為put的函數。這是因為A會呼叫B中名字為put的接口，而不管這個接口的型別。由於A中的
+put是個任務，所以B中的put可以是任務，也可以是函數。但是對於nonblocking系列連接埠來說，只能定義函數。
+## EXPORT 與 IMP 的連接
+PORT 可以與 IMP 連接，同樣的 EXPORT 也可以與IMP相連接，其連接方法與 PORT 和 IMP 的連接完全一樣
+```
+function void my_env::connect_phase(uvm_phase phase);
+          super.connect_phase(phase);
+          A_inst.A_export.connect(B_inst.B_imp);  // 就是將 A_port 改成 A_export
+endfunction
+```
+## PORT 與 PORT 的連接
+![image](https://github.com/user-attachments/assets/edb3c087-d918-4bf1-a3a2-12dfdca2404d)
+上圖中，A 與 C 中是 PORT，B 中是 IMP。UVM 支援 C 的 PORT 連接到 A 的 PORT，並最終連接到 B 的 IMP
+* **Class C code (類似 driver)**
+```
+class C extends uvm_component;
+  `uvm_component_utils(C)
+  uvm_blocking_put_port#(my_transaction) C_port;
+  …
+endclass
+…
+task C::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat(10) begin
+    #10;
+    tr = new("tr");
+    assert(tr.randomize());
+    C_port.put(tr);
+  end
+endtask
+```
+* **Class A code (類似 agent)**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  C C_inst;
+  uvm_blocking_put_port#(my_transaction) A_port;
+  …
+endclass
+
+function void A::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  A_port = new("A_port", this);                     // 實例化 A_port
+  C_inst = C::type_id::create("C_inst", this);      // 實例化 Class C
+endfunction
+
+function void A::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  C_inst.C_port.connect(this.A_port);     // 在 class A 的 connect 連接
+endfunction
+
+task A::main_phase(uvm_phase phase);
+endtask
+```
+## EXPORT 與 EXPORT 的連接
+![image](https://github.com/user-attachments/assets/0a0477c6-5ba2-4572-a500-5b721027c6a8)
+* **Class C code (類似 C: agent, B: monitor)**
+```
+class C extends uvm_component;
+  `uvm_component_utils(C)
+  B B_inst;
+  uvm_blocking_put_export#(my_transaction) C_export;
+  …
+endclass
+
+function void C::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  C_export = new("C_export", this);              // 實例化 C_export
+  B_inst = B::type_id::create("B_inst", this);   // 實例化 Class B
+endfunction
+
+function void C::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  this.C_export.connect(B_inst.B_export);        // 連接 Class C 內部的連接 (C->B)
+endfunction
+
+task C::main_phase(uvm_phase phase);
+endtask
+```
+* **env**
+```
+function void my_env::connect_phase(uvm_phase phase);
+              super.connect_phase(phase);
+              A_inst.A_port.connect(C_inst.C_export); // 連接 A->C
+endfunction
+```
 ## port export imp 比較
 * **imp (Implementation)**
   * 真正實作介面方法的端口
@@ -218,4 +324,3 @@ ion, top_tb_sv_unit::B)
   * 主動方：會呼叫一個介面方法（例如 put()）
   * 通常由上層元件發起呼叫  
 ![image](https://github.com/user-attachments/assets/e722a5ed-6524-4fa4-8aef-491a8961297a)
-
