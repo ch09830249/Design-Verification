@@ -311,6 +311,194 @@ function void my_env::connect_phase(uvm_phase phase);
               A_inst.A_port.connect(C_inst.C_export); // 連接 A->C
 endfunction
 ```
+## blocking_get 端口的使用
+* 使用 blocking_get 系列連接埠的框圖如下圖所示
+![image](https://github.com/user-attachments/assets/547d9eef-20d0-4c8d-8b2e-75280b9dd3d5)
+在這種連結關係中，資料流依然是從 A 到 B，但 A 由動作發起者變成了動作接收者，而 B 由動作接收者變成了動作發起者。B_port 的型別為 uvm_blocking_get_port，A_export 的型別為 uvm_blocking_get_export，A_imp 的型別為 uvm_blocking_get_imp
+* uvm_blocking_get_imp 所在的 component 要實作一個名字為 get 的函數/任務
+* **Class A code 如下:**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_blocking_get_export#(my_transaction) A_export;
+  uvm_blocking_get_imp#(my_transaction, A) A_imp;
+  my_transaction tr_q[$];
+endclass
+
+function void A::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  A_export = new("A_export", this);
+  A_imp = new("A_imp", this);
+endfunction
+
+function void A::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_export.connect(A_imp);    //  在 A 的 connect_phase，需要把 A_export 和 A_imp 連接起來。
+endfunction
+
+/*
+  在 A 的 get 任務中，每隔 2 個時間單位檢查 tr_q 中是否有數據，如果有則發送出去
+  當 B 在其 main_phase 呼叫 get 任務時，會最終執行 A 的 get 任務。
+*/
+task A::get(output my_transaction tr);
+  while (tr_q.size() == 0) #2;
+  tr = tr_q.pop_front();
+endtask
+
+// A 每隔 10 sec 產生並塞一個新的 transaction 到 queue 中
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat (10) begin
+    #10;
+    tr = new("tr");
+    tr_q.push_back(tr);
+  end
+endtask
+```
+* **Class B code 如下:**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_blocking_get_port#(my_transaction) B_port;
+endclass
+
+function void B::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  B_port = new("B_port", this);
+endfunction
+
+task B::main_phase(uvm_phase phase);
+  my_transaction tr;
+  // 無限迴圈 get transaction 並印出
+  while (1) begin
+    B_port.get(tr);
+    `uvm_info("B", "get a transaction", UVM_LOW)
+    tr.print();
+  end
+endtask
+```
+* **env code 如下:**
+```
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  B_inst.B_port.connect(A_inst.A_export);
+endfunction
+```
+* 需要謹記的是連結的終點必須是一個 IMP
+## blocking_transport 端口的使用
+* 在 transport 系列連接埠中，通信變成了雙向的
+![image](https://github.com/user-attachments/assets/22c8e65d-83a6-4b2c-818a-e3da26f03533)
+* **Class A code 如下:**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_blocking_transport_port#(my_transaction, my_transaction) A_transport;
+endclass
+......
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  my_transaction rsp;
+  repeat (10) begin
+    #10;
+    tr = new("tr");
+    assert(tr.randomize());
+    A_transport.transport(tr, rsp);  // 在 A 中呼叫 transport 任務，並把生成的 transaction 當作第一個參數
+    `uvm_info("A", "received rsp", UVM_MEDIUM)
+    rsp.print();                     // A 根據接收到的 rsp 決定後面的行為
+  end
+endtask
+```
+* **Class B code 如下:**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_blocking_transport_imp#(my_transaction, my_transaction, B) B_imp;
+endclass
+
+// B 中的 transaport 任務接收到這筆 transaction，根據這筆 transaction 做某些操作，並把操作的結果當作 transport 的第二個參數送出
+task B::transport(my_transaction req, output my_transaction rsp);
+  `uvm_info("B", "receive a transaction", UVM_LOW)
+  req.print();
+  // do something according to req
+  #5;
+  rsp = new("rsp");
+endtask
+```
+* **env code 如下:**
+```
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_inst.A_transport.connect(B_inst.B_imp);
+endfunction
+```
+## nonblocking 端口的使用
+* nonblocking 的所有操作都是非阻塞的，換言之，**必須用函數實現，而不能用任務實現**
+![image](https://github.com/user-attachments/assets/2106d6dc-db20-47fe-be60-79ca90be6266)
+* **Class A code 如下:**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_nonblocking_put_port#(my_transaction) A_port;
+......
+endclass
+
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat (10) begin
+    tr = new("tr");
+    assert(tr.randomize());
+    while (!A_port.can_put()) #10;
+    void'(A_port.try_put(tr));
+  end
+endtask
+```
+* 由於連接埠變成了非阻塞的，所以在送出 transaction 之前需要呼叫 can_put 函數來確認是否能夠執行 put 操作。can_put 最終會調用 B 中的 can_put
+* **Class B code 如下:**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_nonblocking_put_imp#(my_transaction, B) B_imp;
+  my_transaction tr_q[$];
+......
+endclass
+
+// 確認 queue 中是否有 transaction
+function bit B::can_put();
+  if (tr_q.size() > 0)
+    return 0;
+  else
+    return 1;
+endfunction
+
+function bit B::try_put(my_transaction tr);
+  `uvm_info("B", "receive a transaction", UVM_LOW)
+  if (tr_q.size() > 0)
+    return 0;
+  else begin
+    tr_q.push_back(tr);
+    return 1;
+  end
+endfunction
+
+task B::main_phase(uvm_phase phase);
+  my_transaction tr;
+  while (1) begin
+    if (tr_q.size() > 0)
+      tr = tr_q.pop_front();
+    else
+      #25;
+  end
+endtask
+```
+* 在 A 中使用 can_put 來判斷是否可以發送，其實這裡還可以不用 can_put，而直接使用 try_put
+* 如果不使用 can_put，在 B 中仍然需要定義一個名字為 can_put 的函數，這個函數裡可以沒有任何內容，純粹是空函數
+* **env code 如下:**
+```
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_inst.A_export.connect(B_inst.B_imp);
+endfunction
+```
 ## port export imp 比較
 * **imp (Implementation)**
   * 真正實作介面方法的端口
