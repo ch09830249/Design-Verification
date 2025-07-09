@@ -499,6 +499,131 @@ function void my_env::connect_phase(uvm_phase phase);
   A_inst.A_export.connect(B_inst.B_imp);
 endfunction
 ```
+## UVM 中 analysis 端口
+UVM 中還有 2 種特殊的端口：**analysis_port 和 analysis_export**
+1. 一個 analysis_port（analysis_export）可以連接多個 IMP，也就是說，analysis_port（analysis_export）與 IMP
+之間的通信是一對多的通信 (put 和 get 系列端口與相應 IMP 的通信是一對一的通信) analysis_port（analysis_export）更像是一個廣播
+2. 對於 analysis_port 和 analysis_export 來說，沒有阻塞和非阻塞的概念。因為它本身就是廣播，不必等待與其相連的其他連接埠的回應，所以不存在阻塞和非阻塞
+3. 一個 analysis_port 可以和多個 IMP 連接進行通信，但是 IMP 的類型必須是 uvm_analysis_imp，否則會報錯
+4. 對於 analysis_port 和 analysis_export 來說，只有一種操作：write。在 analysis_imp 所在的 component，必須定義一個名字為 write 的函式  
+![image](https://github.com/user-attachments/assets/d0a00e32-c9d6-4668-9c3d-6a885b371f8d)
+* **Class A code 如下:**
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_analysis_port#(my_transaction) A_ap;
+…
+endclass
+…
+// 只是簡單定義一個 analysis_port，並在 main_phase 中每隔 10 個時間單位寫入一個 transaction
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat(10) begin
+    #10;
+    tr = new("tr");
+    assert(tr.randomize());
+    A_ap.write(tr);
+  end
+endtask
+```
+* **Class B code 如下:**
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_analysis_imp#(my_transaction, B) B_imp;
+  …
+endclass
+// B 是 B_imp 所在的 component，因此在 B 中定義一個名字為 write 的函數
+function void B::write(my_transaction tr);
+  `uvm_info("B", "receive a transaction", UVM_LOW)
+  tr.print();
+endfunction
+```
+* **env code 如下:**
+```
+/*
+A_ap 分別與 B 和 C 中對應的 imp 連結到了一起。analysis_export 和 IMP 也可以這樣連接，只需將上面範例中的 uvm_analysis_port 改為 uvm_analysis_export 就可以
+*/
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_inst.A_ap.connect(B_inst.B_imp);
+  A_inst.A_ap.connect(C_inst.C_imp);
+endfunction
+```
+PS: 與 put 系列連接埠的 PORT 和 EXPORT 直接相連會出錯的情況一樣，analysis_port 如果和一個 analysis_export 直接相連也會出錯。只有在 analysis_export 後面再連接一級 uvm_analysis_imp，才不會出錯。
+## 一個 component 內有多個 IMP
+之前範例 o_agt 的 monitor 與 scoreboard 之間的通信，使用 analysis_port 實作
+* **monitor code 如下:**
+```
+class monitor extends uvm_monitor;
+    uvm_analysis_port#(my_transaction) ap;    // 宣告 uvm_analysis_port
+    task main_phase(uvm_phase phase);
+        super.main_phase(phase);
+        my_transaction tr;
+        …
+        ap.write(tr);      // write tr
+        …
+    endtask
+endclass
+```
+* **scoreboard code 如下:**
+```
+class scoreboard extends uvm_scoreboard;
+      uvm_analysis_imp#(my_transaction, scoreboard) scb_imp;
+      task write(my_transaction tr);    // 實作 write task
+            //do something on tr
+      endtask
+endclass
+```
+之後在 env 中可以使用 connect 連線。由於 monitor 與 scoreboard 在 UVM 樹中並不是平等的兄妹關係，其中間還間隔了 o_agt，所
+這裡有三種連結方式
+**1. 直接在 env 中跨層次引用 monitor 中的 ap**
+* **env code 如下:**
+```
+function void my_env::connect_phase(uvm_phase phase);
+      o_agt.mon.ap.connect(scb.scb_imp);
+      …
+endfunction
+```
+**2. 在 agent 中宣告一個 ap 並實例化它，在 connect_phase 將其與 monitor 的 ap 相連，並且可以在 env 中把 agent 的 ap 直接連接到 scoreboard 的 imp**
+* **agent code 如下:**
+```
+class my_agent extends uvm_agent ;
+    uvm_analysis_port #(my_transaction) ap;    // 宣告 ap
+    …
+
+    function void build_phase(uvm_phase phase);
+          super.build_phase(phase);
+          ap = new("ap", this);    // 實例化 ap
+          …
+    endfunction
+
+    function void my_agent::connect_phase(uvm_phase phase);
+        mon.ap.connect(this.ap);
+        …
+    endfunction
+endclass
+
+function void my_env::connect_phase(uvm_phase phase);
+    o_agt.ap.connect(scb.scb_imp);
+    …
+endfunction
+```
+**3. 在 agent 中宣告一個 ap，但不實例化它，讓其指向 monitor 中的 ap。在 env 中可以直接連接 agent 的 ap 到 scoreboard 的 imp**
+```
+class my_agent extends uvm_agent ;
+        uvm_analysis_port #(my_transaction) ap;
+        …
+        function void my_agent::connect_phase(uvm_phase phase);
+              ap = mon.ap;
+              …
+        endfunction
+endclass
+function void my_env::connect_phase(uvm_phase phase);
+    o_agt.ap.connect(scb.scb_imp);
+    …
+endfunction
+```
 ## port export imp 比較
 * **imp (Implementation)**
   * 真正實作介面方法的端口
