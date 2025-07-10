@@ -678,3 +678,106 @@ endfunction
   * 通常由上層元件發起呼叫  
 ![image](https://github.com/user-attachments/assets/e722a5ed-6524-4fa4-8aef-491a8961297a)
 ## 使用 FIFO 通信
+利用 FIFO 來實作 monitor 和 scoreboard 的通訊
+在 agent 和 scoreboard 之間加入一個 uvm_analysis_fifo。FIFO 的本質是一塊快取加兩個 IMP。在 monitor 與 FIFO 的連結關係中，monitor 中依然是 analysis_port，FIFO 中是 uvm_analysis_imp，資料流和控制流的方向相同。在 scoreboard 與 FIFO 的連接關係中，scoreboard 中使用 blocking_get_port 埠：
+```
+class my_scoreboard extends uvm_scoreboard;
+  my_transaction expect_queue[$];                      // 裝 expect value 的 queue
+  uvm_blocking_get_port #(my_transaction) exp_port;    // 改成 port 主動取資料
+  uvm_blocking_get_port #(my_transaction) act_port;
+  …
+endclass
+…
+task my_scoreboard::main_phase(uvm_phase phase);
+  …
+  fork
+    while (1) begin
+      exp_port.get(get_expect);            // Scoreboard 主動去 get tr
+      expect_queue.push_back(get_expect);
+    end
+    while (1) begin
+      act_port.get(get_actual);            // actual data 不用放到 queue 因為直接拿 expect value 去比對
+      …
+    end
+  join
+endtask
+```
+而 FIFO 中使用的是一個 get 埠的 IMP。在這種連接關係中，控制流是從 scoreboard 到 FIFO，而資料流是從 FIFO 到 scoreboard。
+<img width="1064" height="788" alt="image" src="https://github.com/user-attachments/assets/062735af-73f4-4b7b-97c0-eb9da1e73295" />
+env code
+```
+class my_env extends uvm_env;
+
+  my_agent i_agt;
+  my_agent o_agt;
+  my_model mdl;
+  my_scoreboard scb;
+
+  uvm_tlm_analysis_fifo #(my_transaction) agt_scb_fifo;
+  uvm_tlm_analysis_fifo #(my_transaction) agt_mdl_fifo;
+  uvm_tlm_analysis_fifo #(my_transaction) mdl_scb_fifo;
+  …
+endclass
+
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  i_agt.ap.connect(agt_mdl_fifo.analysis_export);
+  mdl.port.connect(agt_mdl_fifo.blocking_get_export);
+  mdl.ap.connect(mdl_scb_fifo.analysis_export);
+  scb.exp_port.connect(mdl_scb_fifo.blocking_get_export);
+  o_agt.ap.connect(agt_scb_fifo.analysis_export);
+  scb.act_port.connect(agt_scb_fifo.blocking_get_export);
+endfunction
+```
+FIFO 中有兩個 IMP，但是在上面的連接關係中，FIFO 中卻是 EXPORT，這是為什麼呢？實際上，FIFO 中的 analysis_export 和 blocking_get_export 雖然名字中有關鍵字 export，但其型態卻是 IMP。UVM 為了掩飾 IMP 的存在，在它們的命名中加入了 export 關鍵字。如 analysis_export 的原型如下：
+```
+uvm_analysis_imp #(T, uvm_tlm_analysis_fifo #(T)) analysis_export;
+```
+* 第一個好處是不必在 scoreboard 中再寫一個名字為 write 的函數。 scoreboard 可以按照自己的步調工作，而不必跟著 monitor 的節奏
+* 第二個好處是 FIFO 的存在隱藏了 IMP，這對初學者來說比較容易理解
+* 第三個好處是可以輕易解決上一節講到的當 reference model 和 monitor 同時連接到 scoreboard 該如何處理的問題。事實上，FIFO 的存在自然而然地解決了它，這根本就不是一個問題了。
+## FIFO 上的連接埠及調試
+一個FIFO中有眾多的端口
+<img width="1212" height="494" alt="image" src="https://github.com/user-attachments/assets/fa186f3b-f731-46ec-8819-6f725e08eccf" />
+* **圓圈:** 表示的 EXPORT 雖然名字中有 export，但本質上都是 IMP。
+  * 包含了 12 種 IMP，用於分別和相應的 PORT 及 EXPORT 連接
+* **peek 系列端口**
+  * peek 埠與 get 相似，其資料流、控制流都相似，唯一的差別在於當 get 任務被呼叫時，FIFO 內部快取會少一個 transaction，而 peek 被呼叫時，FIFO 會把 transaction 複製一份發送出去，其內部快取中的 transaction 數量並不會減少
+* 還有兩個 analysis_port：put_ap 和 get_ap
+  * 當 FIFO 上的 blocking_put_export 或 put_export 被連接到一個 blocking_put_port 或 put_port 上時，FIFO 內部被定義的 put 任務被調用，這個 put 任務把傳遞過來的 transaction 放在 FIFO 內部的緩存裡，同時，把這個 transaction 透過 put_ap 使用 write 函數送出去。 FIFO 的 put 任務定義如下：
+```
+virtual task put( input T t );
+    m.put( t );          // m 即是 FIFO 內部的緩存，使用 SystemVerilog 中的 mailbox 來實現
+    put_ap.write( t );
+endtask
+```
+與 put_ap 相似，當 FIFO 的 get 任務被呼叫時，同樣會有一個 transaction 從 get_ap 上發出：
+```
+virtual task get( output T t );
+    m_pending_blocked_gets++;
+    m.get( t );
+    m_pending_blocked_gets--;
+    get_ap.write( t );
+endtask
+```
+一個 blocking_get_port 連接到了 FIFO 上，當它呼叫 get 任務獲取 transaction 時就會呼叫 FIFO 的 get 任務。除此之外，FIFO 的 get_export、get_peek_export 和 blocking_get_peek_export 被對應的 PORT 或者 EXPORT 連線時，也會會呼叫 FIFO 的 get 任務
+* FIFO 的類型有兩種，一種是上節介紹的 uvm_tlm_analysis_fifo，另外一種是 uvm_tlm_fifo
+  * 這兩者的唯一差異在於前者有一個 analysis_export 端口，並且有一個 write 函數，而後者沒有
+* FIFO 中的眾多連接埠方便了使用者的使用，同樣的，UVM 也提供了幾個函數用於 FIFO 的調試
+  * **used 函數**用於查詢 FIFO 快取中有多少 transaction
+  * **is_empty 函數**用來判斷目前 FIFO 快取是否為空
+  * **is_full 函數**用於判斷當前 FIFO 快取是否已經滿了
+  * **flush 函數**用於清空 FIFO 快取中的所有數據，它一般用於重設等操作
+  * **size 函數**可以返回 FIFO 上限值
+  * 作為一個快取來說，其能儲存的 transaction 是有限的。最大值是定義在 FIFO 的 new 函數，原型如下：
+```
+function new(string name, uvm_component parent = null, int size = 1);
+```
+FIFO 本質上是一個 component，所以其前兩個參數是 uvm_component 的 new 函式中的兩個參數。**第三個參數是 size，用於設定FIFO緩存的上限，在預設的情況下為1**。若要把快取設定為**無限大小，將傳入的 size 參數設為 0 即可**
+## 用 FIFO 還是用 IMP
+* 用 FIFO 通訊的方法中
+  * 完全隱藏了 IMP。使用者可以完全不關心 IMP。尤其是當 scoreboard 面臨多個 IMP，需要為 IMP 聲明一個後綴時，這種優勢更加明顯
+  * FIFO 連線的方式增加了 env 中程式碼的複雜度，滿滿的看起來似乎都是與 FIFO 相關的程式碼 (connect 的點變多)。尤其是當要連接的連接埠數量眾多時，這個缺點更加明顯
+不過對於使用連接埠數組的情況，FIFO要優於IMP。假如參考模型中有16個類似連接埠要和scoreboard中對應的連接埠相互通信，如
+此多數量的端口，在參考模型中可以使用端口數組來實現：
+未完~~~~
