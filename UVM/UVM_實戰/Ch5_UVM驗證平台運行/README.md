@@ -315,3 +315,10 @@ endfunction
 ```
 <sim command> +UVM_TIMEOUT="300ns, YES"
 ```
+## objection 機制
+## objection 與 task phase
+* 在進入某一 phase 時，UVM 會收集此 phase 提出的所有 objection，並且實時監測所有 objection 是否已經被撤銷了，當發現所有都已經撤銷後，那麼就會關閉此 phase，開始進入下一個 phase。當所有的 phase 都執行完畢後，就會呼叫 $finish 來將整個的驗證平台關掉
+* 如果 UVM 發現此 phase 沒有提起任何 objection，那麼將會直接跳到下一個 phase。假如驗證平台中只有（注意「只有」兩個字）driver 中提起了異議，而 monitor 等都沒有提起，很顯然，driver 中的程式碼是可以執行的，那麼 monitor 中的程式碼能夠執行嗎？答案是肯定的。當進入 monitor 後，系統會監測到已經有 objection 被提起了，所以會執行 monitor 中的程式碼。當過了 100 個單位時間之後，driver 中的 objection 被撤銷。此時，UVM 監測發現所有的 objection 都被撤銷了（因為只有 driver raise_objection），於是 UVM 會直接「殺死」monitor 中的無限循環進程，並且跳到下一個 phase，即 post_main_phase（）。假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻就為 100。
+* 如果 driver 根本沒有 raise_objection，而且所有其他 component 的 main_phase 裡面也沒有 raise_objection，即 driver變成如下情況：那麼在進入 main_phase 時，UVM 發現沒有任何 objection 被提起，於是雖然 driver 中有一個延時 100 個單位時間的程式碼，monitor 中有一個無限循環，UVM 也都不理會，它會直接跳到 post_main_phase，假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻還是為 0。
+* UVM 使用者一定要注意：如果想要執行一些耗費時間的程式碼，那麼要在此 phase 下任一個 component 中至少提起一次 objection。
+* 上述結論只適用於 12 個 run-time 的 phase。對於 run_phase 則不適用。由於 run_phase 與動態運行的 phase 是並行運行的，如果 12 個動態運行的 phase 有 objection 被提起，那麼 run_phase 根本不需要 raise_objection 就可以自動執行，程式碼如下：
