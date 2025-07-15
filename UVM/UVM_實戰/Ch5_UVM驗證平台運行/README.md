@@ -277,4 +277,41 @@ UVM 會提示出 **run_phase 不是 main_phase 的先驅 phase 或是後繼 phas
 * **向後跳轉**
   * 如從 main_phase 跳到 shutdown_phase
   * 除了動態運行的 phase 外，還可以是函數 phase，如可以從 main_phase 跳到 final_phase
-## phase 機制的必要性
+## phase 調適
+UVM 提供命令列參數 UVM_PHASE_TRACE 來對 phase 機制進行偵錯，其使用方式為：
+```
+<sim command> +UVM_PHASE_TRACE
+```
+```
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1124) @ 0: reporter [PH/TRC/STRT] Phase 'uvm.
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1203) @ 0: reporter [PH/TRC/SKIP] Phase 'uvm.
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1381) @ 0: reporter [PH/TRC/DONE] Phase 'uvm.
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1403) @ 0: reporter [PH/TRC/SCHEDULED] Phase
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1124) @ 0: reporter [PH/TRC/STRT] Phase 'uvm.
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1203) @ 0: reporter [PH/TRC/SKIP] Phase 'uvm.
+# UVM_INFO /home/landy/uvm/uvm-1.1d/src/base/uvm_phase.svh(1381) @ 0: reporter [PH/TRC/DONE] Phase 'uvm.
+```
+## 超時退出
+在驗證平台運行時，有時測試案例會出現掛起（hang up）的情況。在這種狀態下，仿真時間一直往前走，driver 或 monitor 並沒有發出或收到 transaction，也沒有 UVM_ERROR 出現。一個測試案例的運行時間是可以預期的，如果超出了這個時間，那麼通常就是出錯了。在 UVM 中透過 uvm_root 的 set_timeout 函數可以設定逾時時間：
+```
+function void base_test::build_phase(uvm_phase phase);
+         super.build_phase(phase);
+         env = my_env::type_id::create("env", this);
+         uvm_top.set_timeout(500ns, 0);
+endfunction
+```
+* set_timeout 函數有兩個參數
+  * 第一個參數是設定的時間
+  * 第二個參數表示此設定是否可以被其後的其他 set_timeout 語句覆蓋
+    * 如上的程式碼將逾時的時間定為 500ns。如果達到 500ns 時，測試案例還沒有運行完畢，則會給出一條 uvm_fatal 的提示訊息，並退出仿真。預設的超時退出時間是 9200s，是透過宏 UVM_DEFAULT_TIMEOUT 來指定的：
+```
+`define UVM_DEFAULT_TIMEOUT 9200s
+```
+還可以在命令列中設定：
+```
+<sim command> +UVM_TIMEOUT=<timeout>,<overridable>
+```
+其中 timeout 是要設定的時間，overridable 表示能否被覆蓋，其值可以是 YES 或 NO。如將超時退出時間設定為 300ns，且可被覆蓋，程式碼如下：
+```
+<sim command> +UVM_TIMEOUT="300ns, YES"
+```
