@@ -319,6 +319,30 @@ endfunction
 ## objection 與 task phase
 * 在進入某一 phase 時，UVM 會收集此 phase 提出的所有 objection，並且實時監測所有 objection 是否已經被撤銷了，當發現所有都已經撤銷後，那麼就會關閉此 phase，開始進入下一個 phase。當所有的 phase 都執行完畢後，就會呼叫 $finish 來將整個的驗證平台關掉
 * 如果 UVM 發現此 phase 沒有提起任何 objection，那麼將會直接跳到下一個 phase。假如驗證平台中只有（注意「只有」兩個字）driver 中提起了異議，而 monitor 等都沒有提起，很顯然，driver 中的程式碼是可以執行的，那麼 monitor 中的程式碼能夠執行嗎？答案是肯定的。當進入 monitor 後，系統會監測到已經有 objection 被提起了，所以會執行 monitor 中的程式碼。當過了 100 個單位時間之後，driver 中的 objection 被撤銷。此時，UVM 監測發現所有的 objection 都被撤銷了（因為只有 driver raise_objection），於是 UVM 會直接「殺死」monitor 中的無限循環進程，並且跳到下一個 phase，即 post_main_phase（）。假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻就為 100。
-* 如果 driver 根本沒有 raise_objection，而且所有其他 component 的 main_phase 裡面也沒有 raise_objection，即 driver變成如下情況：那麼在進入 main_phase 時，UVM 發現沒有任何 objection 被提起，於是雖然 driver 中有一個延時 100 個單位時間的程式碼，monitor 中有一個無限循環，UVM 也都不理會，它會直接跳到 post_main_phase，假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻還是為 0。
-* UVM 使用者一定要注意：如果想要執行一些耗費時間的程式碼，那麼要在此 phase 下任一個 component 中至少提起一次 objection。
-* 上述結論只適用於 12 個 run-time 的 phase。對於 run_phase 則不適用。由於 run_phase 與動態運行的 phase 是並行運行的，如果 12 個動態運行的 phase 有 objection 被提起，那麼 run_phase 根本不需要 raise_objection 就可以自動執行，程式碼如下：
+* 如果 driver 根本沒有 raise_objection，而且所有其他 component 的 main_phase 裡面也沒有 raise_objection，那麼在進入 main_phase 時，UVM 發現沒有任何 objection 被提起，於是雖然 driver 中有一個延時 100 個單位時間的程式碼，monitor 中有一個無限循環，UVM 也都不理會，它會直接跳到 post_main_phase，假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻還是為 0
+* UVM 使用者一定要注意：如果想要執行一些耗費時間的程式碼，那麼要在此 phase 下任一個 component 中至少提起一次 objection
+* 上述結論只適用於 12 個 run-time 的 phase。對於 run_phase 則不適用。由於 run_phase 與動態運行的 phase 是並行運行的，如果 12 個動態運行的 phase 有 objection 被提起，那麼 run_phase 根本不需要 raise_objection 就可以自動執行
+   * 第一個是其他動態運行的 phase 中有 objection 被提起。在這種情況下，運行時間受其他動態運行 phase 中 objection 控制，run_phase 只能被動地接受
+   * 第二是在 run_phase 中 raise_objection。這種情況下運行時間完全受 run_phase 控制\
+<img width="515" height="754" alt="image" src="https://github.com/user-attachments/assets/433a0dee-53aa-4473-9cf9-645ee4ed484e" />
+
+如圖所示為一個 env 與 model、scb 組成的大樓，每一層就是一個 phase（為了方便起見，圖中並沒有將 12 個動態運作的 phase
+全部列出，而只列出了 reset_phase 等 4 個 phase）。這棟建築物的每一層都有三個房間，其中最外層最大的就是 env，而其中又包含
+了 model 與 scb 兩個房間，換句話說，由於 env 是 model 和 scb 的父結點，所以 model 與 scb 房間其實是房中房。在 env、model、scb 三個
+房間中，分別有一個歷史遺留的井 run_phase（OVM 遺留的），可以直通樓頂。
+在每層的每個房間及各個房間的井中，都有可能存在著殭屍（objection）及需要通電才能運轉的機器（在每個phase中寫的代
+碼）。整大樓處於斷電的狀態。
+有一棵叫UVM的植物，在經歷start_of_simulation_phase之後，於0時刻進入到最頂層（12層）：pre_reset_phase。在進入後，
+它首先為本層所有房間及所有井（run_phase）通電，如果房間及井中有機器，那麼這些機器就會運轉起來。
+這棵植物在通電完畢後開始檢測各個房間中有沒有殭屍（是否raise_objection），如果任一個房間中有殭屍，那麼就開始消
+滅這些殭屍，一直到所有殭屍消失（drop_objection）。當所有的殭屍被消滅後，它就斷掉這一層各房間的電，所有正在運作的
+機器將會停止運轉，然後這棵UVM植物進入下一層。要注意的是，它只會斷掉所有房間的電，而沒有斷掉所有的井（run_phase）
+中的電，所以各個井中如果有機器，那麼它們仍然在正常運作。
+如果所有的房間中都沒有殭屍，那麼它直接斷電並進入下一層，在這種情況下，所有的機器只發出一聲轟鳴聲，便被緊急終
+止了。這棵UVM植物一層一層消滅殭屍，一直到消滅底層post_shutdown_phase中的殭屍。此時，12個動態運行phase全部結束，
+它們中的殭屍全部被消滅完畢。這棵UVM植物並不是立即進入extract_phase，而是開始查看所有的井（run_phase）中是否有僵
+屍，如果有那麼就開始消滅它們，一直到所有的殭屍消失，否則直接斷掉井中的電，所有井中正在運轉的機器停止運轉。當
+run_phase中的殭屍也被消滅完畢後，開始進入extract_phase。
+所以，欲使每一層中的機器（代碼）運轉起來，只要在這一層的任何一個房間（任一component）中加入一個殭屍
+（raise_objection）即可。如果殭屍永遠無法消失（phase.raise_objection與phase.drop_objection之間是一個無限循環），那麼就會一
+直停留在這一層。
