@@ -55,3 +55,9 @@ endfunction
 ```
 在這個呼叫中，對應 b_ptr 指向的實例是 parrot 類型的，而 b_ptr 本身雖然是 parrot 類型的，但是在呼叫 hungry 函數時，它被隱式地轉換成了 bird 類型。 hungry 是虛函數，所以即使轉換成了 bird 類型，印出來的還是 parrot。但是 hungry2 不是虛函數，打
 印出來的就是 bird 了
+
+這種函數/任務重載的功能在 UVM 中得到了大量的應用。其實最典型的莫過於各個 phase。當各個 phase 被呼叫時，以 build_phase 為例，實際上系統是使用如下的方式呼叫：
+```
+c_ptr.build_phase();
+```
+其中 c_ptr 是 uvm_component 類型的，而不是其他類型，如 my_driver（但是 c_ptr 指向的實例卻是 my_driver 類型的）。在一個驗在證平台中，UVM 樹上的結點是各個類型的，UVM 不必理會它們具體是什麼類型，統一將它們當作 uvm_component 來對待，這極大方便了管理。
