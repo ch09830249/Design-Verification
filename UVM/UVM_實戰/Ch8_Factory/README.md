@@ -200,3 +200,23 @@ UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'bird'
 UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'parrot'. A component of type
 ```
 ## 重載的方式及種類
+上節介紹了使用 set_type_override_by_type 函數可以實作兩種不同類型之間的重載。這個函數位於 uvm_component 中，其原型是：
+```
+extern static function void set_type_override_by_type(uvm_object_wrapper original_type,
+                                                      uvm_object_wrapper override_type,
+                                                      bit replace=1);
+```
+這個函數有三個參數，其中第三個參數是 replace，將會在下節講述這個參數。實際應用上一般只用前兩個參數  
+**第一個參數是被重載的類型，**  
+**第二個參數是重載的類型。**  
+但有時候可能並不是希望把驗證平台中的A類型全部替換成B類型，而只是替換其中的某一部分，這種情況就要用到 set_inst_override_by_type 函數。這個函數的原型如下：
+```
+extern function void set_inst_override_by_type(string relative_inst_path,
+                                                uvm_object_wrapper original_type,
+                                                uvm_object_wrapper override_type);
+```
+其中  
+**第一個參數是相對路徑**，
+**第二個參數是被重載的類型，**
+**第三個參數是要重載的類型。**
+假設有以下的 monitor 定義：
