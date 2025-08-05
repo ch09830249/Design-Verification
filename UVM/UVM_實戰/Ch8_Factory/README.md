@@ -209,14 +209,44 @@ extern static function void set_type_override_by_type(uvm_object_wrapper origina
 這個函數有三個參數，其中第三個參數是 replace，將會在下節講述這個參數。實際應用上一般只用前兩個參數  
 **第一個參數是被重載的類型，**  
 **第二個參數是重載的類型。**  
-但有時候可能並不是希望把驗證平台中的A類型全部替換成B類型，而只是替換其中的某一部分，這種情況就要用到 set_inst_override_by_type 函數。這個函數的原型如下：
+但有時候可能並不是希望把驗證平台中的 A 類型全部替換成 B 類型，而只是替換其中的某一部分，這種情況就要用到 set_inst_override_by_type 函數。這個函數的原型如下：
 ```
 extern function void set_inst_override_by_type(string relative_inst_path,
                                                 uvm_object_wrapper original_type,
                                                 uvm_object_wrapper override_type);
 ```
 其中  
-**第一個參數是相對路徑**，
-**第二個參數是被重載的類型，**
-**第三個參數是要重載的類型。**
-假設有以下的 monitor 定義：
+**第一個參數是相對路徑**，  
+**第二個參數是被重載的類型，**  
+**第三個參數是要重載的類型。**  
+假設有以下的 new monitor 定義：
+```
+class new_monitor extends my_monitor;
+    `uvm_component_utils(new_monitor)
+    
+    virtual task main_phase(uvm_phase phase);
+    fork
+      super.main_phase(phase);
+    join_none
+    `uvm_info("new_monitor", "I am new monitor", UVM_MEDIUM)
+    endtask
+endclass
+```
+以 UVM 樹為例
+<img width="1095" height="781" alt="image" src="https://github.com/user-attachments/assets/bcc22967-9d7a-44a7-bd2e-4a643169171a" />
+要將 env.o_agt.mon 替換成 new_monitor
+```
+set_inst_override_by_type("env.o_agt.mon", my_monitor::get_type(), new_monitor::get_type());
+```
+經過上述替換後，執行到 main_phase 時，會輸出下列語句：
+```
+I am new_monitor
+```
+無論是 set_type_override_by_type 或是 set_inst_override_by_type，它們的參數都是一個 uvm_object_wrapper 型的型別參數，這種
+參數透過 xxx：：get_type() 的形式取得。 UVM 還提供了另外一種簡單的方法來替換這種晦澀的寫法：字串。
+與 set_type_override_by_type 相對的是 set_type_override，它的原型是：
+```
+extern static function void set_type_override(string original_type_name,
+                                              string override_type_name,
+                                              bit replace=1);
+```
