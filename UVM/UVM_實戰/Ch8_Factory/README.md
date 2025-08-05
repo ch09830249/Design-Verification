@@ -246,7 +246,179 @@ I am new_monitor
 參數透過 xxx：：get_type() 的形式取得。 UVM 還提供了另外一種簡單的方法來替換這種晦澀的寫法：字串。
 與 set_type_override_by_type 相對的是 set_type_override，它的原型是：
 ```
-extern static function void set_type_override(string original_type_name,
+extern static function void set_type_override(string original_type_name,        // 透過 Class 的名稱
                                               string override_type_name,
                                               bit replace=1);
 ```
+要使用 parrot 替換 bird，只需要加入下列語句：
+```
+set_type_override("bird", "parrot")
+```
+與 set_inst_override_by_type 相對的是 set_inst_override，它的原型是：
+```
+extern function void set_inst_override(string relative_inst_path,
+                                        string original_type_name,
+                                        string override_type_name);
+```
+對於上面使用 new_monitor 重載 my_monitor 的例子，可以使用以下語句：
+```
+set_inst_override("env.o_agt.mon", "my_driver", "new_monitor");
+```
+上述的所有函數都是 uvm_component 的函數，但是如果在一個無法使用 component 的地方，**如在 top_tb 的 initial 語句裡，就無法
+使用。UVM 提供了另外四個函數來取代上述的四個函數，這四個函數的原型是：**
+```
+extern function
+void set_type_override_by_type (uvm_object_wrapper original_type,
+                                uvm_object_wrapper override_type,
+                                bit replace=1);
+extern function
+void set_inst_override_by_type (uvm_object_wrapper original_type,
+                                uvm_object_wrapper override_type,
+                                string full_inst_path);
+extern function
+void set_type_override_by_name (string original_type_name,
+                                string override_type_name,
+                                bit replace=1);
+extern function
+void set_inst_override_by_name (string original_type_name,
+                                string override_type_name,
+                                string full_inst_path);
+```
+這四個函數都位於 uvm_factory 類別中，其中  
+第一個函數與 uvm_component 中的同名函數類似，傳遞的參數相同。
+第二個對應 uvm_component 中的同名函數，只是其輸入參數變了，這裡需要輸入一個字串類型的 full_inst_path。這個 full_inst_path 就是要替換的實例中使用 get_full_name() 得到的路徑值。  
+第三個與 uvm_component 中的 set_type_override 類似，傳遞的參數相同。
+第四個函數字對應 uvm_component 中的 set_inst_override，也需要一個 full_inst_path。  
+如何使用這四個函數呢？**系統中存在一個 uvm_factory 類型的全域變數 factory**可以在 initial 語句裡使用如下的方式呼叫這四個
+函數：
+```
+initial begin
+    factory.set_type_override_by_type(bird::get_type(), parrot::get_type());
+end
+```
+在一個 component 內也完全可以直接呼叫 factory 機制的重載函數：
+```
+factory.set_type_override_by_type(bird::get_type(), parrot::get_type());
+```
+事實上，uvm_component 的四個重載函數直接呼叫了 factory 的對應函數。
+除了可以在程式碼中進行重載外，還可以在**命令列中進行重載**。對於實例重載和類型重載，分別有各自的命令列參數：
+```
+<sim command> +uvm_set_inst_override=<req_type>,<override_type>,<full_inst_path>
+<sim command> +uvm_set_type_override=<req_type>,<override_type>[,<replace>]
+```
+這兩個命令列參數分別對應於 set_inst_override_by_name 和 set_type_override_by_name。對於實例重載：
+```
+<sim command> +uvm_set_inst_override="my_monitor,new_monitor,uvm_test_top.env.o_agt.mon"
+```
+對於類型重載：
+```
+<sim command> +uvm_set_type_override="my_monitor,new_monitor"
+```
+類型重載的命令列參數中有三個選項，其中最後一個 replace 表示是否可以被後面的重載覆蓋。
+## 複雜的重載
+事實上，UVM 支援連續的重載。還是以 bird 與 parrot 的例子來敘述，現在從 parrot 又派生出了一個新的類別 big_parrot：
+```
+class big_parrot extends parrot;
+  virtual function void hungry();
+    $display("I am a big_parrot, I am hungry");
+  endfunction
+
+  function void hungry2();
+    $display("I am a big_parrot, I am hungry2");
+  endfunction
+
+  `uvm_object_utils(big_parrot)
+
+  function new(string name = "big_parrot");
+    super.new(name);
+  endfunction
+endclass
+```
+在 build_phase 中設定如下的連續重載，並呼叫 print_hungry 函數：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  bird bird_inst;
+  parrot parrot_inst;
+  super.build_phase(phase);
+
+  set_type_override_by_type(bird::get_type(), parrot::get_type());
+  set_type_override_by_type(parrot::get_type(), big_parrot::get_type());
+
+  bird_inst = bird::type_id::create("bird_inst");
+  parrot_inst = parrot::type_id::create("parrot_inst");
+  print_hungry(bird_inst);
+  print_hungry(parrot_inst);
+endfunction
+```
+最後輸出
+```
+# I am a big_parrot, I am hungry
+# I am a bird, I am hungry2
+```
+除了這種連續的重載外，還有一種是替換式的重載。假如從 bird 派生出了新的鳥 sparrow：
+```
+class sparrow extends bird;
+  virtual function void hungry();
+    $display("I am a sparrow, I am hungry");
+  endfunction
+
+  function void hungry2();
+    $display("I am a sparrow, I am hungry2");
+  endfunction
+
+  `uvm_object_utils(sparrow)
+
+  function new(string name = "sparrow");
+    super.new(name);
+  endfunction
+endclass
+```
+在 build_phase 中設定如下重載：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  bird bird_inst;
+  parrot parrot_inst;
+  super.build_phase(phase);
+
+  set_type_override_by_type(bird::get_type(), parrot::get_type());
+  set_type_override_by_type(bird::get_type(), sparrow::get_type());
+
+  bird_inst = bird::type_id::create("bird_inst");
+  parrot_inst = parrot::type_id::create("parrot_inst");
+  print_hungry(bird_inst);
+  print_hungry(parrot_inst);
+endfunction
+```
+最後輸出
+```
+# I am a sparrow, I am hungry
+# I am a bird, I am hungry2
+# I am a parrot, I am hungry
+# I am a bird, I am hungry2
+```
+在建立 bird 的實例時，factory 機制會查詢到兩個相關的記錄，它並不會在看完第一筆記錄後即直接建立一個 parrot 的實例，而是
+最後看完第二筆記錄後才會建立 sparrow 的實例。由於是讀取完最後的語句後才可以建立實例，所以其實下列的重載方式也是允
+許的：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  bird bird_inst;
+  super.build_phase(phase);
+
+  set_type_override_by_type(bird::get_type(), parrot::get_type());
+  set_type_override_by_type(parrot::get_type(), sparrow::get_type(), 0);
+
+  bird_inst = bird::type_id::create("bird_inst");
+  print_hungry(bird_inst);
+endfunction
+```
+最後輸出
+```
+# I am a sparrow, I am hungry
+# I am a bird, I am hungry2
+```
+程式碼清單8-38中第86行的重載語句與在8.2.1節中總結的重載四前提中的第三條相違背，sparrow並沒有派生自parrot，但是依
+然可以重載parrot。但這樣使用依然是有條件的，最終創建出的實例是sparrow類型的，而最初是bird類型的，這兩者之間仍然有
+派生關係。程式碼清單8-38與程式碼清單8-37相比，去掉了對parrot_inst的實例化。因為在程式碼清單8-38中第86行存在的情況下，再實
+例化一個parrot_inst會出錯。所以，8.2.1節中的重載四前提的第三條應該改為：
+在有多個重載時，最終重載的類別要與最初被重載的類別有派生關係。最終重載的類別必須派生自最初被重載的類，最初被重載的
+類別必須是最終重載類別的父類別。
