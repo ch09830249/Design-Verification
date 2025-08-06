@@ -341,8 +341,8 @@ function void my_case0::build_phase(uvm_phase phase);
   parrot parrot_inst;
   super.build_phase(phase);
 
-  set_type_override_by_type(bird::get_type(), parrot::get_type());
-  set_type_override_by_type(parrot::get_type(), big_parrot::get_type());
+  set_type_override_by_type(bird::get_type(), parrot::get_type());          // bird       => parrot
+  set_type_override_by_type(parrot::get_type(), big_parrot::get_type());    // parrot     => big parrot
 
   bird_inst = bird::type_id::create("bird_inst");
   parrot_inst = parrot::type_id::create("parrot_inst");
@@ -350,9 +350,11 @@ function void my_case0::build_phase(uvm_phase phase);
   print_hungry(parrot_inst);
 endfunction
 ```
-最後輸出
+最後輸出是 (bird => parrot => big parrot)
 ```
-# I am a big_parrot, I am hungry
+# I am a big_parrot, I am hungry      // print_hungry(bird_inst);
+# I am a bird, I am hungry2
+# I am a big_parrot, I am hungry      // print_hungry(parrot_inst);
 # I am a bird, I am hungry2
 ```
 除了這種連續的重載外，還有一種是替換式的重載。假如從 bird 派生出了新的鳥 sparrow：
@@ -380,8 +382,8 @@ function void my_case0::build_phase(uvm_phase phase);
   parrot parrot_inst;
   super.build_phase(phase);
 
-  set_type_override_by_type(bird::get_type(), parrot::get_type());
-  set_type_override_by_type(bird::get_type(), sparrow::get_type());
+  set_type_override_by_type(bird::get_type(), parrot::get_type());      // bird    =>  parrot
+  set_type_override_by_type(bird::get_type(), sparrow::get_type());     // bird    =>  sparrow
 
   bird_inst = bird::type_id::create("bird_inst");
   parrot_inst = parrot::type_id::create("parrot_inst");
@@ -391,12 +393,12 @@ endfunction
 ```
 最後輸出
 ```
-# I am a sparrow, I am hungry
+# I am a sparrow, I am hungry      // 最終是 sparrow
 # I am a bird, I am hungry2
-# I am a parrot, I am hungry
+# I am a parrot, I am hungry       // parrot 沒有替換紀錄
 # I am a bird, I am hungry2
 ```
-在建立 bird 的實例時，factory 機制會查詢到兩個相關的記錄，它並不會在看完第一筆記錄後即直接建立一個 parrot 的實例，而是
+在建立 bird 的實例時，**factory 機制會查詢到兩個相關的記錄**，它並不會在看完第一筆記錄後即直接建立一個 parrot 的實例，而是
 最後看完第二筆記錄後才會建立 sparrow 的實例。由於是讀取完最後的語句後才可以建立實例，所以其實下列的重載方式也是允
 許的：
 ```
@@ -404,8 +406,8 @@ function void my_case0::build_phase(uvm_phase phase);
   bird bird_inst;
   super.build_phase(phase);
 
-  set_type_override_by_type(bird::get_type(), parrot::get_type());
-  set_type_override_by_type(parrot::get_type(), sparrow::get_type(), 0);
+  set_type_override_by_type(bird::get_type(), parrot::get_type());              // bird    => parrot  (A)
+  set_type_override_by_type(parrot::get_type(), sparrow::get_type(), 0);        // parrot  => sparrow (B)    sparrow extend from bird not parrot
 
   bird_inst = bird::type_id::create("bird_inst");
   print_hungry(bird_inst);
@@ -416,9 +418,253 @@ endfunction
 # I am a sparrow, I am hungry
 # I am a bird, I am hungry2
 ```
-程式碼清單8-38中第86行的重載語句與在8.2.1節中總結的重載四前提中的第三條相違背，sparrow並沒有派生自parrot，但是依
-然可以重載parrot。但這樣使用依然是有條件的，最終創建出的實例是sparrow類型的，而最初是bird類型的，這兩者之間仍然有
-派生關係。程式碼清單8-38與程式碼清單8-37相比，去掉了對parrot_inst的實例化。因為在程式碼清單8-38中第86行存在的情況下，再實
-例化一個parrot_inst會出錯。所以，8.2.1節中的重載四前提的第三條應該改為：
-在有多個重載時，最終重載的類別要與最初被重載的類別有派生關係。最終重載的類別必須派生自最初被重載的類，最初被重載的
-類別必須是最終重載類別的父類別。
+在上述 A 的重載語句與 B 的重載四前提中的第三條相違背，sparrow 並沒有派生自 parrot，但是依
+然可以重載 parrot。但這樣使用依然是有條件的，最終創建出的實例是 sparrow 類型的，而最初是 bird 類型的，這兩者之間仍然有
+派生關係。程式碼清單8-38與程式碼清單8-37相比，去掉了對 parrot_inst 的實例化。因為在程式碼清單8-38中第86行存在的情況下，再實
+例化一個 parrot_inst 會出錯。所以，8.2.1節中的重載四前提的第三條應該改為：
+**在有多個重載時，最終重載的類別要與最初被重載的類別有派生關係。最終重載的類別必須派生自最初被重載的類，最初被重載的
+類別必須是最終重載類別的父類別**
+## factory 機制的調試
+factory 機制的重載功能很強大，UVM 提供了 print_override_info 函數來輸出所有的列印訊息，以上節中的 new_monitor 重載 
+my_monitor 為例：
+```
+set_inst_override_by_type("env.o_agt.mon", my_monitor::get_type(), new_monito r::get_type());
+```
+## print_override_info
+驗證平台中僅有這一句重載語句，那麼呼叫 print_override_info 函數列印的方式為：
+```
+function void my_case0::connect_phase(uvm_phase phase);
+      super.connect_phase(phase);
+      env.o_agt.mon.print_override_info("my_monitor");
+endfunction
+```
+最終輸出的資訊為：
+```
+# Given a request for an object of type 'my_monitor' with an instance
+# path of 'uvm_test_top.env.o_agt.mon', the factory encountered
+# the following relevant overrides. An 'x' next to a match indicates a
+# match that was ignored.
+##
+Original Type Instance Path Override Type
+# ------------- -------------------------- -------------
+# my_monitor uvm_test_top.env.o_agt.mon new_monitor            // 這裡會明確列出原始類型和新類型
+##
+Result:
+##
+The factory will produce an object of type 'new_monitor'
+```
+在呼叫 print_override_info 時，其輸入的類型應該是原始的類型，而不是新的類型。
+print_override_info 是一個 uvm_component 的成員函數，它實質上是呼叫 uvm_factory 的 debug_create_by_name。
+## debug_create_by_type
+除了這個函數外，uvm_factory 還有 debug_create_by_type，其原型為：
+```
+extern function void debug_create_by_type (uvm_object_wrapper requested_type,
+                                            string parent_inst_path="",
+                                            string name="");
+```
+使用它對 new_monitor 進行調試的程式碼為：
+```
+factory.debug_create_by_type(my_monitor::get_type(), "uvm_test_top.env.o_agt.mon");
+```
+其輸出與使用 print_override_info 相同。
+## print
+除了上述兩個函數外，uvm_factory 也提供 print 函數：
+```
+extern function void print (int all_types=1);
+```
+這個函數只有一個參數，其取值可能為 0、1 或 2。當為 0 時，僅列印被重載的實例和類型，其列印出的資訊大致如下：
+```
+#### Factory Configuration (*)
+##
+Instance Overrides:
+##
+Requested Type Override Path Override Type
+# -------------- -------------------------- -------------
+# my_monitor uvm_test_top.env.o_agt.mon new_monitor
+#
+# No type overrides are registered with this factory
+```
+當為 1 時，列印參數為 0 時的信息，以及所有使用者建立的、註冊到 factory 的類別的名稱。
+當為 2 時，列印參數為 1 時的信息，以及系統所建立的、所有註冊到 factory 的類別的名稱（如 uvm_reg_item）。
+## print_topology
+除了上述這些函數外，還有另外一個重要的工具可以顯示出整棵 UVM 樹的拓樸結構，這個工具就是 uvm_root 的 print_topology
+函數。 UVM 樹在 build_phase 執行完成後才完全建立完成，因此，這個函數應該在 build_phase 之後呼叫：
+```
+uvm_top.print_topology();
+```
+最終顯示的結果（部分）為：
+```
+--------------------------------------------------------------------
+Name Type Size Value
+--------------------------------------------------------------------
+<unnamed> uvm_root - @158
+uvm_test_top my_case0 - @455
+env my_env - @469
+…
+i_agt my_agent - @481
+…
+mon my_monitor - @822
+…
+o_agt my_agent - @489
+mon new_monitor - @865
+…
+```
+從這個拓樸結構中可以清楚看出，env.o_agt.mon 被重載成了 new_monitor 類型。 print_topology 這個函數非常有用，即使在不
+進行 factory 機制偵錯的情況下，也可以透過呼叫它來顯示整個驗證平台的拓樸結構是否與自己預期的一致。因此可以把其放在所
+有測試用例的基底類別 base_test 中。
+## 常用的重載
+## 重載 transaction
+在有了 factory 機制的重載功能後，建置 CRC 錯誤的測試案例就多了一種選擇。假設有如下的正常 sequence，此 sequence 被作為
+某個測試用例的 default_sequence：
+```
+class normal_sequence extends uvm_sequence #(my_transaction);
+......
+  virtual task body();
+    repeat (10) begin
+      `uvm_do(m_trans)
+    end
+    #100;
+  endtask
+......
+  `uvm_object_utils(normal_sequence)
+endclass
+```
+這裡的 my_transaction 使用8.1.2節程式碼清單8-7的定義。現在要建立一個新的測試案例，這是一個異常的測試案例，要測試 
+CRC 錯誤的情況。可以從這個 transaction 派生一個新的 transaction：
+```
+class crc_err_tr extends my_transaction;
+......
+  constraint crc_err_cons{
+    crc_err == 1;
+  }
+endclass
+```
+如果使用8.1.2節程式碼清單8-13的方法，那麼需要新建一個 sequence，然後將這個 sequence 作為新的測試案例的
+default_sequence：
+```
+class abnormal_sequence extends uvm_sequence #(my_transaction);
+  crc_err_tr tr;
+  virtual task body();
+      repeat(10) begin
+          `uvm_do(tr)
+      end
+  endtask
+endclass
+function void my_case0::build_phase(uvm_phase phase);
+…
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+                                          "env.i_agt.sqr.main_phase",
+                                          "default_sequence",
+                                          abnormal_sequence::type_id::get());
+endfunction
+```
+但有了 factory 機制的重載功能後，可以不用重寫一個 abnormal_sequence，而繼續使用 normal_sequence 作為新的測試案例
+的 default_sequence，只需要將 my_transaction 使用 crc_err_tr 重載：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+
+  factory.set_type_override_by_type(my_transaction::get_type(), crc_err_tr::get_type());
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+                                          "env.i_agt.sqr.main_phase",
+                                          "default_sequence",
+                                          normal_sequence::type_id::get());
+endfunction
+```
+經過這樣的重載後，normal_sequence 產生的 transaction 就是 CRC 錯誤的 transaction。這比新建一個 CRC 錯誤的 sequence 的方式簡
+練了很多。
+## 重載 sequence
+transaction 可以重載，同樣的，sequence 也可以重載。上節使用的 transaction 重載能工作的前提是約束也可以重載。但是很多人
+可能並不習慣於這種用法，而習慣於最原始的如8.1.2節中代碼清單8-9的方法。
+在其他測試案例中已經定義瞭如下的兩個 sequence：
+```
+class normal_sequence extends uvm_sequence #(my_transaction);
+
+  virtual task body();
+    `uvm_do(m_trans)
+    m_trans.print();
+  endtask
+
+  `uvm_object_utils(normal_sequence)
+endclass
+
+class case_sequence extends uvm_sequence #(my_transaction);
+
+  virtual task body();
+    normal_sequence nseq;
+    repeat(10) begin
+      `uvm_do(nseq)
+    end
+  endtask
+
+endclass
+```
+這裡使用了巢狀的 sequence。 case_sequence 被當作 default_sequence。現在新建一個測試用例時，可以仍然將 case_sequence 作為 
+default_sequence，只需要從 normal_sequence 派生一個例外的 sequence：
+```
+class abnormal_sequence extends normal_sequence;
+......
+  virtual task body();
+    m_trans = new("m_trans");
+    m_trans.crc_err_cons.constraint_mode(0);
+    `uvm_rand_send_with(m_trans, {crc_err == 1;})
+    m_trans.print();
+  endtask
+endclass
+```
+並且在 build_phase 中將 normal_sequence 使用 abnormal_sequence 重載掉：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  factory.set_type_override_by_type(normal_sequence::get_type(), abnormal_sequence::get_type());
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+                                          "env.i_agt.sqr.main_phase",
+                                          "default_sequence",
+                                          case_sequence::type_id::get());
+endfunction
+```
+本節所述的內容其實與上節的類似，都能達到同樣的目的。這就是UVM的強大之處，對於同樣的事情，它提供多種方式完
+成，使用者可以自由選擇。
+## 重載 component
+8.3.1節和8.3.2節分別使用重載 transaction 和重載 sequence 的方式產生異常的測試案例。其實，還可以使用重載 driver 的方式產
+生。假設某個測試案例使用8.3.1節程式碼清單8-45的 normal_sequence 作為其 default_sequence。這是一個只產生正常 transaction 的 
+sequence，使用它建構的測試案例是一個正常的用例。現在如果要產生一個 CRC 錯誤的測試案例，可以依然使用這個 sequence 作為
+default_sequence，只是需要定義如下的 driver：
+```
+class crc_driver extends my_driver;
+......
+  virtual function void inject_crc_err(my_transaction tr);
+    tr.crc = $urandom_range(10000000, 0);
+  endfunction
+
+  virtual task main_phase(uvm_phase phase);
+    vif.data <= 8'b0;
+    vif.valid <= 1'b0;
+    while(!vif.rst_n)
+      @(posedge vif.clk);
+    while(1) begin
+      seq_item_port.get_next_item(req);
+      inject_crc_err(req);
+      drive_one_pkt(req);
+      seq_item_port.item_done();
+    end
+  endtask
+
+endclass
+```
+然後在 build phase 中將 my_driver 使用 crc_driver 重載：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  factory.set_type_override_by_type(my_driver::get_type(), crc_driver::get_type());
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+                                          "env.i_agt.sqr.main_phase",
+                                          "default_sequence",
+                                          normal_sequence::type_id::get());
+endfunction
+```
+在本節所舉的例子中看不出重載driver的優勢，因為CRC錯誤是一個非常普通的異常測試案例。對於那些特別異常的測試用
+例，異常到使用sequence實現起來非常麻煩的情況，重載driver就會顯示出其優勢。
+除了driver可以重載外，scoreboard與參考模型等都可以重載。尤其對於參考模型來說，處理異常的激勵源是相當耗時的一件
+事情。可能對於一個DUT來說，其80%的程式碼都是用來處理異常情況，作為模擬DUT的參考模型來說，更是如此。如果將所有的
+異常情況都用一個參考模型實現，那麼這個參考模型程式碼量將會非常大。但是如果將其分散為數十個參考模型，則每一個處理一種
+異常情況，當建立相應異常的測試案例時，將正常的參考模型由它替換掉。這樣，可使程式碼清晰，並增加了可讀性。
+## 
