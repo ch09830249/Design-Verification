@@ -13,17 +13,17 @@ class bird extends uvm_object;
 endclass
 
 class parrot extends bird;
-  virtual function void hungry();
+  virtual function void hungry();        // 有 virtual
     $display("I am a parrot, I am hungry");
   endfunction
 
-  function void hungry2();
+  function void hungry2();               // 沒 virtual
     $display("I am a parrot, I am hungry2");
   endfunction
 endclass
 ```
 1. hungry 就是虛函數，它可以被重載。但是 hungry2 不是虛函數，不能被重載
-2. 當指標以父類別的類型傳遞時，其表現出的行為依然是子類別的行為
+2. **當指標以父類別的類型傳遞時，其表現出的行為依然是子類別的行為**
 ```
 function void my_case0::print_hungry(bird b_ptr);
   b_ptr.hungry();   // virtual => 支援多型，依物件實際型態呼叫
@@ -36,6 +36,7 @@ function void my_case0::build_phase(uvm_phase phase);
 
   super.build_phase(phase);
 
+  // 沒有任何重載
   bird_inst = bird::type_id::create("bird_inst");
   parrot_inst = parrot::type_id::create("parrot_inst");
 
@@ -53,7 +54,7 @@ endfunction
 "I am a parrot, I am hungry"
 "I am a bird, I am hungry2"
 ```
-在這個呼叫中，對應 b_ptr 指向的實例是 parrot 類型的，而 b_ptr 本身雖然是 parrot 類型的，但是在呼叫 hungry 函數時，它被隱式地轉換成了 bird 類型。 hungry 是虛函數，所以即使轉換成了 bird 類型，印出來的還是 parrot。但是 hungry2 不是虛函數，打印出來的就是 bird 了
+在這個呼叫中，對應 b_ptr 指向的實例是 parrot 類型的，而 b_ptr 本身雖然是 parrot 類型的，但是在呼叫 hungry 函數時，它被隱式地轉換成了 bird 類型 (print_hungry 的參數是 bird 類型指標)。 hungry 是虛函數，所以即使轉換成了 bird 類型，印出來的還是 parrot。但是 hungry2 不是虛函數，打印出來的就是 bird 了
 
 這種函數/任務重載的功能在 UVM 中得到了大量的應用。其實最典型的莫過於各個 phase。當各個 phase 被呼叫時，以 build_phase 為例，實際上系統是使用如下的方式呼叫：
 ```
@@ -70,7 +71,7 @@ class my_transaction extends uvm_sequence_item;
   rand bit [15:0] ether_type;
   rand byte pload[];
   rand bit [31:0] crc;
-
+  // For 各種 error 的 flag
   rand bit crc_err;
   rand bit sfd_err;
   rand bit pre_err;
@@ -90,13 +91,14 @@ endclass
 ```
 這些錯誤都是異常的情況，在大部分測試案例中，它們的值都應該為 0。所以 default constraint 是
 ```
+// 正常情況下, 很少發生這些 error (機率極低)
 constraint default_cons{
   crc_err dist{0 := 999_999_999, 1 := 1};
   pre_err dist{0 := 999_999_999, 1 := 1};
   sfd_err dist{0 := 999_999_999, 1 := 1};
 }
 ```
-在隨機化時，crc_err、pre_err 和 sfd_err 只有 1/1_000_000_000 的可能性取值為 1，其餘均為 0。但是其中最大的問題是其何時取 1、何時取 0 是無法控制的。如果某個測試案例用於測試正常的功能，裡面則不能有錯誤產生，換句話說，crc_err、pre_err 和 sfd_err 的值要一定為 0。上面的 constraint 顯然不能滿足，這種要求有 2 種解決方案。
+在隨機化時，crc_err、pre_err 和 sfd_err 只有 1/1_000_000_000 的可能性取值為 1，其餘均為 0。但是其中最大的問題是其何時取 1、何時取 0 是無法控制的。**如果某個測試案例用於測試正常的功能，裡面則不能有錯誤產生**，換句話說，crc_err、pre_err 和 sfd_err 的值要一定為 0。上面的 constraint 顯然不能滿足，這種要求有 2 種解決方案。
 1. 在定義 transaction 時，使用如下的方式定義 constraint：
 ```
 class my_transaction extends uvm_sequence_item;
@@ -115,20 +117,20 @@ class my_transaction extends uvm_sequence_item;
 ......
 endclass
 ```
-在正常的測試案例中，可以使用以下方式隨機化：
+在正常的測試案例中 (不要有任何 err)，可以使用以下方式隨機化：
 ```
 my_transaction tr;
 `uvm_do(tr)
 ```
-在異常的測試案例中，可以使用以下方式隨機化：
+在異常的測試案例中 (可以有 err)，可以使用以下方式隨機化：
 ```
 virtual task body();
-  m_trans = new();
-  `uvm_info("sequence", "turn off constraint", UVM_MEDIUM)
-  m_trans.crc_err_cons.constraint_mode(0);                        // 關閉名為 crc_err_cons 的 constraint，讓你能對 crc_err 做額外的隨機化控制
-  m_trans.constraint_mode(0);                                     // 關掉所有 constraint
-  // 這個巨集會自動 randomize 並將 transaction 傳送到 driver，適用於 sequence 中送出單一 transaction 的情境
-  `uvm_rand_send_with(m_trans, {crc_err dist {0 := 2, 1 := 1};})  // 指定隨機分布，使 crc_err 有 2/3 的機率為 0，1/3 為 1
+    m_trans = new();
+    `uvm_info("sequence", "turn off constraint", UVM_MEDIUM)
+    m_trans.crc_err_cons.constraint_mode(0);                        // 關閉名為 crc_err_cons 的 constraint，讓你能對 crc_err 做額外的隨機化控制
+    m_trans.constraint_mode(0);                                     // 關掉所有 constraint
+    // 這個巨集會自動 randomize 並將 transaction 傳送到 driver，適用於 sequence 中送出單一 transaction 的情境
+    `uvm_rand_send_with(m_trans, {crc_err dist {0 := 2, 1 := 1};})  // 指定隨機分布，使 crc_err 有 2/3 的機率為 0，1/3 為 1
 endtask
 ```
 PS: 能夠使用這種方式的前提是 m_trans 已經被實例化。如果不實例化，直接使用 uvm_do 巨集：
@@ -137,6 +139,13 @@ my_transaction m_trans;
 m_trans.crc_err_cons.constraint_mode(0);
 `uvm_do(m_trans)
 ```
+這樣會報空指標的錯誤。(Null ptr)
+sfd_err與pre_err的情況也可以使用類似的方式實作。上述語句中只是單獨地關閉了某一個約束，也可以使用如下的語句來關閉
+所有的約束：
+```
+m_trans.constraint_mode(0);
+```
+在這種情況下，隨機化時就需要分別對crc_err、pre_err及sfd_err進行約束。
 2. SystemVerilog 中一個非常有用的特性是支援約束的重載。因此，依然使用第一種方式中 my_transaction 的定義，在其基礎上派生一個新的 transaction：
 ```
 class new_transaction extends my_transaction;
@@ -686,4 +695,5 @@ sequence的重用。但是對於driver來說，要實現這樣的功能，只能
 ·使用virtual sequence可以協調、同步不同激勵的產生。當放棄sequence時，在不同的driver之間完成這樣的同步則比較難。
 基於以上原因，請不要將所有的測試案例都使用driver重載實作。只有將driver的重載與sequence結合，才與UVM的最初設
 計初衷相符合，也才能建構起可重用性高的驗證平台。完成同樣的事情有很多種方式，應綜合考慮選擇最合理的方式。
+
 
