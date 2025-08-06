@@ -517,6 +517,7 @@ mon new_monitor - @865
 在有了 factory 機制的重載功能後，建置 CRC 錯誤的測試案例就多了一種選擇。假設有如下的正常 sequence，此 sequence 被作為
 某個測試用例的 default_sequence：
 ```
+// normal case (不會有 CRC error)
 class normal_sequence extends uvm_sequence #(my_transaction);
 ......
   virtual task body();
@@ -532,8 +533,10 @@ endclass
 這裡的 my_transaction 使用8.1.2節程式碼清單8-7的定義。現在要建立一個新的測試案例，這是一個異常的測試案例，要測試 
 CRC 錯誤的情況。可以從這個 transaction 派生一個新的 transaction：
 ```
+// 派生出 crc err 的 transaction
 class crc_err_tr extends my_transaction;
 ......
+  // 重載 my_transaction 的 constraint
   constraint crc_err_cons{
     crc_err == 1;
   }
@@ -564,7 +567,8 @@ endfunction
 function void my_case0::build_phase(uvm_phase phase);
   super.build_phase(phase);
 
-  factory.set_type_override_by_type(my_transaction::get_type(), crc_err_tr::get_type());
+  factory.set_type_override_by_type(my_transaction::get_type(), crc_err_tr::get_type());    // my_transaction    =>    crc_err_tr
+  // 這裡 default sequence 還是 normal_sequence
   uvm_config_db#(uvm_object_wrapper)::set(this,
                                           "env.i_agt.sqr.main_phase",
                                           "default_sequence",
@@ -667,4 +671,19 @@ endfunction
 事情。可能對於一個DUT來說，其80%的程式碼都是用來處理異常情況，作為模擬DUT的參考模型來說，更是如此。如果將所有的
 異常情況都用一個參考模型實現，那麼這個參考模型程式碼量將會非常大。但是如果將其分散為數十個參考模型，則每一個處理一種
 異常情況，當建立相應異常的測試案例時，將正常的參考模型由它替換掉。這樣，可使程式碼清晰，並增加了可讀性。
-## 
+## 重載 driver 以實現所有的測試案例
+重載driver使得一些在sequence中比較難實現的測試案例輕易地在driver中實作。那如果放棄sequence，只使用factory機制實
+現測試用例可能嗎？答案確實是可能的。當不用sequence時，那麼要在driver中控制發送包的種類、數量，對於objection的控制又
+要從sequence回到driver中，恰如2.2.3節那樣，似乎一切都回到了起點。
+但不推薦這麼做：
+·引入sequence的原因是將資料流產生的功能從driver中獨立出來。取消sequence相當於一種倒退，會使得driver的功能不明
+的確，與現代程式設計中模組化、功能化的趨勢不合。
+·雖然用driver實作某些測試案例比sequence更方便，但是對於另外一些測試案例，在sequence裡做起來會比driver中更加方
+便。
+·sequence的強大之處在於，它可以在一個sequence中啟動另外的sequence，從而可以最大程度地實現不同測試用例之間
+sequence的重用。但是對於driver來說，要實現這樣的功能，只能將一些基本的產生激勵的函數寫在基類driver中。用戶會發現到最
+後這個driver的程式碼量非常恐怖。
+·使用virtual sequence可以協調、同步不同激勵的產生。當放棄sequence時，在不同的driver之間完成這樣的同步則比較難。
+基於以上原因，請不要將所有的測試案例都使用driver重載實作。只有將driver的重載與sequence結合，才與UVM的最初設
+計初衷相符合，也才能建構起可重用性高的驗證平台。完成同樣的事情有很多種方式，應綜合考慮選擇最合理的方式。
+
