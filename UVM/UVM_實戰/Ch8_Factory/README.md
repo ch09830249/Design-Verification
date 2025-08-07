@@ -139,14 +139,15 @@ my_transaction m_trans;
 m_trans.crc_err_cons.constraint_mode(0);
 `uvm_do(m_trans)
 ```
-這樣會報空指標的錯誤。(Null ptr)
-sfd_err與pre_err的情況也可以使用類似的方式實作。上述語句中只是單獨地關閉了某一個約束，也可以使用如下的語句來關閉
+這樣會報空指標的錯誤。(Null ptr)  
+sfd_err 與 pre_err 的情況也可以使用類似的方式實作。上述語句中只是單獨地關閉了某一個約束，也可以使用如下的語句來關閉
 所有的約束：
 ```
 m_trans.constraint_mode(0);
 ```
-在這種情況下，隨機化時就需要分別對crc_err、pre_err及sfd_err進行約束。
-2. SystemVerilog 中一個非常有用的特性是支援約束的重載。因此，依然使用第一種方式中 my_transaction 的定義，在其基礎上派生一個新的 transaction：
+在這種情況下，隨機化時就需要分別對 crc_err、pre_err 及 sfd_err 進行約束。  
+  
+2. SystemVerilog 中一個非常有用的特性是**支援約束的重載**。因此，依然使用第一種方式中 my_transaction 的定義，在其基礎上派生一個新的 transaction：
 ```
 class new_transaction extends my_transaction;
   `uvm_object_utils(new_transaction)
@@ -160,10 +161,10 @@ class new_transaction extends my_transaction;
   }
 endclass
 ```
-在這個新的 transaction 中將 crc_err_cons 重載了。因此，在異常的測試案例中，可以使用如下的方式隨機化：
+**在這個新的 transaction 中將 crc_err_cons 重載了**。因此，在異常的測試案例中，可以使用如下的方式隨機化：
 ```
 virtual task body();
-  new_transaction ntr;
+  new_transaction ntr;    // 直接用新的 tr
 
   repeat (10) begin
     `uvm_do(ntr)
@@ -190,16 +191,18 @@ endfunction
 "I am a parrot, I am hungry"
 "I am a bird, I am hungry2"
 ```
-雖然 print_hungry 接收的是 bird 類型的參數，但從運行結果可以推測出來，無論是第一次還是第二次呼叫 print_hungry，傳遞的都是類型為 bird 但是指向 parrot 的指標。對於第二次調用，可以很好理解，但第一次卻使人很難接受。這就是factory機制的重載功能。
+雖然 print_hungry 接收的是 bird 類型的參數，但從運行結果可以推測出來，無論是第一次還是第二次呼叫 print_hungry，**傳遞的都是類型為 bird 但是指向 parrot 的指標**。
 <img width="1086" height="754" alt="image" src="https://github.com/user-attachments/assets/9d2f0531-19ed-464b-93e2-d16438ddcc51" />
 <img width="1078" height="708" alt="image" src="https://github.com/user-attachments/assets/bd847f67-6c1b-4bb6-87b0-9e9201a57656" />
-雖然 bird_inst 在實例化以及傳遞給 hungry 的過程中，沒有過與 parrot 的任何接觸，但它最終指向了一個 parrot 的實例。這是因 bird_inst 使用了 UVM 的 factory 機制式的實例化方式：
-在實例化時，UVM 會透過 factory 機制在自己內部的一張表格中查看是否有相關的重載記錄。 set_type_override_by_type 語句相當於在 factory 機制的表格中加入了一筆記錄。當查到有重載記錄時，會使用新的類型來取代舊的類型。所以雖然在 build_phase 中寫明創建 bird 的實例，但最後卻建立了 parrot 的實例。
-使用 factory 機制的重載是有前提的，並不是任意的類別都可以互相重載。要使用重載的功能，必須滿足以下要求：
-**第一，無論是重載的類別（parrot）或被重載的類別（bird），都要在定義時註冊到factory機制中。**
-**第二，被重載的類別（bird）在實例化時，要使用 factory 機制式的實例化方式，而不能使用傳統的 new 方式。**
-**第三，最重要的是，重載的類別（parrot）要與被重載的類別（bird）有派生關係。重載的類別必須派生自被重載的類，被重載的類別必須是重載類別的父類別。**
-**第四，component 與 object 之間互相不能重載。雖然 uvm_component 是派生自 uvm_object，但這兩者的血緣關係太遠了，遠到根本不能重載。從兩者的 new 參數的函數就可以看出來，二者互相重載時，多出來的一個 parent 參數會使 factory 機制無所適從。**
+雖然 bird_inst 在實例化以及傳遞給 hungry 的過程中，沒有過與 parrot 的任何接觸，但它最終指向了一個 parrot 的實例。  
+這是因 bird_inst 使用了 UVM 的 factory 機制式的實例化方式：
+在實例化時，**UVM 會透過 factory 機制在自己內部的一張表格中查看是否有相關的重載記錄**。  
+set_type_override_by_type 語句相當於在 factory 機制的表格中加入了一筆記錄。當查到有重載記錄時，會使用新的類型來取代舊的類型。所以雖然在 build_phase 中寫明創建 bird 的實例，但最後卻建立了 parrot 的實例。
+使用 factory 機制的重載是有前提的，並不是任意的類別都可以互相重載。要使用重載的功能，必須滿足以下要求：  
+**第一，無論是重載的類別（parrot）或被重載的類別（bird），都要在定義時註冊到 factory 機制中。**  
+**第二，被重載的類別（bird）在實例化時，要使用 factory 機制式的實例化方式，而不能使用傳統的 new 方式。**  
+**第三，最重要的是，重載的類別（parrot）要與被重載的類別（bird）有派生關係。重載的類別必須派生自被重載的類，被重載的類別必須是重載類別的父類別。**  
+**第四，component 與 object 之間互相不能重載。雖然 uvm_component 是派生自 uvm_object，但這兩者的血緣關係太遠了，遠到根本不能重載。從兩者的 new 參數的函數就可以看出來，二者互相重載時，多出來的一個 parent 參數會使 factory 機制無所適從。**  
 若沒有派生關係，會出現類似以下的 error messege
 ```
 UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'bird'.A component of type 'bear'
@@ -695,5 +698,6 @@ sequence的重用。但是對於driver來說，要實現這樣的功能，只能
 ·使用virtual sequence可以協調、同步不同激勵的產生。當放棄sequence時，在不同的driver之間完成這樣的同步則比較難。
 基於以上原因，請不要將所有的測試案例都使用driver重載實作。只有將driver的重載與sequence結合，才與UVM的最初設
 計初衷相符合，也才能建構起可重用性高的驗證平台。完成同樣的事情有很多種方式，應綜合考慮選擇最合理的方式。
+
 
 
