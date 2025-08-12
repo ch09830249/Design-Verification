@@ -190,3 +190,115 @@ endclass
 由於 sequence1 中 transaction 的優先權較高，所以如預期，先選擇 sequence1 產生的 transaction。當 sequence1 的 transaction 全部
 生成完畢後，再產生 sequence0 的 transaction。但是運行上述程式碼，發現並沒有如預期的那樣，而是 sequence0 與 sequence1 交替產生 
 transaction 。這是因為 sequencer 的仲裁演算法有很多種：
+```
+SEQ_ARB_FIFO,
+SEQ_ARB_WEIGHTED,
+SEQ_ARB_RANDOM,
+SEQ_ARB_STRICT_FIFO,
+SEQ_ARB_STRICT_RANDOM,
+SEQ_ARB_USER
+```
+在預設情況下 sequencer 的仲裁演算法是 SEQ_ARB_FIFO。  
+**SEQ_ARB_FIFO** 它會嚴格遵循先入先出的順序，而不會考慮優先順序。  
+**SEQ_ARB_WEIGHTED** 是加權的仲裁；  
+**SEQ_ARB_RANDOM** 是完全隨機選擇；  
+**SEQ_ARB_STRICT_FIFO** 是嚴格依照優先順序的，當有多個相同優先權的 sequence 時，按照先入先出的順序選擇；  
+**SEQ_ARB_STRICT_RANDOM** 是嚴格依照優先權的，當有多個同一優先順序的sequence時，隨機從最高優先權中選擇；
+**SEQ_ARB_USER** 則是使用者可以自訂新的仲裁演算法。
+因此，若想使優先權起作用，應該設定仲裁演算法為 SEQ_ARB_STRICT_FIFO 或 SEQ_ARB_STRICT_RANDOM：
+```
+task my_case0::main_phase(uvm_phase phase);
+  ...
+  env.i_agt.sqr.set_arbitration(SEQ_ARB_STRICT_FIFO);  // 設定仲裁策略
+  fork
+    seq0.start(env.i_agt.sqr);
+    seq1.start(env.i_agt.sqr);
+  join
+endtask
+```
+經過如上的設定後，會發現直到 sequence1 發送完 transaction 後，sequence0 才開始發送。
+除 transaction 有優先權外，sequence 也有優先權的概念。可以在 sequence 啟動時指定其優先權：
+```
+task my_case0::main_phase(uvm_phase phase);
+  ...
+  env.i_agt.sqr.set_arbitration(SEQ_ARB_STRICT_FIFO);
+  fork
+    seq0.start(env.i_agt.sqr, null, 100);
+    seq1.start(env.i_agt.sqr, null, 200);
+  join
+endtask
+```
+start 任務的第一個參數是 sequencer，第二個參數是 parent sequence，可以設定為 null，第三個參數是優先權，如果不指定則此
+值為-1，它同樣不能設定為一個小於 -1 的數字。
+sequence0 和 sequence1，即不在 uvm_do 系列巨集中指定優先權。運行上述程式碼，會發現 
+sequence1 中的 transaction 完全發送完後才發送 sequence0 中的 transaction。所以，對 sequence 設定優先權的本質即設定其內產生的 
+transaction 的優先權。
+## sequencer 的 lock 操作
+當多個 sequence 在一個 sequencer 上同時啟動時，每個 sequence 產生的 transaction 都需要參與 sequencer 的仲裁。那麼考慮這樣
+一種情況，**某個 sequence 比較奇特，一旦它要執行，那麼它所有的 transaction 必須連續地交給 driver，如果中間夾雜著其他 sequence 
+的 transaction，就會發生錯誤**。要解決這個問題，可以像上一節一樣，對此 sequence 賦予較高的優先權。
+但是假如有其他 sequence 有更高的優先權呢？所以這種解決方法並不科學。在 UVM 中可以使用 lock 操作來解決這個問題。
+所謂 lock，就是 sequence 向 sequencer 發送一個請求，這個請求與其他 sequence 發送 transaction 的請求一同被放入 sequencer 的仲裁
+隊列中。當其前面的所有請求被處理完畢後，sequencer 就開始回應這個 lock 請求，此後 sequencer 會一直連續發送此 sequence 的 
+transaction，直到 unlock 操作被呼叫。從效果上看，此 sequencer 的所有權並沒有被所有的 sequence 共享，而是被申請 lock 操作的 
+sequence 獨佔了。一個使用 lock 操作的 sequence 為：
+```
+class sequence1 extends uvm_sequence #(my_transaction);
+  ...
+  virtual task body();
+    ...
+    repeat (3) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    lock();
+    `uvm_info("sequence1", "locked the sequencer ", UVM_MEDIUM)
+    repeat (4) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    `uvm_info("sequence1", "unlocked the sequencer ", UVM_MEDIUM)
+    unlock();
+    repeat (3) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    ...
+  endtask
+  ...
+endclass
+```
+將此 sequence1 與前面 sequence0 在 env.i_agt.sqr 上啟動，會發現在 lock 語句前，sequence0 和 
+seuquence1 交替產生 transaction；在 lock 語句後，一直傳送 sequence1 的 transaction，直到 unlock 語句被呼叫後，sequence0 和 
+seuquence1 又開始交替產生 transaction。
+如果兩個 sequence 都試圖使用 lock 任務來取得 sequencer 的所有權則會如何呢？答案是**先取得所有權的sequence在執行完畢後才
+會將所有權交還給另外一個 sequence**。
+```
+class sequence0 extends uvm_sequence #(my_transaction);
+  ...
+  virtual task body();
+    ...
+    repeat (2) begin
+      `uvm_do(m_trans)
+      `uvm_info("sequence0", "send one transaction", UVM_MEDIUM)
+    end
+    lock();
+    repeat (5) begin
+      `uvm_do(m_trans)
+      `uvm_info("sequence0", "send one transaction", UVM_MEDIUM)
+    end
+    unlock();
+    repeat (2) begin
+      `uvm_do(m_trans)
+      `uvm_info("sequence0", "send one transaction", UVM_MEDIUM)
+    end
+    #100;
+    ...
+  endtask
+
+  `uvm_object_utils(sequence0)
+endclass
+```
+將上述 sequence0 與 sequence1 同時在 env.i_agt.sqr 上啟動，會發現 sequence0 先獲得 sequencer 的所有權，在 
+unlock 函數被呼叫前，一直發送 sequence0 的 transaction。在 unlock 被呼叫後，sequence1 取得 sequencer 的所有權，之後一直發送 
+sequence1 的 transaction，直到 unlock 函數被呼叫。
