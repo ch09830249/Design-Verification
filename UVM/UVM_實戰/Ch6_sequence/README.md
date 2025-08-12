@@ -302,3 +302,137 @@ endclass
 將上述 sequence0 與 sequence1 同時在 env.i_agt.sqr 上啟動，會發現 sequence0 先獲得 sequencer 的所有權，在 
 unlock 函數被呼叫前，一直發送 sequence0 的 transaction。在 unlock 被呼叫後，sequence1 取得 sequencer 的所有權，之後一直發送 
 sequence1 的 transaction，直到 unlock 函數被呼叫。
+## sequencer 的 grab 操作
+與 lock 操作一樣，grab 操作也用於暫時擁有 sequencer 的所有權，**只是 grab 操作比 lock 操作優先權更高**。  
+**lock 請求是被插入 sequencer 仲裁隊列的最後面**，等到它時，它前面的仲裁請求都已經結束了。  
+**grab 請求則被放入 sequencer 仲裁隊列的最前面**，它幾乎是一發出就擁有了sequencer的所有權：
+```
+class sequence1 extends uvm_sequence #(my_transaction);
+  ...
+  virtual task body();
+    ...
+    repeat (3) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    grab();
+    `uvm_info("sequence1", "grab the sequencer ", UVM_MEDIUM)
+    repeat (4) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    `uvm_info("sequence1", "ungrab the sequencer ", UVM_MEDIUM)
+    ungrab();
+    repeat (3) begin
+      `uvm_do_with(m_trans, {m_trans.pload.size < 500;})
+      `uvm_info("sequence1", "send one transaction", UVM_MEDIUM)
+    end
+    ...
+  endtask
+
+  `uvm_object_utils(sequence1)
+endclass
+```
+如果兩個 sequence 同時試圖使用 grab 任務來取得 sequencer 的所有權將會如何呢？這種情況與兩個 sequence 同時試圖呼叫 lock 函數
+一樣，在先取得所有權的 sequence 執行完畢後才會將所有權交還給另外一個試圖所有權的 sequence。
+如果一個 sequence 在使用 grab 任務取得 sequencer 的所有權前，另一個 sequence 已經使用 lock 任務取得了 sequencer 的所有權則
+會如何呢？答案是 grab 任務會一直等待 lock 的釋放。 **grab 任務還是比較講文明的，雖然它會插隊，但是絕對不會打斷別人正在進行的
+事情**。
+## sequence 的有效性
+當有多個 sequence 同時在一個 sequencer 上啟動時，所有的 sequence 都參與仲裁，根據演算法決定哪個 sequence 發送 transaction。仲
+裁算法是由 sequencer 決定的，sequence 除了可以在優先權上設定外，對仲裁的結果無能為力。
+透過 lock 任務和 grab 任務，sequence 可以獨佔 sequencer，強行使 sequencer 發送自己產生的 transaction。同樣的，UVM 也提供措
+施使 sequence 可以在一定時間內不參與仲裁，即令此 sequence 失效。
+sequencer 在仲裁時，會查看 sequence 的 is_relevant 函數的回傳結果。如果為 1，說明此 sequence 有效，否則無效。因此可以透過
+重載 is_relevant 函數來使 sequence 失效：
+```
+class sequence0 extends uvm_sequence #(my_transaction);
+  my_transaction m_trans;
+  int num;
+  bit has_delayed;
+  ...
+  // 覆寫 is_relevant
+  virtual function bit is_relevant();
+    if ((num >= 3) && (!has_delayed)) return 0;
+    else return 1;
+  endfunction
+
+  virtual task body();
+    ...
+    fork
+      repeat (10) begin
+        num++;
+        `uvm_do(m_trans)
+        `uvm_info("sequence0", "send one transaction", UVM_MEDIUM)
+      end
+
+      while (1) begin
+        if (!has_delayed) begin
+          if (num >= 3) begin
+            `uvm_info("sequence0", "begin to delay", UVM_MEDIUM)
+            #500000;
+            has_delayed = 1'b1;
+            `uvm_info("sequence0", "end delay", UVM_MEDIUM)
+            break;
+          end else
+            #1000;
+        end
+      end
+    join
+    ...
+  endtask
+  ...
+endclass
+```
+這個 sequence 在發送了 3 個 transaction 後開始變成無效，延遲 500000 時間單位後又開始有效。將此 sequence 與 
+sequence1 同時啟動，會發現在失效前 sequence0 和 sequence1 交替發送 transaction；而在失效的 500000 時間單位內，只有 sequence1 發
+送 transaction；當 sequence0 重新變有效後，sequence0 和 sequence1 又開始交替發送 transaction。從某種程度上來說，is_relevant 與 grab
+ 任務和 lock 任務是完全相反的。透過設定 is_relevant，可以讓 sequence 主動放棄 sequencer 的使用權，而 grab 任務和 lock 任務則強佔 sequencer 的所有權。除了 is_relevant 外，sequence 中還有一個任務 wait_for_relevant 也與 sequence 的有效性有關：
+```
+class sequence0 extends uvm_sequence #(my_transaction);
+  ...
+
+  virtual function bit is_relevant();
+    if ((num >= 3) && (!has_delayed)) return 0;
+    else return 1;
+  endfunction
+
+  virtual task wait_for_relevant();
+    #10000;
+    has_delayed = 1;
+  endtask
+
+  virtual task body();
+    ...
+    repeat (10) begin
+      num++;
+      `uvm_do(m_trans)
+      `uvm_info("sequence0", "send one transaction", UVM_MEDIUM)
+    end
+    ...
+  endtask
+
+  ...
+endclass
+```
+當 sequencer 發現在其上啟動的所有 sequence 都無效時，此時會呼叫 wait_for_relevant 並等待 sequence 變有效。當此 sequence 與 sequence1 同時啟動，並發送了 3 個 transaction 後，sequence0 變成無效。此後 sequencer 一直發送 sequence1 的 
+transaction，直到全部的 transaction 都寄完畢。此時，sequencer 發現 sequence0 無效，會呼叫其 wait_for_relevant。換言之， 
+sequence0 失效是自己控制的，但是重新變成有效卻是受其他 sequence 的控制。如果其他 sequence 永遠不結束，那麼 sequence0 將永遠
+遠處於失效狀態。這裡與程式碼清單6-19範例的差別是，程式碼清單6-19範例中 sequence0 並不是等待著 sequence1 的 transaction 全部發
+送完畢，而是自己主動控制自己何時有效何時無效。
+在 wait_for_relevant 中，必須將使 sequence 無效的條件清除。在程式碼清單6-20中，假如 wait_for_relevant 只是如下定義：
+```
+virtual task wait_for_relevant();
+  #10000;
+endtask
+```
+那麼當 wait_for_relevant 回傳後，sequencer 會繼續呼叫 sequence0 的 is_relevant，發現依然是無效狀態，則繼續呼叫
+wait_for_relevant。系統會處於死循環的狀態。
+在代碼清單6-19的例子中，透過控制延時（500000）單位時間來使 sequence0 重新變得有效。假如在這段時間內，sequence1 的
+ transaction 發送完畢後，而 sequence0 中又沒有重載 wait_for_relevant 任務，那麼將會給出如下錯誤提示：
+```
+UVM_FATAL @ 1166700: uvm_test_top.env.i_agt.sqr@@seq0 [RELMSM] is_relevant()was implemented without defining
+```
+因此，is_relevant 與 wait_for_relevant 一般應成對重載，不能只重載其中的一個。程式碼清單6-19的例子中沒有重載 
+wait_for_relevant，是因為巧妙地設定了延時，可以保證不會呼叫到 wait_for_relevant。讀者在使用時應該重載 wait_for_relevant 這個
+任務。
