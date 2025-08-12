@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
-`include "uvm_macros.svh"       // 把 uvm_macros.svh 檔案透過 include 語句包含進來。這是 UVM 中的一個文件，裡面包含了眾多的 macro 定義，只需要包含一次
-
 import uvm_pkg::*;              // import 語句將整個 uvm_pkg 導入驗證平台中。只有導入了這個函式庫，編譯器在編譯 my_driver.sv 檔時才會認識其中的 uvm_driver 等類別名稱
+`include "uvm_macros.svh"       // 把 uvm_macros.svh 檔案透過 include 語句包含進來。這是 UVM 中的一個文件，裡面包含了眾多的 macro 定義，只需要包含一次
 `include "my_driver.sv"         // 把剛剛定義好的 driver 引入
 
 module top_tb;
