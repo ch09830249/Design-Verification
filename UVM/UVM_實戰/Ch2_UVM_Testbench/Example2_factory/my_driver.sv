@@ -24,4 +24,5 @@ task my_driver::main_phase(uvm_phase phase);
     end
     @(posedge top_tb.clk);
     top_tb.rx_dv <= 1'b0;
+    `uvm_info("my_driver", "main_phase is ended", UVM_LOW);
 endtask
