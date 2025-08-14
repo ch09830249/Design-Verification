@@ -16,11 +16,12 @@ module dut(clk, rst_n, rxd, rx_dv, txd, tx_en);
         end
         else begin
             txd <= rxd;             // 否則將 rxd 接收到的數據給 txd
-            tx_en <= rx_dv;         // 並且表示該 txd 是有效的資料
+            tx_en <= rx_dv;         // 並且根據 rx_dv 表示該 txd 是否有效的資料
         end
     end
 endmodule
 
 /*
     透過 rxd 接收數據，再透過 txd 發送出去。其中 rx_dv 是接收的資料有效指示，tx_en 是發送的資料有效指示
+    資料都是一個 Byte 一個 Byte 傳遞
 */
