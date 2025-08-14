@@ -1,5 +1,5 @@
 # xrun.log
-因為改用 uvm 架構去跑, 所以加了 raise/drop objection 就可以了!!! 所以有 wave form 了
+因為改用 uvm 架構去跑 (run_test("my_driver");), 所以加了 raise/drop objection 就可以了!!! 所以有 wave form 了
 <img width="1918" height="386" alt="image" src="https://github.com/user-attachments/assets/92f10eba-4a90-41aa-9cd6-1f1fc1bd9d56" />
 
 ```
