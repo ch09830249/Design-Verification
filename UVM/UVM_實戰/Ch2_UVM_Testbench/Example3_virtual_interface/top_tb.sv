@@ -1,8 +1,9 @@
+
 `timescale 1ns/1ps
 `include "uvm_macros.svh"
-
 import uvm_pkg::*;
 `include "my_driver.sv"
+`include "my_if.sv"
 
 module top_tb;
 
@@ -40,6 +41,11 @@ module top_tb;
         rst_n = 1'b0;
         #1000;
         rst_n = 1'b1;
+    end
+
+    initial begin
+        $shm_open("waves.shm");        // 指定 SHM 波形檔名
+        $shm_probe("AS");              // 把 top_tb 裡所有訊號都 dump 出來
     end
 
     initial begin
