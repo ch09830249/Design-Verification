@@ -26,3 +26,34 @@ end
 ```
 simvision waves.shm
 ```
+## 補充  
+## $shm_probe 的語法與參數
+```
+$shm_probe([<depth>], [<scope>], [<signal_spec>]);
+or
+$shm_probe(<flags>, [<scope>]);
+```
+```
+$shm_open("waves.shm");            // 開啟 shm 波形檔案
+$shm_probe("AS", top_tb);          // 把 top_tb 所有信號都 dump 出來（推薦）
+```
+
+**flags：控制 dump 類型與深度（字串）** 
+| Flag | 意思                            |
+| ---- | ----------------------------- |
+| `A`  | dump 所有信號（All signals）        |
+| `S`  | 包含 `struct` 裡面的欄位（Structures） |
+| `F`  | dump full 層級（等於層級 = 0）        |
+| `C`  | dump 所有階層的 `clocking blocks`  |
+| `+`  | 新增到已 dump 的信號                 |
+| `-`  | 從已 dump 的清單中移除信號              |
+
+通常用 "AS" 就夠用了，表示「所有訊號 + struct 支援」。  
+
+**scope：要 dump 的模組/範圍**  
+* 是一個模組名、instance、或 hierarchy 的識別符號（不是字串）
+* 可以是例如：top_tb、top_tb.u_dut、env.agent.driver
+```
+$shm_probe("AS", top_tb);        // dump top_tb 的所有訊號
+$shm_probe("AS", top_tb.u_dut);  // 只 dump u_dut
+```
