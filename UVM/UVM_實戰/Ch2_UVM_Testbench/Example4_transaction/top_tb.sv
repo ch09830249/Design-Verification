@@ -34,6 +34,11 @@ module top_tb;
     end
 
     initial begin
+        $shm_open("waves.shm");        // 指定 SHM 波形檔名
+        $shm_probe("AS");              // 把 top_tb 裡所有訊號都 dump 出來
+    end
+
+    initial begin
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top", "vif", input_if);
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top", "vif2", output_if);
     end
