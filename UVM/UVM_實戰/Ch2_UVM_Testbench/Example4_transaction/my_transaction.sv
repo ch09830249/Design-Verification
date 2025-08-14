@@ -1,13 +1,13 @@
 class my_transaction extends uvm_sequence_item; // my_transaction 的基底類別是 uvm_sequence_item
 
-    rand bit[47:0] dmac;                        // dmac 是 48bit 的乙太網路目的位址
-    rand bit[47:0] smac;                        // smac 是 48bit 的乙太網路來源位址
+    rand bit[47:0] dmac;                        // dmac 是 48 bits 的乙太網路目的位址
+    rand bit[47:0] smac;                        // smac 是 48 bits 的乙太網路來源位址
     rand bit[15:0] ether_type;                  // ether_type 是乙太網路類型
     rand byte pload[];                          // pload 是其攜帶資料的大小
     rand bit[31:0] crc;
 
-    constraint pload_cons {                     // pload 大小被限制在 46～1500 byte
-        pload.size >= 46;
+    constraint pload_cons {                     // pload 大小被限制在 46～1500 bytes (這裡為了和 wave form 對答案 46 先改為 20)
+        pload.size >= 20;
         pload.size <= 1500;
     }
 
@@ -16,7 +16,19 @@ class my_transaction extends uvm_sequence_item; // my_transaction 的基底類�
     endfunction
 
     function void post_randomize();
-        crc = calc_crc;                       // 當某個類別的實例的 randomize 函數被呼叫後，post_randomize 會緊接著無條件地被調用 (這裡只是在post_randomize中加了一個空函式calc_crc)
+        crc = calc_crc();                       // 當某個類別的實例的 randomize 函數被呼叫後，post_randomize 會緊接著無條件地被調用 (這裡只是在post_randomize中加了一個空函式calc_crc)
+    endfunction
+    
+    function void print_tr();
+        $display("======================= Print Transaction =======================");
+        $display("dmac: %h", dmac);
+        $display("smac: %h", smac);
+        $display("ether_type: %h", ether_type);
+        foreach (pload[i]) begin
+            $display("pload[%0d] = %h", i, pload[i]);
+        end
+        $display("crc: %h", crc);
+        $display("==============================================");
     endfunction
 
     `uvm_object_utils(my_transaction)
