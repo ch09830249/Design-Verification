@@ -39,8 +39,13 @@ module top_tb;
 
     initial begin
         rst_n = 1'b0;           // 先清空 rxd 和 rx_dv, 等 1000 ns 後, 才正常傳送資料
-        #1000;
+        #1000;                  // 前 1000 ns rst_n 均為 0, 所以不會傳送 data
         rst_n = 1'b1;
+    end
+
+    initial begin
+        $shm_open("waves.shm");        // 指定 SHM 波形檔名
+        $shm_probe("AS");              // 把 top_tb 裡所有訊號都 dump 出來
     end
 
 endmodule
