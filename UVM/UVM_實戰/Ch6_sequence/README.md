@@ -436,3 +436,454 @@ UVM_FATAL @ 1166700: uvm_test_top.env.i_agt.sqr@@seq0 [RELMSM] is_relevant()was 
 因此，is_relevant 與 wait_for_relevant 一般應成對重載，不能只重載其中的一個。程式碼清單6-19的例子中沒有重載 
 wait_for_relevant，是因為巧妙地設定了延時，可以保證不會呼叫到 wait_for_relevant。讀者在使用時應該重載 wait_for_relevant 這個
 任務。
+# sequence 相關巨集及其實現
+## uvm_do 系列宏
+uvm_do 系列宏主要有以下 8 個：
+```
+`uvm_do(SEQ_OR_ITEM)
+`uvm_do_pri(SEQ_OR_ITEM, PRIORITY)
+`uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS)
+`uvm_do_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS)
+`uvm_do_on(SEQ_OR_ITEM, SEQR)
+`uvm_do_on_pri(SEQ_OR_ITEM, SEQR, PRIORITY)
+`uvm_do_on_with(SEQ_OR_ITEM, SEQR, CONSTRAINTS)
+`uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS)
+```
+其中 uvm_do、uvm_do_with、uvm_do_pri、uvm_do_pri_with 在前面已經提到過了，這裡只介紹另外 4 個。
+## uvm_do_on 
+* 用於明確指定使用哪個 sequencer 發送此 transaction
+  * 第一個參數是 transaction 的指針
+  * 第二個參數是 sequencer 的指標
+* 當在 sequence 中使用 uvm_do 等巨集時，其預設的 sequencer 就是此 sequence 啟動時為其指定的 sequencer，sequence 將這個 sequencer 的指標放在其成員變數 m_sequencer 中。事實上，uvm_do 等價於：
+```
+`uvm_do_on(tr, this.m_sequencer)  // 此 transaction 是在當前 sequencer 發送
+```
+這裡看起來指定使用哪個 sequencer 似乎並沒有用，它的真正作用要在6.5節 virtual sequence 中體現。
+## uvm_do_on_pri
+  * 第一個參數是 transaction 的指針
+  * 第二個是 sequencer 的指針
+  * 第三個是優先權：
+```
+`uvm_do_on(tr, this, 100)
+```
+## uvm_do_on_with
+ * 第一個參數是 transaction 的指針
+ * 第二個是 sequencer 的指針
+ * 第三個是約束：
+```
+`uvm_do_on_with(tr, this, {tr.pload.size == 100;})
+```
+## uvm_do_on_pri_with
+* 所有 uvm_do 巨集中參數最多的一個
+  * 第一個參數是 transaction 的指針
+  * 第二個是 sequencer 的指針
+  * 第三個是優先級
+  * 第四個是約束：
+```
+`uvm_do_on_pri_with(tr, this, 100, {tr.pload.size == 100;})
+```
+uvm_do 系列的其他七個宏其實都是用 uvm_do_on_pri_with 巨集來實現的。如 uvm_do 宏：
+```
+`define uvm_do(SEQ_OR_ITEM) \
+    `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, {})
+```
+## uvm_create 與 uvm_send
+除了使用 uvm_do 巨集產生 transaction，還可以使用 uvm_create 巨集與 uvm_send 巨集來產生：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+...
+  virtual task body();
+    int num = 0;
+    int p_sz;
+...
+    repeat (10) begin
+      num++;
+      `uvm_create(m_trans)
+      assert(m_trans.randomize());
+      p_sz = m_trans.pload.size();
+      {m_trans.pload[p_sz - 4],
+       m_trans.pload[p_sz - 3],
+       m_trans.pload[p_sz - 2],
+       m_trans.pload[p_sz - 1]} = num;
+      `uvm_send(m_trans)
+    end
+...
+  endtask
+...
+endclass
+```
+**uvm_create 巨集的作用是實例化 transaction**。當一個 transaction 被實例化後，可以對其做更多的處理，**處理完畢後使用 uvm_send 宏送出去**。這種使用方式比 uvm_do 系列巨集更靈活。如在上例中，**就將 pload 的最後 4 個 byte 替換為此 transaction 的序號**。
+事實上，在上述的程式碼中，也完全可以不使用 uvm_create 宏，而直接呼叫 new 進行實例化：
+```
+virtual task body();
+  …
+    m_trans = new("m_trans");
+    assert(m_trans.randomize());
+    p_sz = m_trans.pload.size();
+    {m_trans.pload[p_sz - 4],
+    m_trans.pload[p_sz - 3],
+    m_trans.pload[p_sz - 2],
+    m_trans.pload[p_sz - 1]}
+    = num;
+    `uvm_send(m_trans)
+  …
+endtask
+```
+除了 uvm_send 外，還有 uvm_send_pri 宏，它的作用是在將 transaction 交給 sequencer 時設定優先權：
+```
+virtual task body();
+  …
+  m_trans = new("m_trans");
+  assert(m_trans.randomize());
+  p_sz = m_trans.pload.size();
+  {m_trans.pload[p_sz - 4],
+  m_trans.pload[p_sz - 3],
+  m_trans.pload[p_sz - 2],
+  m_trans.pload[p_sz - 1]}
+  = num;
+  `uvm_send_pri(m_trans, 200)
+  …
+endtask
+```
+## uvm_rand_send 系列宏
+uvm_rand_send 系列宏有以下幾個：
+```
+`uvm_rand_send(SEQ_OR_ITEM)
+`uvm_rand_send_pri(SEQ_OR_ITEM, PRIORITY)
+`uvm_rand_send_with(SEQ_OR_ITEM, CONSTRAINTS)
+`uvm_rand_send_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS)
+```
+## uvm_rand_send
+uvm_rand_send 巨集與 uvm_send 巨集類似，**唯一的差別是它會對 transaction 進行隨機化**。**這個巨集使用的前提是 transaction 已經被分配了空間**，換言之，即已經實例化了：
+```
+m_trans = new("m_trans");
+`uvm_rand_send(m_trans)
+```
+## uvm_rand_send_pri
+uvm_rand_send_pri 巨集用於指定 transaction 的優先權。它有兩個參數，第一個是transaction的指針，第二個是優先權：
+```
+m_trans = new("m_trans");
+`uvm_rand_send_pri(m_trans, 100)
+```
+## uvm_rand_send_with
+uvm_rand_send_with 宏，用於指定使用隨機化時的約束，它有兩個參數，第一個是 transaction 的指針，第二個是約束：
+```
+m_trans = new("m_trans");
+`uvm_rand_send_with(m_trans, {m_trans.pload.size == 100;})
+```
+## uvm_rand_send_pri_with
+uvm_rand_send_pri_with 宏，用於指定優先權和約束，它有三個參數，第一個是 transaction 的指針，第二個是優先權，第三個
+是約束：
+```
+m_trans = new("m_trans");
+`uvm_rand_send_pri_with(m_trans, 100, {m_trans.pload.size == 100;})
+```
+uvm_rand_send 系列巨集及 uvm_send 系列巨集的意義主要在於，如果一個 transaction 佔用的記憶體比較大，那麼很可能希望前後兩次發送的 transaction 都使用同一塊內存，只是其中的內容可以不同，這樣比較節省內存。
+# start_item 與 finish_item
+不使用巨集產生 transaction 的方式要依賴兩個任務：start_item 和 finish_item。在使用這兩個任務前，必須先實例化 transaction
+後才可以呼叫這兩個任務：
+```
+tr = new("tr");
+start_item(tr);
+finish_item(tr);
+```
+完整使用如上兩個任務所建構的一個 sequence 如下：
+```
+virtual task body();
+  repeat(10) begin
+    tr = new("tr");
+    start_item(tr);
+    finish_item(tr);
+  end
+endtask
+```
+上述程式碼中並沒有對 tr 進行隨機化。可以在 transaction 實例化後、finish_item 呼叫前進行隨機化：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+...
+  virtual task body();
+...
+    repeat (10) begin
+      tr = new("tr");
+      assert(tr.randomize() with {tr.pload.size == 200;});
+      start_item(tr);
+      finish_item(tr);
+    end
+...
+  endtask
+...
+endclass
+```
+上述 assert 語句也可以放在 start_item 之後、finish_item 之前。 uvm_do 系列宏其實是將下述動作封裝在了一個巨集中：
+```
+virtual task body();
+  …
+  tr = new("tr");
+  start_item(tr);
+  assert(tr.randomize() with {tr.pload.size() == 200;});
+  finish_item(tr);
+  …
+endtask
+```
+如果要指定 transaction 的優先權，那麼要在呼叫 start_item 和 finish_item 時都要加入優先權參數：
+```
+virtual task body();
+  …
+  start_item(tr, 100);
+  finish_item(tr, 100);
+  …
+endtask
+```
+如果不指定優先權參數，預設的優先權為 -1
+## pre_do、mid_do 與 post_do
+uvm_do 巨集封裝了從 transaction 實例化到傳送的一系列操作，封裝的越多，則其彈性越差。為了增加 uvm_do 系列巨集的功能，
+UVM 提供了三個介面：pre_do、mid_do與post_do。
+* pre_do 是一個任務，在 start_item 中被調用，它是 start_item 返回前執行的最後一行程式碼，在它執行完畢後才對 transaction 進行隨機化
+* mid_do 是一個函數，位於 finish_item 的最開始。執行完此函數後，finish_item 才進行其他操作。
+* post_do 也是一個函數，也位於 finish_item 中，它是 finish_item 返回前執行的最後一行程式碼。它們的執行順序大致為：
+```
+sequencer.wait_for_grant(prior) (task) \ start_item \
+parent_seq.pre_do(1) (task)            /             \
+                                                      `uvm_do* macros
+parent_seq.mid_do(item) (func)         \              /
+sequencer.send_request(item) (func)     \finish_item /
+sequencer.wait_for_item_done() (task)   /
+parent_seq.post_do(item) (func)        /
+```
+wait_for_grant、send_request 及 wait_for_item_done 都是 UVM 內部的一些介面。這三個介面函數/任務的使用範例如下：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  my_transaction m_trans;
+  int num;
+...
+  virtual task pre_do(bit is_item);
+    #100;
+    `uvm_info("sequence0", "this is pre_do", UVM_MEDIUM)
+  endtask
+
+  virtual function void mid_do(uvm_sequence_item this_item);
+    my_transaction tr;
+    int p_sz;
+    `uvm_info("sequence0", "this is mid_do", UVM_MEDIUM)
+    void'($cast(tr, this_item));
+    p_sz = tr.pload.size();
+    {tr.pload[p_sz - 4],
+     tr.pload[p_sz - 3],
+     tr.pload[p_sz - 2],
+     tr.pload[p_sz - 1]} = num;
+    tr.crc = tr.calc_crc();
+    tr.print();
+  endfunction
+
+  virtual function void post_do(uvm_sequence_item this_item);
+    `uvm_info("sequence0", "this is post_do", UVM_MEDIUM)
+  endfunction
+
+  virtual task body();
+...
+    repeat (10) begin
+      num++;
+      `uvm_do(m_trans)
+    end
+...
+  endtask
+...
+endclass
+```
+pre_do 有一個參數，此參數用來表示 uvm_do 宏是在對一個 transaction 還是在對一個 sequence 進行操作，關於這一點請參考6.4.1
+節。 mid_do 和 post_do 的兩個參數是正在操作的 sequence 或 item 的指針，但其型別是 uvm_sequence_item 型別。透過 cast 可以轉換成目標類型（範例中為my_transaction）。
+## 嵌套的 sequence
+假設一個產生 CRC 錯誤包的 sequence 如下：
+```
+class crc_seq extends uvm_sequence#(my_transaction);
+…
+  virtual task body();
+    my_transaction tr;
+    `uvm_do_with(tr, {tr.crc_err == 1; tr.dmac == 48'h980F;})
+  endtask
+endclass
+```
+另外一個產生長包的 sequence 如下：
+```
+class long_seq extends uvm_sequence#(my_transaction);
+…
+  virtual task body();
+    my_transaction tr;
+    `uvm_do_with(tr, {tr.crc_err == 0; tr.pload.size() == 1500; tr.dmac == 48'hF675;})
+  endtask
+endclass
+```
+現在要寫一個新的 sequence，它可以交替產生上面的兩種包。那麼在新的 sequence 裡面可以這樣寫：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  virtual task body();
+  my_transaction tr;
+  repeat (10) begin
+    `uvm_do_with(tr, {tr.crc_err == 1; tr.dmac == 48'h980F;})
+    `uvm_do_with(tr, {tr.crc_err == 0; tr.pload.size() == 1500; tr.dmac == 48'hF675;})
+  end
+  endtask
+endclass
+```
+似乎這樣寫起來顯得特別麻煩。產生的兩種不同的包中，第一個約束條件有兩個，第二個約束條件有三個。但是假如約束條
+件有十個呢？如果整個驗證平台中有 30 個測試案例都用到這樣的兩種包，那就要在這 30 個測試案例的 sequence 中加入這些程式碼，
+這是一件相當恐怖的事情，而且特別容易出錯。既然已經定義好 crc_seq 和 long_seq，那麼有沒有簡單的方法呢？答案是肯定的。
+在一個 sequence 的 body 中，除了可以使用 uvm_do 巨集產生 transaction 外，其實還可以啟動其他的 sequence，也就是一個 sequence 內啟動另外一個 sequence，這就是嵌套的 sequence：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+…
+  virtual task body();
+    crc_seq cseq;
+    long_seq lseq;
+    …
+    repeat (10) begin
+      cseq = new("cseq");
+      cseq.start(m_sequencer);
+      lseq = new("lseq");
+      lseq.start(m_sequencer);
+    end
+  …
+  endtask
+…
+endclass
+```
+直接在新的 sequence 的 body 中呼叫定義好的 sequence，從而實作 sequence 的重用。這個功能是非常強大的。在上面程式碼中， 
+m_sequencer 是 case0_sequence 啟動後所使用的 sequencer 的指標。但通常來說並不用這麼麻煩，可以使用 uvm_do 宏來完成這些事情：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+…
+  virtual task body();
+    crc_seq cseq;
+    long_seq lseq;
+    …
+    repeat (10) begin
+      `uvm_do(cseq)
+      `uvm_do(lseq)
+    end
+    …
+  endtask
+…
+endclass
+```
+uvm_do 系列巨集中，其第一個參數除了可以是 transaction 的指標外，還可以是某個 sequence 的指標。當第一個參數是 transaction
+時，它如6.3.4節程式碼清單6-39所示，呼叫 start_item 和 finish_item；當第一個參數是 sequence 時，它呼叫此 sequence 的 start 任務。
+除了 uvm_do 宏外，前面介紹的 uvm_send 宏、uvm_rand_send 宏、uvm_create 宏，其第一個參數都可以是 sequence 的指標。唯一
+例外的是 start_item 與 finish_item，這兩個任務的參數必須是 transaction 的指標。
+## 在 sequence 中使用 rand 類型變數
+在 transaction 的定義中，通常會使用 rand 來對變數進行修飾，說明在呼叫 randomize 時要對此欄位進行隨機化。其實在 sequence 中
+也可以使用 rand 修飾因子。有如下的 sequence，它有成員變數 ldmac：
+```
+class long_seq extends uvm_sequence#(my_transaction);
+  rand bit[47:0] ldmac;
+  …
+  virtual task body();
+    my_transaction tr;
+    `uvm_do_with(tr, {tr.crc_err == 0;
+    tr.pload.size() == 1500;
+    tr.dmac == ldmac;})
+    tr.print();
+  endtask
+endclass
+```
+這個 sequence 可以當作底層的 sequence 被頂層的 sequence 呼叫：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  …
+  virtual task body();
+    long_seq lseq;
+    …
+    repeat (10) begin
+    `uvm_do_with(lseq, {lseq.ldmac == 48'hFFFF;})
+    end
+    …
+  endtask
+  …
+endclass
+```
+sequence 裡可以加入任意多的 rand 修飾符，用以規範它所產生的 transaction。 sequence 與 transaction 都可以呼叫 randomize 進行隨機化，都可以有 rand 修飾符的成員變量，從某種程度上來說，二者的界線比較模糊。這也就是為什麼 uvm_do 系列宏可以接受 
+sequence 作為其參數的原因。
+在 sequence 中定義 rand 類型變數時，要注意變數的命名。很多人習慣於變數的名字和 transaction 中對應欄位的名字一致：
+```
+class long_seq extends uvm_sequence#(my_transaction);
+  rand bit[47:0] dmac;
+  …
+  virtual task body();
+    my_transaction tr;
+    `uvm_do_with(tr, {tr.crc_err == 0;
+    tr.pload.size() == 1500;
+    tr.dmac == dmac;})
+    tr.print();
+  endtask
+endclass
+```
+在 case0_sequence 中啟動上述 sequence，並將 dmac 位址約束為 48’hFFFF，此時將會發現產生的 transaction 的 dmac 並不是 
+48‘hFFFF，而是一個隨機值！這是因為，執行到上述程式碼的第15行時，編譯器會先去 my_transaction 找 dmac，如果找到了，
+就不再繼續尋找。換言之，止述代號第13到第15行等價於：
+```
+`uvm_do_with(tr, {tr.crc_err == 0;
+tr.pload.size() == 1500;
+tr.dmac == tr.dmac;})
+```
+long_seq 中的 dmac 並沒有起到作用。所以，在 sequence 中定義 rand 類型變數以傳遞約束到產生的 transaction 時，變數的名字一定要與 transaction 中對應欄位的名字不同。
+## transaction 類型的匹配
+一個 sequencer 只能產生一種類型的 transaction，一個 sequence 如果要想在此 sequencer 上啟動，那麼其所產生的 transaction 的類型必須是這種 transaction 或是派生自這種 transaction。
+如果一個 sequence 中產生的 transaction 的類型不是此種 transaction，那麼將會報錯：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  your_transaction y_trans;
+  virtual task body();
+    repeat (10) begin
+      `uvm_do(y_trans)
+    end
+  endtask
+endclass
+```
+**巢狀 sequence 的前提是，在套裡面的所有 sequence 產生的 transaction 都可以被同一個 sequencer 所接受**。
+那麼有沒有辦法將兩個截然不同的 transaction 交給同一個 sequencer 呢？可以，只是需要將 sequencer 和 driver 能夠接受的資料類
+型設定為 uvm_sequence_item：
+```
+class my_sequencer extends uvm_sequencer #(uvm_sequence_item);
+class my_driver extends uvm_driver#(uvm_sequence_item);
+```
+在 sequence 中可以交替傳送 my_transaction 和 your_transaction：
+```
+class case0_sequence extends uvm_sequence;
+  my_transaction m_trans;
+  your_transaction y_trans;
+  …
+  virtual task body();
+  …
+    repeat (10) begin
+    `uvm_do(m_trans)
+    `uvm_do(y_trans)
+    end
+  …
+  endtask
+  
+  `uvm_object_utils(case0_sequence)
+endclass
+```
+這樣帶來的問題是，由於 driver 中接收的資料類型是 uvm_sequence_item，如果它要使用 my_transaction 或 your_transaction 中的
+成員變量，必須使用 cast 轉換：
+```
+task my_driver::main_phase(uvm_phase phase);
+  my_transaction m_tr;
+  your_transaction y_tr;
+...
+  while (1) begin
+    seq_item_port.get_next_item(req);
+    if ($cast(m_tr, req)) begin
+      drive_my_transaction(m_tr);
+      `uvm_info("driver", "receive a transaction whose type is my_transaction", UVM_MEDIUM)
+    end
+    else if ($cast(y_tr, req)) begin
+      drive_your_transaction(y_tr);
+      `uvm_info("driver", "receive a transaction whose type is your_transaction", UVM_MEDIUM)
+    end
+    else begin
+      `uvm_error("driver", "receive a transaction whose type is unknown")
+    end
+    seq_item_port.item_done();
+  end
+endtask
+```
