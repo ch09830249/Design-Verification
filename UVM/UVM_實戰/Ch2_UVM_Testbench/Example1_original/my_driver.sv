@@ -14,9 +14,9 @@ task my_driver::main_phase(uvm_phase phase);
     top_tb.rx_dv <= 1'b0;
     while(!top_tb.rst_n)                        // 等待 top_tb.rst_n 變為 1 (意謂著等到 reset 結束為止)
         @(posedge top_tb.clk);                  // clk 上沿回 while loop 檢查 !top_tb.rst_n
-    for(int i = 0; i < 256; i++) begin          // 傳送 256 個 8 bits 數
+    for(int i = 0; i < 20 /*256*/; i++) begin          // 傳送 256 個 8 bits 數 (這裡傳 20 個方便對照 wave form)
         @(posedge top_tb.clk);                  // 當 clk 上沿
-        top_tb.rxd <= $urandom_range(0, 255);   // 隨機產生 0 ~ 255 的數指定給 rxd (8 bits)
+        top_tb.rxd <= $urandom_range(0, 255);   // 隨機產生 0 ~ 255 的數指定給 rxd (8 bits) 一次只傳送一個 Byte
         top_tb.rx_dv <= 1'b1;                   // 並且指示該 rxd 有效
         `uvm_info("my_driver", "data is drived", UVM_LOW)   
         `uvm_info("my_driver", $sformatf("top_tb.rxd = %0d, top_tb.rx_dv = %d", top_tb.rxd, top_tb.rx_dv), UVM_LOW)
