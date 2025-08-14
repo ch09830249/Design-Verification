@@ -26,7 +26,6 @@ end
 ```
 simvision waves.shm
 ```
-## 補充  
 ## $shm_probe 的語法與參數
 ```
 $shm_probe([<depth>], [<scope>], [<signal_spec>]);
@@ -57,3 +56,4 @@ $shm_probe("AS", top_tb);          // 把 top_tb 所有信號都 dump 出來（�
 $shm_probe("AS", top_tb);        // dump top_tb 的所有訊號
 $shm_probe("AS", top_tb.u_dut);  // 只 dump u_dut
 ```
+
