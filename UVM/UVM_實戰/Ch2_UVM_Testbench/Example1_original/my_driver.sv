@@ -19,7 +19,7 @@ task my_driver::main_phase(uvm_phase phase);
         top_tb.rxd <= $urandom_range(0, 255);   // 隨機產生 0 ~ 255 的數指定給 rxd (8 bits) 一次只傳送一個 Byte
         top_tb.rx_dv <= 1'b1;                   // 並且指示該 rxd 有效
         `uvm_info("my_driver", "data is drived", UVM_LOW)   
-        `uvm_info("my_driver", $sformatf("top_tb.rxd = %0d, top_tb.rx_dv = %d", top_tb.rxd, top_tb.rx_dv), UVM_LOW)
+        `uvm_info("my_driver", $sformatf("top_tb.rxd = 0x%h, top_tb.rx_dv = 0x%h", top_tb.rxd, top_tb.rx_dv), UVM_LOW)
         /*
             第一個參數是字串，可以想成 ID；第二個參數也是字串，是具體需要列印的資訊；第三個參數則是不重要程度。所以若比該 level 更高，代表更不重要，所以不需要印出
             UVM_LOW     => 極度重要
