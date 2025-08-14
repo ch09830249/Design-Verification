@@ -8,9 +8,10 @@
     在 class 中使用的是 virtual interface：
 */
 class my_driver extends uvm_driver;
+    `uvm_component_utils(my_driver)
     virtual my_if vif;                  // 聲明一個 virtual interface
     virtual my_if vif2;
-    `uvm_component_utils(my_driver)
+
     function new(string name = "my_driver", uvm_component parent = null);
         super.new(name, parent);
         `uvm_info("my_driver", "new is called", UVM_LOW);
@@ -26,8 +27,12 @@ class my_driver extends uvm_driver;
         */
         if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif)) 
             `uvm_fatal("my_driver", "virtual interface must be set for vif!!!")
+        else
+            `uvm_info("my_driver", "virtual interface get vif successfully!!!", UVM_LOW)
         if(!uvm_config_db#(virtual my_if)::get(this, "", "vif2", vif2))
             `uvm_fatal("my_driver", "virtual interface must be set for vif2!!!")
+        else
+            `uvm_info("my_driver", "virtual interface get vif2 successfully!!!", UVM_LOW)
         /*
         get:
             virtual my_if:  uvm_config_db#（virtual my_if）則是一個參數化的類，其參數就是要寄信的類型，這裡是 virtual my_if
@@ -49,13 +54,15 @@ task my_driver::main_phase(uvm_phase phase);
     vif.valid <= 1'b0;
     while(!vif.rst_n)
         @(posedge vif.clk);
-    for(int i = 0; i < 256; i++) begin
+    for(int i = 0; i < 20; i++) begin
         @(posedge vif.clk);
         vif.data <= $urandom_range(0, 255);
         vif.valid <= 1'b1;
-        `uvm_info("my_driver", "data is drived", UVM_LOW);
+        // `uvm_info("my_driver", "data is drived", UVM_LOW);
+        `uvm_info("my_driver", $sformatf("vif.valid = %h, vif.data = %h", vif.valid, vif.data), UVM_LOW)
     end
     @(posedge vif.clk);
-    vif.rx_dv <= 1'b0;
+    vif.valid <= 1'b0;
+    `uvm_info("my_driver", "main_phase is ended", UVM_LOW);
     phase.drop_objection(this);
 endtask
