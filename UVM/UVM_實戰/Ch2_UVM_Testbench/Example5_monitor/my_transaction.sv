@@ -19,8 +19,8 @@ class my_transaction extends uvm_sequence_item;
         crc = calc_crc();
     endfunction
     
-    function void print_tr();
-        $display("======================= Print Transaction =======================");
+    function void my_print(string name);
+        $display("======================= Print Transaction (%s)=======================", name);
         $display("dmac: %0h", dmac);
         $display("smac: %0h", smac);
         $display("ether_type: %0h", ether_type);
