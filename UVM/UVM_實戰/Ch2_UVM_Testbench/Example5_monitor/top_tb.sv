@@ -3,6 +3,7 @@
 
 import uvm_pkg::*;
 `include "my_driver.sv"
+`include "my_monitor.sv"
 `include "my_if.sv"
 `include "my_env.sv"
 
