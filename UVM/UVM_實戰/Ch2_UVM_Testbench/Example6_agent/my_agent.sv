@@ -6,6 +6,10 @@ class my_agent extends uvm_agent;   // 所有的 agent 都要派生自 uvm_agent
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
+        if (is_active == UVM_ACTIVE)
+            `uvm_info("my_agent", "my_agent is new ", UVM_LOW)
+        else
+            `uvm_info("my_agent", "my_agent is new", UVM_LOW)
         /* 
             透過 config table 取得當前 agent 的模式, 並指定給成員變數 is_active
         */
