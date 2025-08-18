@@ -3,9 +3,14 @@
 
 import uvm_pkg::*;
 `include "my_driver.sv"
+`include "my_if.sv"
+`include "my_env.sv"
 
 module top_tb;
 
+    reg clk;
+    reg rst_n;
+    
     my_if input_if(clk, rst_n);
     my_if output_if(clk, rst_n);
 
@@ -34,12 +39,18 @@ module top_tb;
     end
 
     initial begin
+        $shm_open("waves.shm");
+        $shm_probe("AS");
+    end
+
+    initial begin
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.drv", "vif", input_if);    // 樹狀結構改變, 所以在 top_tb 中使用 config_db 機制傳遞 virtualmy_if 時，要改變對應的路徑
         uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.drv", "vif2", output_if);
         /*
             uvm_test_top 是 UVM 自動建立的樹根的名字，而 drv 則是在 my_env 的 build_phase 中實例化 drv 時傳遞過去的名字。
             如果在實例化 drv 時傳遞的名字是 my_drv，那麼 set 函數的第二個參數中也應 my_drv
         */
+
     end
 
 endmodule
