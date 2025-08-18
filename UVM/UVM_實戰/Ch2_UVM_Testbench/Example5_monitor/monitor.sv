@@ -4,6 +4,8 @@ class my_monitor extends uvm_monitor;       // 所有的 monitor 類別應該衍
 
     `uvm_component_utils(my_monitor)        // uvm_monitor 在整個仿真中是一直存在的，所以它是一個 component，要使用 uvm_component_util 巨集註冊
 
+    byte payload_q[$]; // queue
+
     function new(string name = "my_monitor", uvm_component parent = null);
         super.new(name, parent);
     endfunction
@@ -12,6 +14,8 @@ class my_monitor extends uvm_monitor;       // 所有的 monitor 類別應該衍
         super.build_phase(phase);
         if (!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))              // 透過 db config 取的
             `uvm_fatal("my_monitor", "virtual interface must be set for vif!!!")
+        else
+            `uvm_info("my_monitor", "get virtual interface vif successfully!!!", UVM_LOW);
     endfunction
 
     extern task main_phase(uvm_phase phase);
@@ -21,8 +25,8 @@ endclass
 
 task my_monitor::main_phase(uvm_phase phase);
     my_transaction tr;
-    while (1) begin         // 由於 monitor 需要時時收集數據，永不停歇，所以在 main_phase 中使用 while（1）循環來實現這一目的
-        tr = new("tr");     // 先準備好一個空的 transaction 物件
+    while (1) begin             // 由於 monitor 需要時時收集數據，永不停歇，所以在 main_phase 中使用 while（1）循環來實現這一目的
+        tr = new("tr");         // 先準備好一個空的 transaction 物件
         collect_one_pkt(tr);
     end
 endtask
@@ -38,6 +42,7 @@ task my_monitor::collect_one_pkt(my_transaction tr);
 
     `uvm_info("my_monitor", "begin to collect one pkt", UVM_LOW);   // 有了 valid data, 可以開始先收到暫存資料的 data_q
 
+
     // 先將所有 data 一個一個 byte 塞進 data_q, 直到 valid 為 0
     while (vif.valid) begin
         data_q.push_back(vif.data);
@@ -47,17 +52,50 @@ task my_monitor::collect_one_pkt(my_transaction tr);
     // 再將 data_q 中的收集好的資料 parse 成 (dmac + smac + ether_type + payload + crc)
     // Pop dmac
     for (int i = 0; i < 6; i++) begin
-        tr.dmac = {tr.dmac[39:0], data_q.pop_front()};
+        tr.dmac = {tr.dmac[39:0], data_q.pop_front()};  // Concat
     end
+    /*
+    1. 把 tr.dmac 的低 40 位（[39:0]）取出來
+    2. 然後把從 data_q 彈出來的 8-bit 新資料加到最後面（最低位）
+    3. 組成新的 48-bit 數值，更新 tr.dmac。
+    
+    EX: 
+        tr.dmac = 48'h000000000000;
+        data_q = '{8'hAA, 8'hBB, 8'hCC, 8'hDD, 8'hEE, 8'hFF};
+
+        i=0: tr.dmac = 0000000000AA
+        i=1: tr.dmac = 00000000AABB
+        i=2: tr.dmac = 000000AABBCC
+        i=3: tr.dmac = 0000AABBCCDD
+        i=4: tr.dmac = 00AABBCCDDEE
+        i=5: tr.dmac = AABBCCDDEEFF
+
+    最終 tr.dmac = AABBCCDDEEFF，就是完整的 48-bit MAC 位址。
+    */
 
     // Pop smac
-    …
+    for (int i = 0; i < 6; i++) begin
+        tr.smac = {tr.smac[39:0], data_q.pop_front()};  // Concat
+    end
 
     // Pop ether_type
-    …
+    for (int i = 0; i < 2; i++) begin
+        tr.ether_type = {tr.ether_type[7:0], data_q.pop_front()};  // Concat
+    end
 
-    // Pop payload
-    …
+    // Pop payload (這裡先固定 payload 長度就是 20 Bytes)
+    /* 
+        理論上要先取得 total len (從 AXI-Stream 接收), 再去推算出 payload len
+        payload_len = total_len - 18; // 18 bytes = dmac(6) + smac(6) + ethertype(2) + crc (4)
+    */
+    payload_q = {};
+    for (int i = 0; i < 20; i++) begin
+        payload_q.push_back(data_q.pop_front());
+    end
+    tr.pload = new[20];
+    for (int i = 0; i < payload_q.size(); i++) begin
+        tr.pload[i] = payload_q[i];
+    end
 
     // Pop crc
     for (int i = 0; i < 4; i++) begin
@@ -65,7 +103,7 @@ task my_monitor::collect_one_pkt(my_transaction tr);
     end
 
     `uvm_info("my_monitor", "end collect one pkt, print it:", UVM_LOW);
-    tr.my_print();
+    tr.my_print("my_monitor");
 endtask
 
 /*
