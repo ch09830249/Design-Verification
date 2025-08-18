@@ -33,8 +33,8 @@ task my_driver::main_phase(uvm_phase phase);
     `uvm_info("my_driver", "main_phase is called", UVM_LOW);
     for (int i = 0; i < 2; i++) begin
         tr = new("tr");
-        assert(tr.randomize() with {pload.size == 20;});
-        tr.print_tr();
+        assert(tr.randomize() with {pload.size == 20;});    // 固定 payload size 為 20 Bytes
+        tr.my_print("my_driver");
         drive_one_pkt(tr);
     end
     // ......
@@ -67,10 +67,8 @@ task my_driver::drive_one_pkt(my_transaction tr);
     end
 
     // Push payload to data_q (tr.pload.size Bytes)
-    for (int i = 0; i < tr.pload.size; i+=8) begin
-        for (int j = 0; j < 8; j++) begin
-            data_q.push_back(tr.pload[i + j]);
-        end      
+    for (int i = 0; i < tr.pload.size; i++) begin
+        data_q.push_back(tr.pload[i]);
     end
 
     // Push crc to data_q (4 Bytes)
