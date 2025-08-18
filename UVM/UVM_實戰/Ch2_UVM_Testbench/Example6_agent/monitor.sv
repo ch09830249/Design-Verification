@@ -1,6 +1,6 @@
 class my_monitor extends uvm_monitor;
-
     virtual my_if vif;
+    byte payload_q[$]; // queue for collecting payload
 
     `uvm_component_utils(my_monitor)
 
@@ -12,6 +12,8 @@ class my_monitor extends uvm_monitor;
         super.build_phase(phase);
         if (!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
             `uvm_fatal("my_monitor", "virtual interface must be set for vif!!!")
+        else
+            `uvm_info("my_monitor", "get virtual interface vif successfully!!!", UVM_LOW);
     endfunction
 
     extern task main_phase(uvm_phase phase);
@@ -21,10 +23,12 @@ endclass
 
 task my_monitor::main_phase(uvm_phase phase);
     my_transaction tr;
+    `uvm_info("my_monitor", "main_phase is called", UVM_LOW);
     while (1) begin
         tr = new("tr");
         collect_one_pkt(tr);
     end
+    `uvm_info("my_monitor", "main_phase is ended", UVM_LOW);
 endtask
 
 task my_monitor::collect_one_pkt(my_transaction tr);
@@ -49,13 +53,24 @@ task my_monitor::collect_one_pkt(my_transaction tr);
     end
 
     // Pop smac
-    …
+    for (int i = 0; i < 6; i++) begin
+        tr.smac = {tr.smac[39:0], data_q.pop_front()};
+    end
 
     // Pop ether_type
-    …
+    for (int i = 0; i < 2; i++) begin
+        tr.ether_type = {tr.ether_type[7:0], data_q.pop_front()};
+    end
 
     // Pop payload
-    …
+    payload_q = {};
+    for (int i = 0; i < 20; i++) begin
+        payload_q.push_back(data_q.pop_front());
+    end
+    tr.pload = new[20];
+    for (int i = 0; i < payload_q.size(); i++) begin
+        tr.pload[i] = payload_q[i];
+    end
 
     // Pop crc
     for (int i = 0; i < 4; i++) begin
@@ -63,5 +78,5 @@ task my_monitor::collect_one_pkt(my_transaction tr);
     end
 
     `uvm_info("my_monitor", "end collect one pkt, print it:", UVM_LOW);
-    tr.my_print();
+    tr.my_print("my_monitor");
 endtask
