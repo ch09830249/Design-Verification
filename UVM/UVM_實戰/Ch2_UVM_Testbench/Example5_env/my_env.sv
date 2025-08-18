@@ -8,6 +8,7 @@ class my_env extends uvm_env;
 
     function new(string name = "my_env", uvm_component parent);
         super.new(name, parent);
+        $display("my_env is new!!");
     endfunction
 
     /*
@@ -16,6 +17,7 @@ class my_env extends uvm_env;
     */
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        $display("my_env build phase!!");
         drv = my_driver::type_id::create("drv", this);  // factory 機制所帶來的獨特的實例化方式。只有使用 factory 機制註冊過的類別才能使用這種方式實例化
     endfunction
 
