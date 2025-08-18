@@ -6,10 +6,6 @@ class my_agent extends uvm_agent;   // 所有的 agent 都要派生自 uvm_agent
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
-        if (is_active == UVM_ACTIVE)
-            `uvm_info("my_agent", "my_agent is new ", UVM_LOW)
-        else
-            `uvm_info("my_agent", "my_agent is new", UVM_LOW)
         /* 
             透過 config table 取得當前 agent 的模式, 並指定給成員變數 is_active
         */
@@ -18,6 +14,10 @@ class my_agent extends uvm_agent;   // 所有的 agent 都要派生自 uvm_agent
             is_active 的值預設為 UVM_ACTIVE，在這種模式下，是需要實例化 driver 的。
             UVM_PASSIVE 模式在輸出埠上不需要驅動任何訊號，只需要監測訊號。在這種情況下，連接埠上是只需要 monitor 的，所以 driver 可以不用實例化。
         */
+        if (is_active == UVM_ACTIVE)
+            `uvm_info("my_agent", "my_agent is new (active)", UVM_LOW)
+        else
+            `uvm_info("my_agent", "my_agent is new (passive)", UVM_LOW)
         if (is_active == UVM_ACTIVE) begin
             drv = my_driver::type_id::create("drv", this);
         end
