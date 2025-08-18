@@ -887,3 +887,372 @@ task my_driver::main_phase(uvm_phase phase);
   end
 endtask
 ```
+## p_sequencer 的使用
+考慮下列一種情況，在 sequencer 中存在以下成員變數：
+```
+class my_sequencer extends uvm_sequencer #(my_transaction);
+  bit [47:0] dmac;
+  bit [47:0] smac;
+......
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    void'(uvm_config_db#(bit[47:0])::get(this, "", "dmac", dmac));
+    void'(uvm_config_db#(bit[47:0])::get(this, "", "smac", smac));
+  endfunction
+
+  `uvm_component_utils(my_sequencer)
+endclass
+```
+在其 build_phase 中，使用 config_db：：get 得到這兩個成員變數的值。之後 sequence 在發送 transaction 時，必須將目的位址設定
+為 dmac，來源位址設定為 smac。現在的問題是，如何在 sequence 的 body 中得到這兩個變數的值呢？
+在6.4.1節介紹巢狀的 sequence 時，引入了 m_sequencer 這個屬於每個 sequence 的成員變量，但如果直接使用 m_sequencer 得
+到這兩個變數的值：
+```
+virtual task body();
+…
+  repeat (10) begin
+    `uvm_do_with(m_trans, {m_trans.dmac == m_sequencer.dmac; m_trans.smac == m_sequencer.smac;})
+  end
+…
+endtask
+```
+如上寫法會造成編譯錯誤。其根源在於 m_sequencer 是 uvm_sequencer_base（uvm_sequencer 的基底類別）類型的，而不是 
+my_sequencer 類型的。 m_sequencer 的原型為：
+```
+protected uvm_sequencer_base m_sequencer;
+```
+但由於 case0_sequence 在 my_sequencer 上啟動，其中的 m_sequencer 本質上是 my_sequencer 類型的，所以可以在 my_sequence 
+中透過 cast 轉換將 m_sequencer 轉換成 my_sequencer 類型，並引用其中的 dmac 和 smac：
+```
+virtual task body();
+  my_sequencer x_sequencer;
+…
+  $cast(x_sequencer, m_sequencer);
+  repeat (10) begin
+   `uvm_do_with(m_trans, {m_trans.dmac == x_sequencer.dmac; m_trans.smac == x_sequencer.smac;})
+  end
+…
+endtask
+```
+上述過程稍顯麻煩。在實際的驗證平台中，用到 sequencer 中成員變數的情況非常多。 UVM 考慮到這種情況，內建了一個巨集：
+uvm_declare_p_sequencer（SEQUENCER）。這個巨集的本質是宣告了一個 SEQUENCER 類型的成員變量，如在定義 sequence 時，使
+用此巨集聲明 sequencer 的類型：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  my_transaction m_trans;
+  `uvm_object_utils(case0_sequence)
+  `uvm_declare_p_sequencer(my_sequencer)
+…
+endclass
+```
+則相當於宣告如下的成員變數：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+  my_sequencer p_sequencer;
+  …
+endclass
+```
+UVM 之後會自動將 m_sequencer 透過 cast 轉換成 p_sequencer。這個過程在 pre_body() 之前就完成了。因此在 sequence 中可以
+直接使用成員變數 p_sequencer 來引用 dmac 和 smac：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+…
+  virtual task body();
+  …
+    repeat (10) begin
+    `uvm_do_with(m_trans, {m_trans.dmac == p_sequencer.dmac; m_trans.smac == p_sequencer.smac;})
+    end
+  …
+  endtask
+
+endclass
+```
+## sequence 的派生與繼承
+sequence 作為一個類，是可以從其中派生其他 sequence 的：
+```
+class base_sequence extends uvm_sequence #(my_transaction);
+  `uvm_object_utils(base_sequence)
+  `uvm_declare_p_sequencer(my_sequencer)
+
+  function new(string name = "base_sequence");
+    super.new(name);
+  endfunction
+
+  // Define some common functions and tasks
+endclass
+
+class case0_sequence extends base_sequence;
+  // Specific implementation for case0
+endclass
+```
+由於在同一個專案中各 sequence 都是類似的，所以可以將許多公用的函數或任務寫在 base sequence 中，其他 sequence 都從此 
+sequence 派生。
+普通的 sequence 這樣使用沒有任何問題，但對於那些使用了 uvm_declare_p_sequence 聲明 p_sequencer 的 base sequence，在派生
+的 sequence 中是否也要呼叫此巨集宣告 p_sequencer？這個問題的答案是否定的，因為 uvm_declare_p_sequence 的實質是在 base sequence 
+中宣告了一個成員變數 p_sequencer。當其他的 sequence 從其派生時，p_sequencer 仍然是新的 sequence 的成員變量，所以無
+須再聲明一次了。
+當然了，如果再聲明一次，系統也不會報錯：
+```
+class base_sequence extends uvm_sequence #(my_transaction);
+  `uvm_object_utils(base_sequence)
+  `uvm_declare_p_sequencer(my_sequencer)
+  …
+endclass
+class case0_sequence extends base_sequence;
+  `uvm_object_utils(case0_sequence)
+  `uvm_declare_p_sequencer(my_sequencer)
+…
+endclass
+```
+雖然這相當於連續宣告了兩個成員變數 p_sequencer，但由於這兩個成員變數一個是屬於父類別的，一個是屬於子類別的，所以
+並不會出錯。
+## virtual sequence 的使用
+## 帶雙路輸入輸出埠的 DUT
+在本書先前所有的例子中，所使用的 DUT 幾乎都是基於2.2.1節中所示的最簡單的 DUT。為了說明 virtual sequence，本節引入附
+錄B的代碼B-1所示的 DUT。
+這個 DUT 相當於在2.2.1節所示的 DUT 的基礎上增加了一組資料口，這組新的資料口與原先的資料口功能完全一樣。新的數據
+連接埠增加後，由於這組新的資料埠與原先的一模一樣，所以可以在 test 中再額外實例化一個 my_env：
+```
+class base_test extends uvm_test;
+  my_env env0;
+  my_env env1;
+…
+endclass
+
+function void base_test::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  env0 = my_env::type_id::create("env0", this);
+  env1 = my_env::type_id::create("env1", this);
+endfunction
+```
+在 top_tb 中做相應更改，多增加一組 my_if，並透過 config_db 將其設定為新的 env 中的 driver 和 monitor：
+```
+module top_tb;
+
+  // Interface instance connections
+  my_if input_if0(clk, rst_n);
+  my_if input_if1(clk, rst_n);
+  my_if output_if0(clk, rst_n);
+  my_if output_if1(clk, rst_n);
+
+  // DUT instantiation
+  dut my_dut(
+    .clk(clk),
+    .rst_n(rst_n),
+    .rxd0(input_if0.data),
+    .rx_dv0(input_if0.valid),
+    .rxd1(input_if1.data),
+    .rx_dv1(input_if1.valid),
+    .txd0(output_if0.data),
+    .tx_en0(output_if0.valid),
+    .txd1(output_if1.data),
+    .tx_en1(output_if1.valid)
+  );
+
+  initial begin
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.i_agt.drv", "vif", input_if0);
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.i_agt.mon", "vif", input_if0);
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.o_agt.mon", "vif", output_if0);
+
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.i_agt.drv", "vif", input_if1);
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.i_agt.mon", "vif", input_if1);
+    uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.o_agt.mon", "vif", output_if1);
+  end
+
+endmodule
+```
+透過在測試用例中設定兩個 default sequence，可以分別向兩個資料連接埠施加激勵：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  
+  uvm_config_db#(uvm_object_wrapper)::set(this, "env0.i_agt.sqr.main_phase", "default_sequence", case0_sequence::type_id::get());
+  uvm_config_db#(uvm_object_wrapper)::set(this, "env1.i_agt.sqr.main_phase", "default_sequence", case0_sequence::type_id::get());
+endfunction
+```
+## sequence 之間的簡單同步
+在這個新的驗證平台中有兩個 driver，它們原本是完全等價的，但是出於某些原因的考慮，如 DUT 要求 driver0 必須先發送一個
+最大長度的包，在此基礎上 driver1 才可以發送包。這是一個 sequence 之間同步的過程，一個很自然的想法是，將這個同步的過程
+使用一個全域的事件來完成：
+```
+文件：src/ch6/section6.5/6.5.2/my_case0.sv
+event send_over; // global event
+class drv0_seq extends uvm_sequence #(my_transaction);
+...
+  virtual task body();
+...
+    `uvm_do_with(m_trans, {m_trans.pload.size == 1500;})
+    ->send_over; // trigger event
+
+    repeat (10) begin
+      `uvm_do(m_trans)
+      `uvm_info("drv0_seq", "send one transaction", UVM_MEDIUM)
+    end
+...
+  endtask
+endclass
+
+class drv1_seq extends uvm_sequence #(my_transaction);
+...
+  virtual task body();
+    @send_over; // wait for event
+
+    repeat (10) begin
+      `uvm_do(m_trans)
+      `uvm_info("drv1_seq", "send one transaction", UVM_MEDIUM)
+    end
+...
+  endtask
+endclass
+```
+之後，透過 uvm_config_db 的方式分別將這兩個 sequence 作為 env0.i_agt.sqr 和 env1.i_agt.sqr 的 default_sequence：
+```
+function void my_case0::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+    "env0.i_agt.sqr.main_phase",
+    "default_sequence",
+    drv0_seq::type_id::get());
+
+  uvm_config_db#(uvm_object_wrapper)::set(this,
+    "env1.i_agt.sqr.main_phase",
+    "default_sequence",
+    drv1_seq::type_id::get());
+endfunction
+```
+當進入 main_phase 時，這兩個 sequence 會同步啟動，但由於 drv1_seq 要等待 send_over 事件的到來，所以它並不會馬上產生
+transaction，而 drv0_seq 則會直接產生 transaction。當 drv0_se q發送完一個最長套件後，send_over 事件被觸發，於 drv1_seq 開始產生
+transaction。
+## sequence 之間的複雜同步
+上節解決同步的方法看起來非常簡單、實用。不過這裡有兩個問題，
+第一個問題是使用了一個全域的事件 send_over。全域變數對於初寫程式碼的人來說是非常受歡迎的，但是幾乎所有的老師及書本中都會這麼說：除非有必要，否則盡量不要使用全域變
+量。使用全域變數的主要問題即它是全域可見的，本來只是打算在 drv0_seq 和 drv1_seq 中使用這個全域變量，但假如其他的某個 
+sequence 也不小心使用了這個全域變量，在 drv0_seq 觸發 send_over 事件之前，這個 sequence 已經觸發了此事件，這是不允許的。所
+以應該盡量避免全域變數的使用。
+第二個問題是上面只是實作了一次同步，如果有多次同步怎麼辦？如 sequence A 要先執行，之後是 B，B 執行後才能是 C，C
+執行後才能是 D，D 執行後才能是 E。這仍然可以使用上面的全局方法解決，只是這會顯得相當笨拙。
+實現 sequence 之間同步的最好的方式就是使用 virtual sequence。從字面上理解，即虛擬的 sequence。虛擬的意思就是它根本就
+不發送 transaction，它只是控制其他的 sequence，起統一調度的作用。
+如圖6-1所示，為了使用 virtual sequence，一般需要一個 virtual sequencer。 virtual sequencer 裡面包含指向其他真實 sequencer 的指
+針：
+```
+class my_vsqr extends uvm_sequencer;
+
+  my_sequencer p_sqr0;
+  my_sequencer p_sqr1;
+…
+endclass
+```
+在 base_test 中，實例化 vsqr，並將對應的 sequencer 賦值給 vsqr 中的 sequencer 的指標：
+```
+class base_test extends uvm_test;
+
+  my_env env0;
+  my_env env1;
+  my_vsqr v_sqr;
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    env0 = my_env::type_id::create("env0", this);
+    env1 = my_env::type_id::create("env1", this);
+    v_sqr = my_vsqr::type_id::create("v_sqr", this);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    v_sqr.p_sqr0 = env0.i_agt.sqr;
+    v_sqr.p_sqr1 = env1.i_agt.sqr;
+  endfunction
+
+endclass
+```
+<img width="1185" height="792" alt="image" src="https://github.com/user-attachments/assets/f0118594-ca21-496e-859f-138b61445d9c" />
+在 virtual sequene 中則可以使用 uvm_do_on 系列巨集來傳送 transaction：
+```
+class case0_vseq extends uvm_sequence;
+  `uvm_object_utils(case0_vseq)
+  `uvm_declare_p_sequencer(my_vsqr)
+  …
+  virtual task body();
+    my_transaction tr;
+    drv0_seq seq0;
+    drv1_seq seq1;
+    …
+    `uvm_do_on_with(tr, p_sequencer.p_sqr0, {tr.pload.size == 1500;})
+    `uvm_info("vseq", "send one longest packet on p_sequencer.p_sqr0", UVM_MEDIUM)
+    fork
+      `uvm_do_on(seq0, p_sequencer.p_sqr0);
+      `uvm_do_on(seq1, p_sequencer.p_sqr1);
+    join
+  …
+  endtask
+endclass
+```
+在使用 uvm_do_on 巨集的情況下，雖然 seq0 是在 case0_vseq 中啟動，但它最終會交給 p_sequencer.p_sqr0，也即 env0.i_agt.sqr
+而不是 v_sqr。這就是 virtual sequence 和 virtual sequencer 中 virtual 的來源。**它們各自並不產生 transaction，而只是控制其他的
+sequence 為對應的 sequencer 產生 transaction**。virtual sequence 和 virtual sequencer 只是扮演一個調度的角色。由於根本不直接產生 
+transaction，所以 virtual sequence 和 virtual sequencer 在定義時根本無需指明要傳送的 transaction 資料類型。
+如果不使用 uvm_do_on 宏，那麼也可以手動啟動 sequence，其效果完全一樣。手工啟動 sequence 的一個優點是可以向其中傳遞
+一些值：
+```
+class read_file_seq extends uvm_sequence #(my_transaction);
+  my_transaction m_trans;
+  string file_name;
+
+  // 其他函式與邏輯
+endclass
+...
+class case0_vseq extends uvm_sequence;
+...
+  virtual task body();
+    my_transaction tr;
+    read_file_seq seq0;
+    drv1_seq seq1;
+...
+    `uvm_do_on_with(tr, p_sequencer.p_sqr0, {tr.pload.size == 1500;})
+    `uvm_info("vseq", "send one longest packet on p_sequencer.p_sqr0", UVM_MEDIUM)
+
+    seq0 = new("seq0");
+    seq0.file_name = "data.txt";
+
+    seq1 = new("seq1");
+
+    fork
+      seq0.start(p_sequencer.p_sqr0);
+      seq1.start(p_sequencer.p_sqr1);
+    join
+...
+  endtask
+endclass
+```
+在 read_file_seq 中，需要一個字串的檔案名字，在手動啟動時可以指定檔案名字，但是 uvm_do 系列巨集無法實現這個功能，
+因為 string 類型變數前不能使用 rand 修飾符。這就是手工啟動 sequence 的優勢。
+在case0_vseq的定義中，一般都要使用uvm_declare_p_sequencer巨集。這個在前文已經講述過了，透過它可以引用sequencer的成
+員變數。
+回顧一下，為了解決 sequence 的同步，之前使用 send_over 這個全域變數的方式來解決。那麼在 virtual sequence 中是如何解決的
+呢？事實上這個問題在 virtual sequence 中根本就不是個問題。由於 virtual sequence 的 body 是順序執行，所以只需要先產生一個最長
+的包，產生完畢後再將其他的 sequence 啟動起來，沒有必要去刻意地同步。這只是 virtual sequence 強大的調度功能的一個小小的體
+現。
+virtual sequence 的使用可以減少 config_db 語句的使用。由於 config_db::set 函數的第二個路徑參數是字串，非常容易出錯，
+所以減少 config_db 語句的使用可以降低出錯的機率。在上節中，使用了兩個 uvm_config_db 語句將兩個 sequence 送給了對應的 
+sequencer 作為 default_sequence。假如驗證平台中的 sequencer 有多個，例如 10 個，那就需要寫 10 個 uvm_config_db 語句，這是一件很
+令人厭煩的事。使用 virtual sequence 後可以將這 10 句只壓縮成一句：
+```
+function void my_case0::build_phase(uvm_phase phase);
+…
+  uvm_config_db#(uvm_object_wrapper)::set(this, "v_sqr.main_phase", "default_sequence", case0_vseq::type_id::get());
+endfunction
+```
+virtual sequence 作為一種特殊的 sequence，也可以在其中啟動其他的 virtual sequence：
+```
+class case0_vseq extends uvm_sequence;
+  …
+  virtual task body();
+    cfg_vseq cvseq;
+  …
+    `uvm_do(cvseq)
+  …
+  endtask
+endclass
+```
+其中 cfg_vseq 是另外一個已經定義好的 virtual sequence。
