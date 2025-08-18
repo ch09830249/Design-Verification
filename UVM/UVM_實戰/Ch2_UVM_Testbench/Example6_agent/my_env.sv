@@ -5,6 +5,7 @@
        其實還可以在 new 函數中執行實例化的動作
        EX: 可以在 my_agent 的 new 函數中實例化 driver 和 monitor
 */
+`include "my_agent.sv"
 class my_env extends uvm_env;
 
     my_agent i_agt;
@@ -12,10 +13,15 @@ class my_env extends uvm_env;
 
     function new(string name = "my_env", uvm_component parent);
         super.new(name, parent);
+        `uvm_info("my_env", "my_envs is new", UVM_LOW);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        `uvm_info("my_env", "my_env build phase!!", UVM_LOW);
+        // drv = my_driver::type_id::create("drv", this);
+        // i_mon = my_monitor::type_id::create("i_mon", this);
+        // o_mon = my_monitor::type_id::create("o_mon", this);
         /*
             這裡透過 config table 對 i_agt 和 o_agt 設定為不同 mode
         */
