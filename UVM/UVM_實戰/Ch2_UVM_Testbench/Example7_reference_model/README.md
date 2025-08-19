@@ -1,4 +1,8 @@
 # xrun.log
+確實有傳遞給 my_model
+<img width="833" height="400" alt="image" src="https://github.com/user-attachments/assets/6a4ea5da-6f67-468a-9f4d-8af017a2ff9a" />
+
+```
 UVM_INFO my_env.sv(16) @ 0: uvm_test_top [my_env] my_envs is new
 UVM_INFO @ 0: reporter [RNTST] Running test my_env...
 UVM_INFO my_env.sv(21) @ 0: uvm_test_top [my_env] my_env build phase!!
@@ -156,3 +160,4 @@ UVM_INFO my_monitor.sv(50) @ 10100000: uvm_test_top.i_agt.mon [my_monitor] begin
 UVM_INFO my_monitor.sv(50) @ 10300000: uvm_test_top.o_agt.mon [my_monitor] begin to collect one pkt
 UVM_INFO my_driver.sv(92) @ 17500000: uvm_test_top.i_agt.drv [my_driver] end drive one pkt
 UVM_INFO my_driver.sv(37) @ 17500000: uvm_test_top.i_agt.drv [my_driver] main_phase is ended
+```
