@@ -15,10 +15,12 @@ endclass
 
 function my_model::new(string name, uvm_component parent);
     super.new(name, parent);
+    `uvm_info("my_model", "my_model is new", UVM_LOW);
 endfunction
 
 function void my_model::build_phase(uvm_phase phase);
     super.build_phase(phase);
+    `uvm_info("my_model", "main_phase is called", UVM_LOW);
     // 實例化
     port = new("port", this);
     ap = new("ap", this);
@@ -36,7 +38,8 @@ task my_model::main_phase(uvm_phase phase);
         new_tr = new("new_tr");     // new 一個新 tr
         new_tr.my_copy(tr);         // 複製一份
         `uvm_info("my_model", "get one transaction, copy and print it:", UVM_LOW)
-        new_tr.my_print();
+        new_tr.my_print("my_model");
         ap.write(new_tr);           // 傳給 scoreboard
+        break;                      // 這裡收到一筆就 break
     end
 endtask
