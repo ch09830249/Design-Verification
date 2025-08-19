@@ -1,5 +1,5 @@
 # xrun.log
-確實有傳遞給 my_model
+確實有傳遞給 my_model  
 <img width="833" height="400" alt="image" src="https://github.com/user-attachments/assets/6a4ea5da-6f67-468a-9f4d-8af017a2ff9a" />
 
 ```
