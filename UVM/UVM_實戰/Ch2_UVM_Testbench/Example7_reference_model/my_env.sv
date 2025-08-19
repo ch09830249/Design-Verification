@@ -1,3 +1,5 @@
+`include "my_agent.sv"
+`include "my_model.sv"
 class my_env extends uvm_env;
 
     my_agent i_agt;
@@ -11,10 +13,12 @@ class my_env extends uvm_env;
 
     function new(string name = "my_env", uvm_component parent);
         super.new(name, parent);
+        `uvm_info("my_env", "my_envs is new", UVM_LOW);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        `uvm_info("my_env", "my_env build phase!!", UVM_LOW);
         uvm_config_db#(uvm_active_passive_enum)::set(this, "i_agt", "is_active", UVM_ACTIVE);
         uvm_config_db#(uvm_active_passive_enum)::set(this, "o_agt", "is_active", UVM_PASSIVE);
         i_agt = my_agent::type_id::create("i_agt", this);
@@ -29,7 +33,7 @@ class my_env extends uvm_env;
         完成之後馬上執行。但是與 build_phase 不同的是，它的執行順序並不是從樹根到樹葉，而是從樹葉到樹根－先執行driver和 monitor 的 connect_phase，
         再執行 agent 的 connect_phase，最後執行 env 的 connect_phase。 (Bottom-Up)
     */
-    function void my_env::connect_phase(uvm_phase phase);
+    function void connect_phase(uvm_phase phase);
         // 在 connect_phase 中將 fifo 分別與 my_monitor 中的 analysis_port 和 my_model 中的 blocking_get_port相連
         super.connect_phase(phase);
         /*
@@ -43,4 +47,5 @@ class my_env extends uvm_env;
     endfunction
 
     `uvm_component_utils(my_env)
+
 endclass
