@@ -25,7 +25,7 @@ endfunction
 task my_scoreboard::main_phase(uvm_phase phase);
     my_transaction get_expect, get_actual, tmp_tran;
     bit result;
-
+    phase.raise_objection(this);    // 加 objection, 收到來自 model 的 tr 和 monitor 的 tr 並比對
     super.main_phase(phase);
     // 在 main_phase 中透過 fork 建立起了 2 個進程
     fork
@@ -33,6 +33,7 @@ task my_scoreboard::main_phase(uvm_phase phase);
         while (1) begin
             exp_port.get(get_expect);
             expect_queue.push_back(get_expect);     // 塞該 tr 進 queue
+            break;
         end
         /*
             另外一個進程處理 act_port 的數據，這是 DUT 的輸出數據，當收集到這些數據後，從 expect_queue 中彈出之前從 exp_port 收到的數據，
@@ -49,10 +50,11 @@ task my_scoreboard::main_phase(uvm_phase phase);
                 else begin
                     `uvm_error("my_scoreboard", "Compare FAILED");
                     $display("the expect pkt is");
-                    tmp_tran.my_print();
+                    tmp_tran.my_print("my_scoreboard");
                     $display("the actual pkt is");
-                    get_actual.my_print();
+                    get_actual.my_print("my_scoreboard");
                 end
+                break;      // 比對成功一筆 tr 就 break
             end
             else begin  
                 /* 
@@ -61,8 +63,9 @@ task my_scoreboard::main_phase(uvm_phase phase);
                 */
                 `uvm_error("my_scoreboard", "Received from DUT, while Expect Queue is empty");
                 $display("the unexpected pkt is");
-                get_actual.my_print();
+                get_actual.my_print("my_scoreboard");
             end
         end
     join
+    phase.drop_objection(this);
 endtask
