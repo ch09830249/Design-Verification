@@ -18,6 +18,10 @@ endclass
 function void my_agent::build_phase(uvm_phase phase);
     super.build_phase(phase);
     uvm_config_db#(uvm_active_passive_enum)::get(this, "", "is_active", is_active);
+    if (is_active == UVM_ACTIVE)
+        `uvm_info("my_agent", "my_agent is new (active)", UVM_LOW)
+    else
+        `uvm_info("my_agent", "my_agent is new (passive)", UVM_LOW)
     if (is_active == UVM_ACTIVE) begin
         drv = my_driver::type_id::create("drv", this);
     end
