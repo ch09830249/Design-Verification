@@ -16,7 +16,6 @@ endfunction
 
 function void my_scoreboard::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    // new 兩個 port
     exp_port = new("exp_port", this);
     act_port = new("act_port", this);
 endfunction
@@ -24,13 +23,15 @@ endfunction
 task my_scoreboard::main_phase(uvm_phase phase);
     my_transaction get_expect, get_actual, tmp_tran;
     bit result;
-
+    phase.raise_objection(this);
     super.main_phase(phase);
     fork
         while (1) begin
             exp_port.get(get_expect);
             expect_queue.push_back(get_expect);
+            break;
         end
+
         while (1) begin
             act_port.get(get_actual);
             if(expect_queue.size() > 0) begin
@@ -38,24 +39,27 @@ task my_scoreboard::main_phase(uvm_phase phase);
                 // result = get_actual.my_compare(tmp_tran);
                 result = get_actual.compare(tmp_tran);
                 if(result) begin
-                    `uvm_info("my_scoreboard", "Compare SUCCESSFULLY", UVM_LOW);
+                    `uvm_info("my_scoreboard", "Compare SUCCESSFULLY and print it!", UVM_LOW);
+                    get_actual.print();
                 end
                 else begin
                     `uvm_error("my_scoreboard", "Compare FAILED");
                     $display("the expect pkt is");
-                    // tmp_tran.my_print();
+                    // tmp_tran.my_print("my_scoreboard");
                     tmp_tran.print();
                     $display("the actual pkt is");
-                    // get_actual.my_print();
+                    // get_actual.my_print("my_scoreboard");
                     get_actual.print();
                 end
+                break;
             end
-            else begin
+            else begin  
                 `uvm_error("my_scoreboard", "Received from DUT, while Expect Queue is empty");
                 $display("the unexpected pkt is");
-                // get_actual.my_print();
+                // get_actual.my_print("my_scoreboard");
                 get_actual.print();
             end
         end
     join
+    phase.drop_objection(this);
 endtask
