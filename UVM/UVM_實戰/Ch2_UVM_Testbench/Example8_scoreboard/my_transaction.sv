@@ -7,7 +7,7 @@ class my_transaction extends uvm_sequence_item;
     rand bit[31:0] crc;
 
     constraint pload_cons {
-        pload.size >= 46;
+        pload.size >= 20;
         pload.size <= 1500;
     }
 
@@ -16,23 +16,19 @@ class my_transaction extends uvm_sequence_item;
     endfunction
 
     function void post_randomize();
-        crc = calc_crc;
+        crc = calc_crc();
     endfunction
-
-    `uvm_object_utils(my_transaction)
-
-    function new(string name = "my_transaction");
-        super.new(name);
-    endfunction
-
-    function void my_print();
-        $display("dmac = %0h", dmac);
-        $display("smac = %0h", smac);
-        $display("ether_type = %0h", ether_type);
-        for(int i = 0; i < pload.size; i++) begin
+    
+    function void my_print(string name);
+        $display("======================= Print Transaction (%s)=======================", name);
+        $display("dmac: %0h", dmac);
+        $display("smac: %0h", smac);
+        $display("ether_type: %0h", ether_type);
+        foreach (pload[i]) begin
             $display("pload[%0d] = %0h", i, pload[i]);
         end
-        $display("crc = %0h", crc);
+        $display("crc: %0h", crc);
+        $display("==============================================");
     endfunction
 
     function void my_copy(my_transaction tr);
@@ -69,4 +65,11 @@ class my_transaction extends uvm_sequence_item;
             end
         return result;
     endfunction
+
+    `uvm_object_utils(my_transaction)
+
+    function new(string name = "my_transaction");
+        super.new(name);
+    endfunction
+
 endclass
