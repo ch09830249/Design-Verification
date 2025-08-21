@@ -1,4 +1,6 @@
 # xrun.log
+<img width="810" height="105" alt="image" src="https://github.com/user-attachments/assets/fba4c522-2c35-4527-a924-52d374258964" />
+
 ```
 UVM_INFO my_env.sv(19) @ 0: uvm_test_top [my_env] my_envs is new
 UVM_INFO @ 0: reporter [RNTST] Running test my_env...
