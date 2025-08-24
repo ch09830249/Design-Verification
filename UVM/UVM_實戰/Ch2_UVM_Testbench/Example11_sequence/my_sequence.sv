@@ -13,7 +13,10 @@ class my_sequence extends uvm_sequence #(my_transaction);   // 每一個sequence
     endfunction
 
     virtual task body();    // 當一個 sequence 啟動之後，會自動執行 body 中的程式碼
+        int num = 0;
         repeat (10) begin
+            num = num + 1;
+            `uvm_info("my_sequence", $sformatf("transaction: %0d", num), UVM_LOW)
             `uvm_do(m_trans)
             // m_trans = my_transaction::type_id::create("m_trans");  // 透過 factory 機制實例化 transaction
             // start_item(m_trans);                                   // 對 transaction 設置
@@ -21,7 +24,7 @@ class my_sequence extends uvm_sequence #(my_transaction);   // 每一個sequence
             //     `uvm_error("", "Randomize failed")
             // finish_item(m_trans);
         end
-        #1000;
+        #1000;  // 這是為了讓最後一筆 tr 順利流過 driver => monitor => model => scoreboard
     endtask
 
     `uvm_object_utils(my_sequence)  // 一個 sequence 應該使用 uvm_object_utils 巨集註冊到 factory 中
