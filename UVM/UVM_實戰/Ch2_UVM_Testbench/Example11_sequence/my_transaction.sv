@@ -7,7 +7,7 @@ class my_transaction extends uvm_sequence_item;
     rand bit[31:0] crc;
 
     constraint pload_cons {
-        pload.size >= 46;
+        pload.size >= 20;
         pload.size <= 1500;
     }
 
@@ -16,9 +16,9 @@ class my_transaction extends uvm_sequence_item;
     endfunction
 
     function void post_randomize();
-        crc = calc_crc;
+        crc = calc_crc();
     endfunction
-
+    
     `uvm_object_utils_begin(my_transaction)
         `uvm_field_int(dmac, UVM_ALL_ON)
         `uvm_field_int(smac, UVM_ALL_ON)
