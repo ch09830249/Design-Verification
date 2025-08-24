@@ -23,20 +23,23 @@ endfunction
 task my_scoreboard::main_phase(uvm_phase phase);
     my_transaction get_expect, get_actual, tmp_tran;
     bit result;
-
+    // phase.raise_objection(this);
     super.main_phase(phase);
     fork
         while (1) begin
             exp_port.get(get_expect);
             expect_queue.push_back(get_expect);
+            // break;  // 原本預期收集一筆來自 my_model 的 tr 就 break;
         end
+
         while (1) begin
             act_port.get(get_actual);
             if(expect_queue.size() > 0) begin
                 tmp_tran = expect_queue.pop_front();
                 result = get_actual.compare(tmp_tran);
                 if(result) begin
-                    `uvm_info("my_scoreboard", "Compare SUCCESSFULLY", UVM_LOW);
+                    `uvm_info("my_scoreboard", "Compare SUCCESSFULLY and print it!", UVM_LOW);
+                    get_actual.print();
                 end
                 else begin
                     `uvm_error("my_scoreboard", "Compare FAILED");
@@ -45,12 +48,14 @@ task my_scoreboard::main_phase(uvm_phase phase);
                     $display("the actual pkt is");
                     get_actual.print();
                 end
+                // break;  // 原本預期比對完一筆就 break
             end
-            else begin
+            else begin  
                 `uvm_error("my_scoreboard", "Received from DUT, while Expect Queue is empty");
                 $display("the unexpected pkt is");
                 get_actual.print();
             end
         end
     join
+    // phase.drop_objection(this);
 endtask
