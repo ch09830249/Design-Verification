@@ -21,10 +21,13 @@ class my_sequence extends uvm_sequence #(my_transaction);
     endfunction
 
     virtual task body();
+        int num = 0;
         // 因此，可以在 sequence 中使用 starting_phase 進行提起和撤銷 objection
         if(starting_phase != null)
             starting_phase.raise_objection(this);
         repeat (10) begin
+            num = num + 1;
+            `uvm_info("my_sequence", $sformatf("transaction: %0d", num), UVM_LOW)
             `uvm_do(m_trans)
         end
         #1000;
