@@ -1,3 +1,4 @@
+`include "my_sequence.sv"
 class my_sequencer extends uvm_sequencer #(my_transaction);
 
     function new(string name, uvm_component parent);
@@ -7,7 +8,7 @@ class my_sequencer extends uvm_sequencer #(my_transaction);
     /*
         在 sequencer 中啟動與在 my_env 中啟動相比，唯一差異是 seq.start 的參數變成 this。
     */
-    task my_sequencer::main_phase(uvm_phase phase);
+    task main_phase(uvm_phase phase);
         my_sequence seq;
         phase.raise_objection(this);
         seq = my_sequence::type_id::create("seq");
