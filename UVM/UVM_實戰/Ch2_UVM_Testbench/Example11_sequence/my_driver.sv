@@ -1,26 +1,30 @@
+`include "my_transaction.sv"
 class my_driver extends uvm_driver#(my_transaction);
     virtual my_if vif;
-
+    virtual my_if vif2;
     `uvm_component_utils(my_driver)
+
     function new(string name = "my_driver", uvm_component parent = null);
         super.new(name, parent);
         `uvm_info("my_driver", "new is called", UVM_LOW);
     endfunction
 
     extern virtual task main_phase(uvm_phase phase);
-    extern virutal task drive_one_pkt(my_transaction tr);
+    extern virtual task drive_one_pkt(my_transaction tr);
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         `uvm_info("my_driver", "build_phase is called", UVM_LOW);
         if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif)) 
             `uvm_fatal("my_driver", "virtual interface must be set for vif!!!")
+        else
+            `uvm_info("my_driver", "get virtual interface vif successfully!!!", UVM_LOW)
     endfunction
 endclass
 
 // 當把二者連接好之後，就可以在 driver 中透過 get_next_item 任務向 sequencer 申請新的 transaction
 task my_driver::main_phase(uvm_phase phase);
-    phase.raise_objection(this);
+    // phase.raise_objection(this);
     vif.data <= 8'b0;
     vif.valid <= 1'b0;
     while(!vif.rst_n)
@@ -29,9 +33,12 @@ task my_driver::main_phase(uvm_phase phase);
         while（1）循環因為 driver 只負責驅動 transaction，而不負責產生，只要有 transaction 就驅動，
         所以必須做成一個無限循環的形式。這與 monitor、reference model 和 scoreboard 的情況非常類似。
     */
+    // for(int i = 0; i < 2; i++) begin
+    //     req = new("req");
+    //     assert(req.randomize() with {pload.size == 200;});
+    //     drive_one_pkt(req);
+    // end
     while(1) begin
-        // req = new("req");
-        // assert(req.randomize() with {pload.size == 200;});
         seq_item_port.get_next_item(req);   // 透過 get_next_item 任務來得到一個新的 req ( Driver 向 sequencer 發送申請 transaction)
         drive_one_pkt(req);                 // 並且驅動它
         seq_item_port.item_done();          // 
@@ -62,22 +69,21 @@ task my_driver::main_phase(uvm_phase phase);
         */
     end
     repeat(5) @(posedge vif.clk);
-    phase.drop_objection(this);
+    // phase.drop_objection(this);
 endtask
 
 task my_driver::drive_one_pkt(my_transaction tr);
-    bit [47:0] tmp_data;
-    bit [7:0] data_q[$];
-
+    byte unsigned data_q[];
+    int data_size;
+    
     data_size = tr.pack_bytes(data_q) / 8;
-
     `uvm_info("my_driver", "begin to drive one pkt", UVM_LOW);
-    repeat(3) @(posedge vif.clk);
-
-    while (data_q.size() > 0) begin
+    tr.print();
+    repeat(5) @(posedge vif.clk);
+    for ( int i = 0; i < data_size; i++ ) begin
         @(posedge vif.clk);
         vif.valid <= 1'b1;
-        vif.data <= data_q.pop_front();
+        vif.data <= data_q[i];
     end
 
     @(posedge vif.clk);
