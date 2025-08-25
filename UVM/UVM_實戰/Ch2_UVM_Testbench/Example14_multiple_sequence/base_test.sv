@@ -17,10 +17,7 @@ endclass
 function void base_test::build_phase(uvm_phase phase);
   super.build_phase(phase); 
   env = my_env::type_id::create("env", this);
-  uvm_config_db#(uvm_object_wrapper)::set(this,
-                                          "env.i_agt.sqr.main_phase",
-                                          "default_sequence",
-                                          my_sequence::type_id::get());
+  uvm_config_db#(uvm_object_wrapper)::set(this, "env.i_agt.sqr.main_phase", "default_sequence", my_sequence::type_id::get());
 endfunction
 
 function void base_test::report_phase(uvm_phase phase);
