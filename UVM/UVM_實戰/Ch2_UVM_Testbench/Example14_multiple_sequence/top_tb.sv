@@ -3,9 +3,18 @@
 
 import uvm_pkg::*;
 `include "my_driver.sv"
+`include "my_monitor.sv"
+`include "my_if.sv"
+`include "my_env.sv"
+`include "base_test.sv"
+`include "my_case0.sv"
+`include "my_case1.sv"
 
 module top_tb;
 
+    reg clk;
+    reg rst_n;
+    
     my_if input_if(clk, rst_n);
     my_if output_if(clk, rst_n);
 
@@ -37,8 +46,11 @@ module top_tb;
             or
             … +UVM_TEST_NAME=my_case1
     */
+
     initial begin
-        run_test();
+        // run_test();
+        // run_test("my_case0");
+        run_test("my_case1");
     end
 
     initial begin
@@ -52,6 +64,11 @@ module top_tb;
         rst_n = 1'b0;
         #1000;
         rst_n = 1'b1;
+    end
+
+    initial begin
+        $shm_open("waves.shm");
+        $shm_probe("AS");
     end
 
     initial begin
