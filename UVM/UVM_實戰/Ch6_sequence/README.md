@@ -1194,6 +1194,7 @@ sequence 為對應的 sequencer 產生 transaction**。virtual sequence 和 virt
 transaction，所以 virtual sequence 和 virtual sequencer 在定義時根本無需指明要傳送的 transaction 資料類型。
 如果不使用 uvm_do_on 宏，那麼也可以手動啟動 sequence，其效果完全一樣。手工啟動 sequence 的一個優點是可以向其中傳遞
 一些值：
+
 ```
 class read_file_seq extends uvm_sequence #(my_transaction);
   my_transaction m_trans;
@@ -1201,14 +1202,14 @@ class read_file_seq extends uvm_sequence #(my_transaction);
 
   // 其他函式與邏輯
 endclass
-...
+…
 class case0_vseq extends uvm_sequence;
-...
+…
   virtual task body();
     my_transaction tr;
     read_file_seq seq0;
     drv1_seq seq1;
-...
+…
     `uvm_do_on_with(tr, p_sequencer.p_sqr0, {tr.pload.size == 1500;})
     `uvm_info("vseq", "send one longest packet on p_sequencer.p_sqr0", UVM_MEDIUM)
 
@@ -1221,10 +1222,11 @@ class case0_vseq extends uvm_sequence;
       seq0.start(p_sequencer.p_sqr0);
       seq1.start(p_sequencer.p_sqr1);
     join
-...
+…
   endtask
 endclass
 ```
+
 在 read_file_seq 中，需要一個字串的檔案名字，在手動啟動時可以指定檔案名字，但是 uvm_do 系列巨集無法實現這個功能，
 因為 string 類型變數前不能使用 rand 修飾符。這就是手工啟動 sequence 的優勢。
 在case0_vseq的定義中，一般都要使用uvm_declare_p_sequencer巨集。這個在前文已經講述過了，透過它可以引用sequencer的成
@@ -1256,3 +1258,48 @@ class case0_vseq extends uvm_sequence;
 endclass
 ```
 其中 cfg_vseq 是另外一個已經定義好的 virtual sequence。
+
+## 僅在 virtual sequence 中控制 objection
+在 sequence 中可以使用 starting_phase 來控制驗證平台的關閉。除了手工啟動 sequence 時為 starting_phase 賦值外，只有將此
+ sequence 作為 sequencer 的某動態執行 phase 的 default_sequence 時，其 starting_phase 才不為null。如果將某 sequence 作為 uvm_do 宏的參
+數，那麼此 sequence 中的 starting_phase 是為 null 的。在此 sequence 中使用 starting_phase.raise_objection 是沒有任何用處的：
+```
+class drv0_seq extends uvm_sequence #(my_transaction);
+…
+  virtual task body();
+    if(starting_phase != null) begin
+      starting_phase.raise_objection(this);
+      `uvm_info("drv0_seq", "raise objection", UVM_MEDIUM)
+    end
+    else begin
+      `uvm_info("drv0_seq", "starting_phase is null, can't raise objection", UVM_MEDIUM)
+    end
+  …
+  endtask
+endclass
+  
+class case0_vseq extends uvm_sequence;
+…
+  virtual task body();
+    drv0_seq seq0;
+    if(starting_phase != null)
+      starting_phase.raise_objection(this);
+    `uvm_do_on(seq0, p_sequencer.p_sqr0);
+    #100;
+    if(starting_phase != null)
+      starting_phase.drop_objection(this);
+  endtask
+endclass
+```
+執行上述程式碼，會發現 drv0_seq 中的 starting_phase 為 null，因此不會對 objection 進行操作。
+若讓 drv0_seq 中的 starting_phase 不為 null 其實比較容易解決，只要將父 sequence 的 starting_phase 賦值給子 sequence 的 starting_phase
+即可。只是可惜 uvm_do 系列巨集並不提供 starting_phase 的傳遞功能。
+5.2.3節中提過要嘛在scoreboard中控制objection，要嘛在sequence中控制。關於在sequence中控制objection，在沒有virtual
+在sequence之前，這沒有什麼疑問。但當virtual sequence存在時，尤其是virtual sequence中又可以啟動其他的virtual sequence時，有
+三個地方可以控制objection：一是普通的sequence，二是中間層的virtual sequence（如代碼清單6-76中的cfg_vseq），三是最頂層的
+virtual sequence（程式碼清單6-76中的case0_vseq）。那麼應該在何處控制objection來最終控制驗證平台的關閉呢？
+一般來說，只在最頂層的virtual sequence中控制objection。因為virtual sequence是起統一調度作用的，這種統一調度不只體現
+在transaction上，也應該體現在objection的控制上。在驗證平台中使用objection時，經常會出現沒有按照預期結束模擬的情況。這
+種情況下就需要層層地查找哪裡有objection被提起了，哪裡有objection被撤銷了。雖然可以透過5.2.5節提及的objection調試手段來
+輔助進行，但它終究是一件比較麻煩的事。如果大家約定俗成都只在最頂層的virtual sequence中控制objection，那麼在遇到這樣
+的問題時，只查找最頂層的virtual sequence即可，從而大大提高效率。
