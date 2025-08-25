@@ -1,3 +1,4 @@
+`include "my_sequence.sv"
 class my_sequencer extends uvm_sequencer #(my_transaction);
 
     function new(string name, uvm_component parent);
