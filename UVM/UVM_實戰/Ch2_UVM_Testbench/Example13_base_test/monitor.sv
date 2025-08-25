@@ -1,6 +1,6 @@
 class my_monitor extends uvm_monitor;
-
     virtual my_if vif;
+    byte payload_q[$];
     uvm_analysis_port #(my_transaction) ap;
 
     `uvm_component_utils(my_monitor)
@@ -13,6 +13,8 @@ class my_monitor extends uvm_monitor;
         super.build_phase(phase);
         if (!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
             `uvm_fatal("my_monitor", "virtual interface must be set for vif!!!")
+        else
+            `uvm_info("my_monitor", "get virtual interface vif successfully!!!", UVM_LOW);
         ap = new("ap", this);
     endfunction
 
@@ -23,16 +25,20 @@ endclass
 
 task my_monitor::main_phase(uvm_phase phase);
     my_transaction tr;
+    `uvm_info("my_monitor", "main_phase is called", UVM_LOW);
     while (1) begin
         tr = new("tr");
         collect_one_pkt(tr);
         ap.write(tr);
     end
+    `uvm_info("my_monitor", "main_phase is ended", UVM_LOW);
 endtask
 
 task my_monitor::collect_one_pkt(my_transaction tr);
     bit[7:0] data_q[$];
     int psize;
+    int data_size;
+    byte unsigned data_array[];
 
     while (1) begin
         @(posedge vif.clk);
@@ -48,7 +54,7 @@ task my_monitor::collect_one_pkt(my_transaction tr);
 
     data_size = data_q.size();
     data_array = new[data_size];
-    for ( int i = 0; i < data_size; i++ ) begin
+    for (int i = 0; i < data_size; i++) begin
         data_array[i] = data_q[i];
     end
     tr.pload = new[data_size - 18];
