@@ -31,16 +31,16 @@ uvm_config_db#(int)::get(this.parent, "drv", "pre_num_max", pre_num_max);
 uvm_config_db#(int)::get(null, "uvm_test_top.env.i_agt.drv", "pre_num_max", p re_num_max);    // 絕對路徑
 ```
 * **get 函數**
-  * 一般的，如果第一個參數被設定為 this，那麼第二個參數可以是一個空的字串，指當前的 component
-  * 第三個參數就是 set 函數中的第三個參數
+  * 如果第一個參數被設定為 this，那麼第二個參數可以是一個空的字串，指當前的 component
+  * get 的第三個參數就是 set 函數中的第三個參數
   * 第四個參數則是要設定的變數
 **PS**: 在 top_tb 中透過 config_db 機制的 set 函數設定 virtual interface 時，set 函數的第一個參數為 null。在這種情況下，
-UVM 會自動把第一個參數替換為 uvm_root：：get（），即 uvm_top。換句話說，以下兩種寫法是完全等價的：
+UVM 會自動把第一個參數替換為 uvm_root::get()，即 uvm_top。換句話說，以下兩種寫法是完全等價的：
 ```
 initial begin
   uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.drv", "vif", input_if);
 end
-
+// 上下完全等價
 initial begin
   uvm_config_db#(virtual my_if)::set(uvm_root::get(), "uvm_test_top.env.i_ag t. drv", "vif", input_if);
 end
@@ -52,9 +52,9 @@ end
 ```
 int pre_num;
 
-// field automation 機制
+// field automation 機制, 有先註冊好欄位
 `uvm_component_utils_begin(my_driver)
-`uvm_field_int(pre_num, UVM_ALL_ON)
+  `uvm_field_int(pre_num, UVM_ALL_ON)
 `uvm_component_utils_end
 
 function new(string name = "my_driver", uvm_component parent = null);
@@ -63,16 +63,16 @@ function new(string name = "my_driver", uvm_component parent = null);
 endfunction
 
 virtual function void build_phase(uvm_phase phase);
-  `uvm_info("my_driver", $sformatf("before super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)  // 呼叫 super.build_phase() config db 應該還沒設定進去
+  `uvm_info("my_driver", $sformatf("before super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)  // 呼叫 super.build_phase() config db 應該還沒設定進去 (pre_num=3)
   super.build_phase(phase);
-  `uvm_info("my_driver", $sformatf("after super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)   // 呼叫後，無須 get db 可以直接 get 設定完的值
+  `uvm_info("my_driver", $sformatf("after super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)   // 呼叫後，無須 get db 可以直接 get 設定完的值  (pre_num=100 上面 code 的設定)
   if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
     `uvm_fatal("my_driver", "virtual interface must be set for vif!!!")
 endfunction
 ```
 * **只要使用 uvm_field_int 註冊，並且在 build_phase 中呼叫 super.build_phase()，就可以省略在 build_phase 中的 get 語句**
-  uvm_config_db#(int)::get(this, "", "pre_num", pre_num);
-* 這裡的關鍵是 build_phase 中的 super.build_phase 語句，當執行到 driver 的 super.build_phase 時，會自動執行 get 語句
+  (uvm_config_db#(int)::get(this, "", "pre_num", pre_num);)
+* 這裡的關鍵是 build_phase 中的 super.build_phase 語句，**當執行到 driver 的 super.build_phase 時，會自動執行 get 語句**
   * 第一，my_driver 必須使用 uvm_component_utils 巨集註冊
   * 第二，pre_num 必須使用 uvm_field_int 巨集註冊
   * 第三，在呼叫 set 函數的時候，set 函數的第三個參數必須與要 get 函數中變數的名字一致，也就是必須是 pre_num
@@ -86,10 +86,7 @@ endfunction
 function void my_case0::build_phase(uvm_phase phase);
     super.build_phase(phase);
 …
-    uvm_config_db#(int)::set(this,
-    "env.i_agt.drv",
-    "pre_num",
-    999);
+    uvm_config_db#(int)::set(this, "env.i_agt.drv", "pre_num", 999);
     `uvm_info("my_case0", "in my_case0, env.i_agt.drv.pre_num is set to 999",UVM_LOW)
 ```
 在 env 的設定語句如下：
@@ -98,18 +95,15 @@ function void my_case0::build_phase(uvm_phase phase);
 virtual function void build_phase(uvm_phase phase);
       super.build_phase(phase);
 …
-      uvm_config_db#(int)::set(this,
-      "i_agt.drv",
-      "pre_num",
-      100);
+      uvm_config_db#(int)::set(this, "i_agt.drv", "pre_num", 100);
       `uvm_info("my_env", "in my_env, env.i_agt.drv.pre_num is set to 100",UVM_LOW)
 endfunction
 ```
-UVM 規定層次越高，那麼它的優先權就越高，所以 driver 獲取的值為 999
+**UVM 規定層次越高，那麼它的優先權就越高**，所以 driver 獲取的值為 999
 * 越靠近根結點 uvm_top，則認為其層次越高
 * uvm_test_top 的層次是高於 env 的，所以 uvm_test_top 中的 set 函數的優先權高  
 **為甚麼這樣設計?**
-相對於 env 來說，uvm_test_top（my_case）更接近使用者。用戶會在 uvm_test_top 中設定不同的 default_sequence，從而衍生出許多不同的測試用例來。而對於 env，它在 uvm_test_top 中實例化。有時候，這個 env 根本就不是用戶自己開發的，很可能是別人已經開發好的一個非常成熟的可重複使用的模組。對於這種成熟的模組，如果覺得其中某些參數不合要求，那麼要到 env 中去修改相關的參數嗎？顯然這是不合理的。比較合理的就是在uvm_test_top 的 build_phase 中透過 set 函數的方式修改。所以說，UVM 這種看似勢利的行為其實極大方便了用戶的使用。
+相對於 env 來說，uvm_test_top（my_case）更接近使用者。用戶會在 uvm_test_top 中設定不同的 default_sequence，從而衍生出許多不同的測試用例來。而對於 env，它在 uvm_test_top 中實例化。有時候，**這個 env 根本就不是用戶自己開發的，很可能是別人已經開發好的一個非常成熟的可重複使用的模組**。對於這種成熟的模組，如果覺得其中某些參數不合要求，那麼要到 env 中去修改相關的參數嗎？顯然這是不合理的。比較合理的就是在 uvm_test_top 的 build_phase 中透過 set 函數的方式修改。所以說，UVM 這種看似勢利的行為其實極大方便了用戶的使用。
 上述結論在 set 函數的第一個參數為 this 時是成立的，但是假如 set 函數的第一個參數不是 this 會如何呢？假設 uvm_test_top 的 set 語句是:
 ```
 function void my_case0::build_phase(uvm_phase phase);
@@ -136,9 +130,10 @@ virtual function void build_phase(uvm_phase phase);
   `uvm_info("my_env", "in my_env, env.i_agt.drv.pre_num is set to 100", UVM_LOW)
 endfunction
 ```
-在這種情況下，driver 得到的 pre_num 的值是 100。由於 set 函數的第一個參數是 uvm_root：：get（），所以寄信人變成了 uvm_top。在這種情況下，**只能比較寄信的時間**。 UVM 的 **build_phase 是由上而下執行的**，my_case0 的 build_phase 先於 my_env 的 build_phase 執行。所以 my_env 對pre_num 的設定在後，其設定成為最終的設定。
-假如 uvm_test_top 中 set 函數的第一個參數是 this，而 env 中 set 函數的第一個參數是uvm_root：：get（），那麼 driver 得到的 pre_num 的值也是 100。這是因為 env 中 set 函數的寄信者變成了 uvm_top，在 UVM 樹中具有最高的優先權。
-因此，無論如何，在呼叫 set 函數時其第一個參數應該盡量使用 this。在無法取得 this 指標的情況下（如在 top_tb 中），使用 null 或 uvm_root：：get（）
+**PS: 上面這樣改代表層級相同 (都是 root), Priority 也相同**
+在這種情況下，driver 得到的 pre_num 的值是 100。由於 set 函數的第一個參數是 uvm_root::get()，所以寄信人變成了 uvm_top。在這種情況下，**只能比較寄信的時間**。 UVM 的 **build_phase 是由上而下執行的**，my_case0 的 build_phase 先於 my_env 的 build_phase 執行。所以 my_env 對pre_num 的設定在後，其設定成為最終的設定。
+假如 uvm_test_top 中 set 函數的第一個參數是 this，而 env 中 set 函數的第一個參數是 uvm_root::get()，那麼 driver 得到的 pre_num 的值也是 100。這是因為 env 中 set 函數的寄信者變成了 uvm_top，在 UVM 樹中具有最高的優先權。
+因此，無論如何，在呼叫 set 函數時其第一個參數應該盡量使用 this。在無法取得 this 指標的情況下（如在 top_tb 中），使用 null 或 uvm_root::get()
 ## 同一層次的多重設定
 當跨層次來看問題時，是高層次的 set 設定優先；當處於同一層次時，上節已經提過，**是時間優先**
 pre_num 在 99% 的測試案例中的值都是 7，只有在 1% 的測試案例中才會是其他值
@@ -165,7 +160,7 @@ endclass
 ```
 前面 99 個測試案例的 build_phase 裡面都是相同的語句，這種程式碼維護起來非常困難。相當耗時的，而且是極易出錯的。
 驗證中寫程式的一個原則是同樣的語句只在一個地方出現，盡量避免在多個地方出現。
-A: 解決這個問題的方法就是在 base_test 的 build_phase 中使用 config_db：：set 進行設置，這樣，當由 base_test 派生而來的 case1～case99 在執行 super.build_phase（phase）時，都會進行設定：
+A: 解決這個問題的方法就是在 base_test 的 build_phase 中使用 config_db::set 進行設置，這樣，當由 base_test 派生而來的 case1～case99 在執行 super.build_phase（phase）時，都會進行設定：
 ```
 classs base_test extends uvm_test;
       function void build_phase(uvm_phase phase);
@@ -249,7 +244,7 @@ void'(uvm_config_db#(int)::get(uvm_root::get(), "uvm_test_top.env.i_agt.drv", "p
 ```
 非直線的取得可以在某些情況下避免 config_db：：set 的冗餘。上面的範例在 reference model 中取得 driver 的 pre_num 的值，如果不這樣做，而採用直線取得的方式，那麼需要在測試案例中透過 cofig_db：：set 分別給 reference model 和 driver 設定 pre_num 的值。
 同樣的參數值設定出現在不同的兩個語句中，這大大增加了出錯的可能性。因此，非直線的獲取可以在驗證平台中多個元件（UVM樹結點）需要使用同一個參數時，減少config_db：：set的冗餘。
-## config_db 機制對通配符的支持
+## config_db 機制對通配符的支持 (Wildcard)
 在先前所有的範例使用完整路徑設定 virtual interface 的程式碼如下：
 ```
 initial begin
@@ -323,16 +318,17 @@ pre_num [/^uvm_test_top\.env\.i_atg\.drv$/] : (int) 999
 ```
 上述結果顯示有兩個設定資訊分別被寫過（set）1 次，但一次也沒有被讀取（get）。其中 pre_num 未被讀取是因為錯把 i_agt 寫成了 i_atg。 default sequence 的設定也沒有被讀取，是因為 default sequence 是設定給 main_phase 的，它在 main_phase 的時候被獲取，而 main_phase 是在 connect_phase 之後執行的。
 ## set_config 與 get_config
-* set_config_int 與 uvm_config_db#（int）：：set 是完全等價的
-* get_config_int 與 uvm_config_db#（int）：：get是完全等價的
-* 除了 set/get_config_int 外，還有 set/get_config_string 和 set/get_config_object。它們分別對應uvm_config_db#（string）：：set/get和 uvm_config_db#（uvm_object）：：set/get
+* set_config_int 與 uvm_config_db#(int)::set 是完全等價的
+* get_config_int 與 uvm_config_db#(int)::get是完全等價的
+* 除了 set/get_config_int 外，還有 set/get_config_string 和 set/get_config_object。它們分別對應uvm_config_db#(string)::set/get和 uvm_config_db#(uvm_object)::set/get
 * config_db 比 set/get_config 強大的地方在於，它所設定的參數類型並不限於以上三種  
-常見的枚舉類型、virtual interface、bit類型、佇列等都可以成為config_db設定的資料型別
+常見的枚舉類型、virtual interface、bit 類型、佇列等都可以成為 config_db 設定的資料型別
 ## 命令列參數來對它們進行設置
 ```
 <sim command> +uvm_set_config_int=<comp>,<field>,<value>
 <sim command> +uvm_set_config_string=<comp>,<field>,<value>
 ```
+EX:
 ```
 <sim command> +uvm_set_config_int="uvm_test_top.env.i_agt.drv,pre_num,'h8" // 16 進位
 ```
