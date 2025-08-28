@@ -1,10 +1,10 @@
 # uvm_component 派生自 uvm_object
 1. uvm_component 擁有 uvm_object 的特性，同時又有自己的一些特質，但 uvm_component 的一些特性，uvm_object 則不一定有
 2. uvm_component 有兩大特性是 uvm_object 所沒有的
-    1. 透過在 new 的時候指定 parent 參數來形成一種樹形的組織結構
-    2. 有 phase 的自動執行特點
+    1. **透過在 new 的時候指定 parent 參數來形成一種樹形的組織結構**
+    2. **有 phase 的自動執行特點**
 ![image](https://github.com/user-attachments/assets/386be6d9-686e-4a92-9ed9-5c7d480f7ab1)  
-PS: 最左邊分支的類別或直接衍生自 uvm_object 的類，是不可能以結點的形式出現在 UVM 樹上的。
+PS: 最左邊分支的類別或直接衍生自 uvm_object 的類，是不可能以結點的形式出現在 UVM 樹上的
 # 常用的派生自 uvm_object 的类
 1. 除了派生自 uvm_component 類別以外的類，幾乎所有的類別都衍生自 uvm_object
 2. 在驗證平台中常遇到的派生自 uvm_object 的類別有：
@@ -29,16 +29,16 @@ PS: 最左邊分支的類別或直接衍生自 uvm_object 的類，是不可能�
 uvm_object，它們都是用於 register model
     * **uvm_phase**
       * 它派生自 uvm_object，其主要作用為控制 uvm_component 的行為方式，使得 uvm_component 平滑地在各個不同的 phase 之間依序運轉
-# 常用的派生自uvm_component的類
+# 常用的派生自 uvm_component 的類
 與 uvm_object 相比，派生自 uvm_component 的類比較少
 * **uvm_driver**
     * 所有的 driver 都要派生自 uvm_driver
-    * driver 的功能主要就是向 sequencer 索取 sequence_item（transaction），並且將 sequence_item 裡的資訊驅動到 DUT 的連接埠上，這相當於完成了從 transaction 等級到 DUT 能夠接受的連接埠層級資訊的轉換。
+    * driver 的功能主要就是向 sequencer 索取 sequence_item（transaction），並且將 sequence_item 裡的資訊驅動到 DUT 的連接埠上，這相當於完成了從 transaction 等級到 DUT 能夠接受的連接埠層級資訊的轉換
 * **uvm_monitor**
     * 所有的 monitor 都要派生自 uvm_monitor
     * monitor 是從 DUT 的 pin 上接收數據，並且把接收到的數據轉換成 transaction 級別的 sequence_item，再把轉換後的數據發送給 
 scoreboard，供其比較
-    * 雖然從理論上來說所有的 monitor 要從 uvm_monitor派生。但實際上如果從 uvm_component派生，也沒有任何問題
+    * 雖然從理論上來說所有的 monitor 要從 uvm_monitor 派生。但實際上如果從 uvm_component 派生，也沒有任何問題
 * **uvm_sequencer**
     * 所有的 sequencer 都要派生自 uvm_sequencer
     * sequencer 的功能就是組織管理 sequence，當 driver 要求資料時，它就把 sequence 產生的 sequence_item 轉發給 driver
@@ -47,12 +47,12 @@ scoreboard，供其比較
     * 一般的 scoreboard 都要派生自 uvm_scoreboard
     * scoreboard 的功能就是比較 reference model 和 monitor 分別發送來的數據，根據比較結果判斷 DUT 是否正確運作
 * **reference model**
-    * UVM 中並沒有針對 reference model 定義一個類別。所以通常來說，reference model都是直接衍生自 uvm_component。
+    * UVM 中並沒有針對 reference model 定義一個類別。所以通常來說，reference model 都是直接衍生自 uvm_component
     * reference model 的作用就是模仿 DUT，完成與 DUT 相同的功能。DUT 是用 Verilog 寫成的時序電路，而 reference
-model 則可以直接使用 SystemVerilog 高階語言的特性，同時也可以透過 DPI 等介面呼叫其他語言來完成與 DUT 相同的功能。
+model 則可以直接使用 SystemVerilog 高階語言的特性，同時也可以透過 DPI 等介面呼叫其他語言來完成與 DUT 相同的功能
 * **uvm_agent**
     * 所有的 agent 要派生自 uvm_agent
-    * 與前面幾個比起來，uvm_agent 的作用並不是那麼明顯。它只是把 driver 和 monitor 封裝在一起，根據參數值來決定只實例化 monitor還是要同時實例化 driver 和 monitor
+    * 與前面幾個比起來，uvm_agent 的作用並不是那麼明顯。它只是把 driver 和 monitor 封裝在一起，根據參數值來決定只實例化 monitor 還是要同時實例化 driver 和 monitor
     * agent 的使用主要是從可重複使用的角度來考慮的。如果在做驗證平台時不考慮可重複使用性，那麼 agent 其實是可有可無的。
     * uvm_agent 的最大改動在於引入了一個變數 is_active
 ```
@@ -66,10 +66,9 @@ virtual class uvm_agent extends uvm_component;
         is_active = uvm_active_passive_enum'(active);
     endfunction
 ```
-PS: get_config_int 是 uvm_config_db#（int）：：get 的另一種寫法，這種寫法最初出現在 OVM 中，本書將在3.5.9節詳細地講述這種
-寫法。由於 is_active 是一個枚舉變量，其兩個取值為固定值0或1。所以在上面的程式碼中可以以 int 型別傳遞給 uvm_agent，並針對傳遞過來的資料做強制型別轉換。
+PS: get_config_int 是 uvm_config_db#(int)::get 的另一種寫法，這種寫法最初出現在 OVM 中，寫法。由於 is_active 是一個枚舉變量，其兩個取值為固定值 0 或 1。所以在上面的程式碼中可以以 int 型別傳遞給 uvm_agent，並針對傳遞過來的資料做強制型別轉換
 * **uvm_env**
-    * 所有的env（environment的縮寫）要派生自uvm_env
+    * 所有的 env（environment的縮寫）要派生自uvm_env
     * env 將驗證平台上用到的固定不變的 component 都封裝在一起。這樣，當要執行不同的測試案例時，只要在測試案例中實例化此 env 即可
 * **uvm_test**
     * 所有的測試用例要派生自 uvm_test 或其派生類，**不同的測試用例之間差異很大，所以從 uvm_test 派生出來的類別各不相同**
@@ -118,7 +117,7 @@ class my_env extends uvm_env;
     endfunction
 endclass
 ```
-**上述的 clone 函數無法用於 uvm_component 中，因為一旦使用後，新 clone 出來的類，其 parent 參數無法指定。**
-* **copy 函數也是 uvm_object 的一個函數，在使用 copy 前，目標實例必須已經使用new函數分配好了記憶體空間**，而使用 clone 函數時，目標實例可以只是一個空指標。換言之，**clone = new + copy**。
-* **雖然uvm_component無法使用clone函數，但可以使用copy函數** 因為在呼叫 copy 之前，目標實例已經完成了實例化，其 parent 參數已經指定了。
+**上述的 clone 函數無法用於 uvm_component 中，因為一旦使用後，新 clone 出來的類，其 parent 參數無法指定**
+* **copy 函數也是 uvm_object 的一個函數，在使用 copy 前，目標實例必須已經使用new函數分配好了記憶體空間**，而使用 clone 函數時，目標實例可以只是一個空指標。換言之，**clone = new + copy**
+* **雖然 uvm_component 無法使用 clone 函數，但可以使用 copy 函數** 因為在呼叫 copy 之前，目標實例已經完成了實例化，其 parent 參數已經指定了
 * uvm_component 的另一個限制是，**位於同一個父結點下的不同的 component，在實例化時不能使用相同的名字**
