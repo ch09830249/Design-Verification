@@ -40,14 +40,16 @@ UVM 會自動把第一個參數替換為 uvm_root::get()，即 uvm_top。換句�
 initial begin
   uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.drv", "vif", input_if);
 end
+
 // 上下完全等價
+
 initial begin
   uvm_config_db#(virtual my_if)::set(uvm_root::get(), "uvm_test_top.env.i_ag t. drv", "vif", input_if);
 end
 ```
 ## 省略 get 語句
 * set 與 get 函數一般都是成對出現，**但在某些情況下，是可以只有 set 而沒有 get 語句**，也就是省略 get 語句。
-在 3.1.5 節介紹到與 uvm_component 相關的巨集時，曾經提及 field automation 機制與 uvm_component 機制的結合。
+在前面章節到與 uvm_component 相關的巨集時，曾經提及 field automation 機制與 uvm_component 機制的結合。
 假設在 my_driver 中有成員變數 pre_num，把其使用 uvm_field_int 實作 field automation 機制：
 ```
 int pre_num;
@@ -65,7 +67,7 @@ endfunction
 virtual function void build_phase(uvm_phase phase);
   `uvm_info("my_driver", $sformatf("before super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)  // 呼叫 super.build_phase() config db 應該還沒設定進去 (pre_num=3)
   super.build_phase(phase);
-  `uvm_info("my_driver", $sformatf("after super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)   // 呼叫後，無須 get db 可以直接 get 設定完的值  (pre_num=100 上面 code 的設定)
+  `uvm_info("my_driver", $sformatf("after super.build_phase, the pre_num is %0d", pre_num), UVM_LOW)   // 呼叫後，無須 get db 可以直接 get 設定完的值  (pre_num=100)
   if(!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
     `uvm_fatal("my_driver", "virtual interface must be set for vif!!!")
 endfunction
@@ -73,9 +75,9 @@ endfunction
 * **只要使用 uvm_field_int 註冊，並且在 build_phase 中呼叫 super.build_phase()，就可以省略在 build_phase 中的 get 語句**
   (uvm_config_db#(int)::get(this, "", "pre_num", pre_num);)
 * 這裡的關鍵是 build_phase 中的 super.build_phase 語句，**當執行到 driver 的 super.build_phase 時，會自動執行 get 語句**
-  * 第一，my_driver 必須使用 uvm_component_utils 巨集註冊
-  * 第二，pre_num 必須使用 uvm_field_int 巨集註冊
-  * 第三，在呼叫 set 函數的時候，set 函數的第三個參數必須與要 get 函數中變數的名字一致，也就是必須是 pre_num
+  * **第一，my_driver 必須使用 uvm_component_utils 巨集註冊**
+  * **第二，pre_num 必須使用 uvm_field_int 巨集註冊**
+  * **第三，在呼叫 set 函數的時候，set 函數的第三個參數必須與要 get 函數中變數的名字一致**，也就是必須是 pre_num
     * 所以上節中，雖然說這兩個參數可以不一致，但是**最好的情況還是一致**
 * **對於 set 語句，則沒有辦法省略**
 ## 跨層次的多重設置
@@ -108,7 +110,7 @@ endfunction
 ```
 function void my_case0::build_phase(uvm_phase phase);
   super.build_phase(phase);
-
+…
   uvm_config_db#(int)::set(uvm_root::get(),        // 改這裡 (原本是 this)
                            "uvm_test_top.env.i_agt.drv",
                            "pre_num",
@@ -121,7 +123,7 @@ env 的 set 語句改成:
 ```
 virtual function void build_phase(uvm_phase phase);
   super.build_phase(phase);
-
+…
   uvm_config_db#(int)::set(uvm_root::get(),        // 改這裡 (原本是 this)
                            "uvm_test_top.env.i_agt.drv",
                            "pre_num",
@@ -151,6 +153,7 @@ class case99 extends base_test;
               uvm_config_db#(int)::set(this, "env.i_agt.drv", pre_num_max, 7);
       endfunction
 endclass
+
 class case100 extends base_test;
       function void build_phase(uvm_phase phase);
               super.build_phase(phase);
@@ -159,7 +162,7 @@ class case100 extends base_test;
 endclass
 ```
 前面 99 個測試案例的 build_phase 裡面都是相同的語句，這種程式碼維護起來非常困難。相當耗時的，而且是極易出錯的。
-驗證中寫程式的一個原則是同樣的語句只在一個地方出現，盡量避免在多個地方出現。
+**驗證中寫程式的一個原則是同樣的語句只在一個地方出現，盡量避免在多個地方出現**。
 A: 解決這個問題的方法就是在 base_test 的 build_phase 中使用 config_db::set 進行設置，這樣，當由 base_test 派生而來的 case1～case99 在執行 super.build_phase（phase）時，都會進行設定：
 ```
 classs base_test extends uvm_test;
@@ -168,6 +171,7 @@ classs base_test extends uvm_test;
               uvm_config_db#(int)::set(this, "env.i_agt.drv", pre_num_max, 7);
       endfunction
 endclass
+// case1 ~ case99 都繼承 base_test
 class case1 extends base_test;
       function void build_phase(uvm_phase phase);
               super.build_phase(phase);
@@ -196,16 +200,16 @@ uvm_config_db#(int)::set(this, "env.i_agt.drv", "pre_num", 100);
 ```
 ## 非直線的設定與獲取
 driver 的路徑為 uvm_test_top.env.i_agt.drv
-* 在 uvm_test_top，env 或 i_agt 中，對 driver 中的某些變量透過 config_db 機制進行設置，稱為**直線的設定** (對其之下的 component 做設定)
-* 若在其他 component，如 scoreboard 中，對 driver 的某些變數使用 config_db 機制進行設置，則稱為**非直線的設置**  (旁系的 component 做設定)
-* 在 my_driver 中使用 config_db：：get 取得其他任意 component 設定給 my_driver 的參數，稱為**直線的取得**  (取得設定給自己的變數)
+* 在 uvm_test_top，env 或 i_agt 中，對 driver 中的某些變量透過 config_db 機制進行設置，稱為**直線的設定** (component 對其直系 child component 做設定)
+* 若在其他 component，如 scoreboard 中，對 driver 的某些變數使用 config_db 機制進行設置，則稱為**非直線的設置**  (component 對其非直系 child component 做設定)
+* 在 my_driver 中使用 config_db::get 取得其他任意 component 設定給 my_driver 的參數，稱為**直線的取得**  (取得設定給自己的變數)
 * 假如要在其他的 component，如在 reference model 中取得其他 component 設定給 my_driver 的參數的值，稱為**非直線的取得** (取得設定給別人的變數)
 ## 非直線的設置
 **要進行非直線的設置，需要仔細設定 set 函數的第一個和第二個參數**
 以在 scoreboard 中設定 driver 中的 pre_num 為例：
 ```
 function void my_scoreboard::build_phase(uvm_phase phase);
-    …
+…
     uvm_config_db#(int)::set(this.m_parent,    // 先推到 scoreboard 的上一層共同的 parent component (env)
                               "i_agt.drv",     // 再指派到 agent 中的 driver 去做設定
                               "pre_num",
@@ -216,16 +220,18 @@ endfunction
 或者：
 ```
 function void my_scoreboard::build_phase(uvm_phase phase);
-          super.build_phase(phase);
-          uvm_config_db#(int)::set(uvm_root::get(),  // 先推到 root
-          "uvm_test_top.env.i_agt.drv",              // 再一路從 uvm_test_top => env => agent => driver
-          "pre_num",
-          200);
+…
+    super.build_phase(phase);
+    uvm_config_db#(int)::set(uvm_root::get(),                  // 先推到 root
+                              "uvm_test_top.env.i_agt.drv",    // 再一路從 uvm_test_top => env => agent => driver
+                              "pre_num",
+                              200);
+    `uvm_info("my_scoreboard", "in my_scoreboard, uvm_test_top.env.i_agt.drv.pre_num is set to 200", UVM_LOW)
 endfunction
 ```
 
 無論哪種方式，都帶來了一個新的問題。  
-在 UVM 樹中，build_phase 是由上而下執行的，但 scb 與 i_agt 處於同一層級中，UVM 並沒有明文指出同一層級的 build_phase 的執行順序。所以當my_driver 在取得參數值時，my_scoreboard 的 **build_phase 可能已經執行了，也可能沒有執行**。所以，這種非直線的設置，會有一定的風險，應該避免這種情況的出現。
+在 UVM 樹中，build_phase 是由上而下執行的，但 scb 與 i_agt 處於同一層級中，UVM 並沒有明文指出同一層級的 build_phase 的執行順序。所以當 my_driver 在取得參數值時，my_scoreboard 的 **build_phase 可能已經執行了，也可能沒有執行**。所以，這種非直線的設置，會有一定的風險，應該避免這種情況的出現。
 ## 非直線的獲取
 非直線的獲取也只需要設定其第一和第二個參數。假如要在 reference model 中取得 driver 的 pre_num 的值：
 ```
@@ -242,8 +248,8 @@ endfunction
 ```
 void'(uvm_config_db#(int)::get(uvm_root::get(), "uvm_test_top.env.i_agt.drv", "pre_num", drv_pre_num));  // 一樣直接推到 root
 ```
-非直線的取得可以在某些情況下避免 config_db：：set 的冗餘。上面的範例在 reference model 中取得 driver 的 pre_num 的值，如果不這樣做，而採用直線取得的方式，那麼需要在測試案例中透過 cofig_db：：set 分別給 reference model 和 driver 設定 pre_num 的值。
-同樣的參數值設定出現在不同的兩個語句中，這大大增加了出錯的可能性。因此，非直線的獲取可以在驗證平台中多個元件（UVM樹結點）需要使用同一個參數時，減少config_db：：set的冗餘。
+非直線的取得可以在某些情況下避免 config_db::set 的冗餘。上面的範例在 reference model 中取得 driver 的 pre_num 的值，如果不這樣做，而採用直線取得的方式，那麼需要在測試案例中透過 cofig_db::set 分別給 reference model 和 driver 設定 pre_num 的值。
+同樣的參數值設定出現在不同的兩個語句中，這大大增加了出錯的可能性。因此，非直線的獲取可以在驗證平台中多個元件（UVM樹結點）需要使用同一個參數時，減少 config_db::set的冗餘。
 ## config_db 機制對通配符的支持 (Wildcard)
 在先前所有的範例使用完整路徑設定 virtual interface 的程式碼如下：
 ```
@@ -319,10 +325,10 @@ pre_num [/^uvm_test_top\.env\.i_atg\.drv$/] : (int) 999
 上述結果顯示有兩個設定資訊分別被寫過（set）1 次，但一次也沒有被讀取（get）。其中 pre_num 未被讀取是因為錯把 i_agt 寫成了 i_atg。 default sequence 的設定也沒有被讀取，是因為 default sequence 是設定給 main_phase 的，它在 main_phase 的時候被獲取，而 main_phase 是在 connect_phase 之後執行的。
 ## set_config 與 get_config
 * set_config_int 與 uvm_config_db#(int)::set 是完全等價的
-* get_config_int 與 uvm_config_db#(int)::get是完全等價的
-* 除了 set/get_config_int 外，還有 set/get_config_string 和 set/get_config_object。它們分別對應uvm_config_db#(string)::set/get和 uvm_config_db#(uvm_object)::set/get
+* get_config_int 與 uvm_config_db#(int)::get 是完全等價的
+* 除了 set/get_config_int 外，還有 set/get_config_string 和 set/get_config_object。它們分別對應 uvm_config_db#(string)::set/get 和 uvm_config_db#(uvm_object)::set/get
 * config_db 比 set/get_config 強大的地方在於，它所設定的參數類型並不限於以上三種  
-常見的枚舉類型、virtual interface、bit 類型、佇列等都可以成為 config_db 設定的資料型別
+常見的 enum、virtual interface、bit 類型、queue 等都可以成為 config_db 設定的資料型別
 ## 命令列參數來對它們進行設置
 ```
 <sim command> +uvm_set_config_int=<comp>,<field>,<value>
