@@ -230,7 +230,7 @@ my_transaction tr;
 tr = new();
 assert(tr.randomize() with {is_vlan == 0;});     // 有個 flag 去控制
 ```
-協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN )**
+協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN)**
 ```
 my_transaction tr;
 tr = new();
