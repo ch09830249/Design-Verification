@@ -1,36 +1,42 @@
 module top;
 
-  logic PCLK;
-  logic PRESETn;
+  logic HCLK;
+  logic HRESETn;
 
-  apb_if apb_if_inst(.PCLK(PCLK), .PRESETn(PRESETn));
+  // Instantiate interface
+  ahb_if ahb_if_inst(.HCLK(HCLK), .HRESETn(HRESETn));
 
-  // Clock generator
+  // Clock generation
   initial begin
-    PCLK = 0;
-    forever #5 PCLK = ~PCLK;
+    HCLK = 0;
+    forever #5 HCLK = ~HCLK;
   end
 
-  // Reset generator
+  // Reset generation
   initial begin
-    PRESETn = 0;
-    #20;
-    PRESETn = 1;
+    HRESETn = 0;
+    #20 HRESETn = 1;
   end
 
-  apb_write_slave dut (
-    .PCLK   (PCLK),
-    .PRESETn(PRESETn),
-    .PSEL   (apb_if_inst.PSEL),
-    .PENABLE(apb_if_inst.PENABLE),
-    .PWRITE (apb_if_inst.PWRITE),
-    .PADDR  (apb_if_inst.PADDR),
-    .PWDATA (apb_if_inst.PWDATA),
-    .PREADY (apb_if_inst.PREADY)
+  // DUT instance
+  ahb_write_slavel dut (
+    .HCLK      (HCLK),
+    .HRESETn   (HRESETn),
+    .HSEL      (ahb_if_inst.HSEL),
+    .HWRITE    (ahb_if_inst.HWRITE),
+    .HTRANS    (ahb_if_inst.HTRANS),
+    .HADDR     (ahb_if_inst.HADDR),
+    .HWDATA    (ahb_if_inst.HWDATA),
+    .HREADYOUT (ahb_if_inst.HREADYOUT)
   );
 
+  // Connect VIP to interface
   initial begin
-    run_test("apb_test");
+    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", ahb_if_inst);
+  end
+
+  initial begin
+    run_test("ahb_test");
   end
 
 endmodule
