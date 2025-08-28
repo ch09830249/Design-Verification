@@ -15,9 +15,9 @@ typedef enum {TB_TRUE, TB_FALSE} tb_bool_e;
 …
 tb_bool_e tb_flag;
 …
-`uvm_field_enum(tb_bool_e, tb_flag, UVM_ALL_ON)
+`uvm_field_enum(tb_bool_e, tb_flag, UVM_ALL_ON) // 需要輸入是哪個 enum 類型
 ```
-## 動態數組型別
+## 動態數組型別 (_array_)
 ```
 `define uvm_field_array_enum(ARG,FLAG)
 `define uvm_field_array_int(ARG,FLAG)
@@ -25,14 +25,14 @@ tb_bool_e tb_flag;
 `define uvm_field_array_string(ARG,FLAG)
 ```
 PS: 相較於前面的 uvm_field 系列巨集少了 event 型別和 real 型別。另外一個重要的變化是 enum 類型的陣列裡也只有兩個參數
-## 靜態數組型別
+## 靜態數組型別 (_sarray_)
 ```
 `define uvm_field_sarray_int(ARG,FLAG)
 `define uvm_field_sarray_enum(ARG,FLAG)
 `define uvm_field_sarray_object(ARG,FLAG)
 `define uvm_field_sarray_string(ARG,FLAG)
 ```
-## 隊列相關
+## 隊列相關 (_queue_)
 ```
 `define uvm_field_queue_enum(ARG,FLAG)
 `define uvm_field_queue_int(ARG,FLAG)
@@ -40,7 +40,7 @@ PS: 相較於前面的 uvm_field 系列巨集少了 event 型別和 real 型別�
 `define uvm_field_queue_string(ARG,FLAG)
 ```
 PS: 對於 enum 類型來說，也只需要兩個參數
-## 聯合數組相關
+## 聯合數組 associative array 相關 (_aa_)
 ```
 `define uvm_field_aa_int_string(ARG, FLAG)
 `define uvm_field_aa_string_string(ARG, FLAG)
@@ -63,8 +63,8 @@ PS: 對於 enum 類型來說，也只需要兩個參數
   * 如 uvm_field_aa_int_string 用於聲明那些儲存的資料是 int，而其索引是 string 類型的聯合數組
 # field automation 機制的常用函數
 * **copy 函數用於實例的複製**
-  * 如果要把某個 A 實例複製到 B 實例中，那麼應該使用 B.copy（A）
-  * 在使用此函數前，B 實例必須已經使用 new 函數分配好了內存空間
+  * 如果要把某個 A 實例複製到 B 實例中，那麼應該使用 B.copy(A)
+  * **在使用此函數前，B 實例必須已經使用 new 函數分配好了內存空間**
 ```
 extern function void copy (uvm_object rhs);
 ```
@@ -78,7 +78,7 @@ extern function bit compare (uvm_object rhs, uvm_comparer comparer=null);
 ```
 extern function int pack_bytes (ref byte unsigned bytestream[], input uvm_packer packer=null);
 ```
-* **unpack_bytes 函數用來將一個byte流逐一恢復到某個類別的實例中**
+* **unpack_bytes 函數用來將一個 byte 流逐一恢復到某個類別的實例中**
 ```
 extern function int unpack_bytes (ref byte unsigned bytestream[], input uvm_packer packer=null);
 ```
@@ -90,7 +90,7 @@ extern function int pack (ref bit bitstream[], input uvm_packer packer=null);
 ```
 extern function int unpack (ref bit bitstream[], input uvm_packer packer=null);
 ```
-* **pack_ints 函數用來將所有的欄位打包成 int（4 個 byte，或是 dword）流**
+* **pack_ints 函數用來將所有的欄位打包成 int（4 個 bytes，或是 dword）流** (word = 2 bytes, dword = 4 bytes)
 ```
 extern function int pack_ints (ref int unsigned intstream[], input uvm_packer packer=null);
 ```
@@ -133,16 +133,14 @@ class my_transaction extends uvm_sequence_item;
   rand byte pload[];
   rand bit[31:0] crc;
   rand bit crc_err;  // 但是這個 bit 不應該包入 transaction
-  …
-
+…
   function void post_randomize();
     if(crc_err)
       ; // do nothing
     else
       crc = calc_crc;
   endfunction
-
-  …
+…
 
 endclass
 ```
@@ -184,7 +182,7 @@ my_transaction tr;
 tr = new();
 assert(tr.randomize() with {vlan.size() == 0;});
 ```
-協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN )**
+協定中規定 vlan 的欄位固定為 4 個位元組，所以在隨機化 VLAN 訊框時，可以使用如下的方式：**(有 VLAN)**
 ```
 my_transaction tr;
 tr = new();
