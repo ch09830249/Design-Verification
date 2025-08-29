@@ -1,5 +1,5 @@
 # xrun.log
-<img width="1566" height="366" alt="image" src="https://github.com/user-attachments/assets/0101a2b8-41ad-4ce6-819e-72a3700c36b9" />
+<img width="1553" height="442" alt="image" src="https://github.com/user-attachments/assets/6994a439-4711-44d6-856b-26e554d0a0c4" />
 <img width="1274" height="588" alt="image" src="https://github.com/user-attachments/assets/02055055-712d-4751-b740-b0fab01a42c0" />
 
 ```
