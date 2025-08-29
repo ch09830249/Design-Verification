@@ -1,42 +1,42 @@
-module top;
+`timescale 1ns/1ps
+import uvm_pkg::*;
+`include "uvm_macros.svh"
 
-  logic HCLK;
-  logic HRESETn;
+module apb_write_top;
 
-  // Instantiate interface
-  ahb_if ahb_if_inst(.HCLK(HCLK), .HRESETn(HRESETn));
+  logic PCLK = 0;
+  logic PRESETn = 0;
 
-  // Clock generation
-  initial begin
-    HCLK = 0;
-    forever #5 HCLK = ~HCLK;
-  end
+  apb_write_if apb_if_inst(.PCLK(PCLK), .PRESETn(PRESETn));
 
-  // Reset generation
-  initial begin
-    HRESETn = 0;
-    #20 HRESETn = 1;
-  end
-
-  // DUT instance
-  ahb_write_slavel dut (
-    .HCLK      (HCLK),
-    .HRESETn   (HRESETn),
-    .HSEL      (ahb_if_inst.HSEL),
-    .HWRITE    (ahb_if_inst.HWRITE),
-    .HTRANS    (ahb_if_inst.HTRANS),
-    .HADDR     (ahb_if_inst.HADDR),
-    .HWDATA    (ahb_if_inst.HWDATA),
-    .HREADYOUT (ahb_if_inst.HREADYOUT)
+  apb_write_slave dut (
+    .PCLK   (PCLK),
+    .PRESETn(PRESETn),
+    .PSEL   (apb_if_inst.PSEL),
+    .PENABLE(apb_if_inst.PENABLE),
+    .PWRITE (apb_if_inst.PWRITE),
+    .PADDR  (apb_if_inst.PADDR),
+    .PWDATA (apb_if_inst.PWDATA),
+    .PREADY (apb_if_inst.PREADY)
   );
 
-  // Connect VIP to interface
+  // Clock generator
+  always #5 PCLK = ~PCLK;
+
+  // Reset generator
   initial begin
-    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", ahb_if_inst);
+    PRESETn = 0;
+    #20;
+    PRESETn = 1;
   end
 
   initial begin
-    run_test("ahb_test");
+    uvm_config_db#(virtual apb_write_if)::set(null, "*", "vif", apb_if_inst);
+    run_test("apb_write_test");
   end
 
+  initial begin
+    $shm_open("waves.shm");
+    $shm_probe("AS");
+  end
 endmodule
