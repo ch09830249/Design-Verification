@@ -1,28 +1,46 @@
-module ahb_write_slavel (
-  input  logic         HCLK,
-  input  logic         HRESETn,
-  input  logic         HSEL,
-  input  logic         HWRITE,
-  input  logic [1:0]   HTRANS,
-  input  logic [31:0]  HADDR,
-  input  logic [31:0]  HWDATA,
-  output logic         HREADYOUT
+module apb_read_slave #(
+    parameter ADDR_WIDTH = 8,
+    parameter DATA_WIDTH = 32,
+    parameter MEM_DEPTH  = 256
+)(
+    input  wire                   PCLK,
+    input  wire                   PRESETn,
+    input  wire                   PSEL,
+    input  wire                   PENABLE,
+    input  wire                   PWRITE,
+    input  wire [ADDR_WIDTH-1:0]  PADDR,
+    output reg  [DATA_WIDTH-1:0]  PRDATA,
+    output reg                    PREADY
 );
 
-  logic [31:0] mem [0:255];
+    // Internal memory for storing read data
+    // Default: 256 x 32-bit memory
+    reg [DATA_WIDTH-1:0] mem [0:MEM_DEPTH-1];
 
-  assign HREADYOUT = 1;
-
-  always_ff @(posedge HCLK or negedge HRESETn) begin
-    if (!HRESETn) begin
-      int i;
-      for (i = 0; i < 256; i++)
-        mem[i] <= 0;
-    end else begin
-      if (HSEL && HWRITE && HTRANS[1]) begin
-        mem[HADDR[9:2]] <= HWDATA;
-      end
+    // Initialization (optional)
+    integer i;
+    initial begin
+        for (i = 0; i < MEM_DEPTH; i = i + 1) begin
+            mem[i] = 32'hA5A50000 + i;  // Pattern data: 32'hA5A50000, 32'hA5A50001, 32'hA5A50002...
+        end
     end
-  end
+
+    // Read logic
+    always @(posedge PCLK or negedge PRESETn) begin
+        // Reset
+        if (!PRESETn) begin
+            PREADY <= 0;
+            PRDATA <= 0;
+        end 
+        else begin
+            if (PSEL && PENABLE && !PWRITE) begin
+                PREADY <= 1;
+                PRDATA <= mem[PADDR[ADDR_WIDTH-1:2]]; // Word aligned (4 bytes)
+            end else begin
+                PREADY <= 0;
+                PRDATA <= 0;
+            end
+        end
+    end
 
 endmodule
