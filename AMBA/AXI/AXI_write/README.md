@@ -1,3 +1,5 @@
+# command line
+xrun -uvm -access +r ./tb/axi_write_top.sv ./rtl/axi_write_slave.sv -f ./tb/axi_write_flist.f
 # xrun.log
 <img width="1553" height="442" alt="image" src="https://github.com/user-attachments/assets/6994a439-4711-44d6-856b-26e554d0a0c4" />
 <img width="1274" height="588" alt="image" src="https://github.com/user-attachments/assets/02055055-712d-4751-b740-b0fab01a42c0" />
