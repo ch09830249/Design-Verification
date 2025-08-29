@@ -1,35 +1,50 @@
-class ahb_driver extends uvm_driver #(ahb_transaction);
-  `uvm_component_utils(ahb_driver)
+class apb_read_driver extends uvm_driver #(apb_read_transaction);
+  `uvm_component_utils(apb_read_driver)
 
-  virtual ahb_if vif;
+  virtual apb_read_if vif;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
-    if (!uvm_config_db#(virtual ahb_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "No virtual interface specified for ahb_driver")
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual apb_read_if)::get(this, "", "vif", vif))
+      `uvm_fatal("NOVIF", "No APB read interface found")
   endfunction
 
   task run_phase(uvm_phase phase);
-    ahb_transaction tx;
+    apb_read_transaction tx;
     forever begin
       seq_item_port.get_next_item(tx);
 
-      // Setup phase
-      vif.HSEL   <= 1;
-      vif.HWRITE <= 1;
-      vif.HADDR  <= tx.addr;
-      vif.HWDATA <= tx.data;
-      vif.HTRANS <= 2'b10; // NONSEQ
+      `uvm_info("apb_read_driver", "before read", UVM_LOW)
+      tx.print();
+      
+      // APB idle -> setup -> enable
+      @(posedge vif.PCLK);
+      vif.PADDR   <= tx.addr;
+      vif.PWRITE  <= 0;
+      vif.PSEL    <= 1;
+      vif.PENABLE <= 0;
 
-      // Wait for HREADY
-      do @(posedge vif.HCLK); while (!vif.HREADYOUT);
+      // Trigger APB read
+      @(posedge vif.PCLK);
+      vif.PENABLE <= 1;
 
-      // Done
-      vif.HSEL   <= 0;
-      vif.HTRANS <= 2'b00;
+      // Wait for PREADY
+      wait (vif.PREADY == 1);
+
+      // Get read data
+      @(posedge vif.PCLK);
+      tx.data = vif.PRDATA;
+
+      // Restore PSEL && PENABLE
+      vif.PSEL    <= 0;
+      vif.PENABLE <= 0;
+
+      `uvm_info("apb_read_driver", "after read", UVM_LOW)
+      tx.print();
 
       seq_item_port.item_done();
     end
