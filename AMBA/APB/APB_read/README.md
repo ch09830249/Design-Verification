@@ -1,6 +1,12 @@
 # command line
 xrun -uvm -access +r ./tb/apb_read_top.sv ./rtl/apb_read_slave.sv -f ./tb/apb_read_flist.f
 # xrun.log
+* **Driver:**
+1. APB idle -> setup (PADDR, PWRITE, PSEL)
+2. enable (PENABLE)
+3. Wait for PREADY
+4. Get read data
+5. Reset PSEL && PENABLE
 <img width="1871" height="362" alt="image" src="https://github.com/user-attachments/assets/fbf2eff5-8640-4fb9-884b-6ccb9d6806b3" />
 
 可以看到 before read 的 addr 和 after read 的 data 是如預期的
@@ -120,4 +126,5 @@ tx                             apb_read_transaction  -     @3579
 UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/sv/src/base/uvm_objection.svh(1268) @ 155000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
 
 ```
+
 
