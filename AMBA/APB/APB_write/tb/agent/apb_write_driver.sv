@@ -1,35 +1,50 @@
-class ahb_driver extends uvm_driver #(ahb_transaction);
-  `uvm_component_utils(ahb_driver)
+class apb_write_driver extends uvm_driver #(apb_write_transaction);
+  `uvm_component_utils(apb_write_driver)
 
-  virtual ahb_if vif;
+  virtual apb_write_if vif;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
-    if (!uvm_config_db#(virtual ahb_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "No virtual interface specified for ahb_driver")
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual apb_write_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", "APB interface not found")
+    end
   endfunction
 
   task run_phase(uvm_phase phase);
-    ahb_transaction tx;
+    apb_write_transaction tx;
+
     forever begin
       seq_item_port.get_next_item(tx);
+  
+      `uvm_info("apb_write_driver", "before write", UVM_LOW)
+      tx.print(); 
 
-      // Setup phase
-      vif.HSEL   <= 1;
-      vif.HWRITE <= 1;
-      vif.HADDR  <= tx.addr;
-      vif.HWDATA <= tx.data;
-      vif.HTRANS <= 2'b10; // NONSEQ
+      // APB idle -> setup -> enable
+      @(posedge vif.PCLK);
+      vif.PSEL    <= 1;
+      vif.PWRITE  <= 1;
+      vif.PENABLE <= 0;
+      vif.PADDR   <= tx.addr;
+      vif.PWDATA  <= tx.data;
 
-      // Wait for HREADY
-      do @(posedge vif.HCLK); while (!vif.HREADYOUT);
+      // Enable APB write
+      @(posedge vif.PCLK);
+      vif.PENABLE <= 1;
 
-      // Done
-      vif.HSEL   <= 0;
-      vif.HTRANS <= 2'b00;
+      // 等到 PREADY 舉起代表 module 已經收到資料
+      wait (vif.PREADY == 1);
+
+      // 回到 idle 狀態
+      @(posedge vif.PCLK);
+      vif.PSEL    <= 0;
+      vif.PENABLE <= 0;
+      vif.PWRITE  <= 0;
+      vif.PADDR   <= 0;
+      vif.PWDATA  <= 0;
 
       seq_item_port.item_done();
     end
