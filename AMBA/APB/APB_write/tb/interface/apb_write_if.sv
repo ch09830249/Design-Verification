@@ -1,11 +1,10 @@
-interface ahb_if(input logic HCLK, input logic HRESETn);
+interface apb_write_if(input logic PCLK, input logic PRESETn);
 
-  logic [31:0] HADDR;
-  logic [31:0] HWDATA;
-  logic        HWRITE;
-  logic [1:0]  HTRANS;
-  logic        HREADY;
-  logic        HREADYOUT;
-  logic        HSEL;
+  logic [31:0] PADDR;
+  logic        PWRITE;
+  logic        PENABLE;
+  logic        PSEL;
+  logic [31:0] PWDATA;
+  logic        PREADY;
 
 endinterface
