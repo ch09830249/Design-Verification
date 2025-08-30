@@ -1,10 +1,15 @@
-class ahb_seq_item extends uvm_sequence_item;
-  rand bit [31:0] addr;
-  rand bit [31:0] data;
+class axi_read_transaction extends uvm_sequence_item;
+  rand bit [31:0] araddr;
+  bit [31:0] rdata;
+  bit [1:0]  rresp;
 
-  `uvm_object_utils(ahb_seq_item)
+  `uvm_object_utils_begin(axi_read_transaction)
+    `uvm_field_int(araddr, UVM_ALL_ON)
+    `uvm_field_int(rdata, UVM_ALL_ON)
+    `uvm_field_int(rresp, UVM_ALL_ON)
+  `uvm_object_utils_end
 
-  function new(string name = "ahb_seq_item");
+  function new(string name = "axi_read_transaction");
     super.new(name);
   endfunction
 endclass
