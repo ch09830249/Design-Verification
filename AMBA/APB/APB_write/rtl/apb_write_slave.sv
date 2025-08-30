@@ -59,7 +59,7 @@ module apb_write_slave (
       for (i = 0; i < 256; i++) begin
         mem[i] <= 32'h0;                // mem 清 0
       end
-      wait_cnt   <= 0;
+      wait_cnt   <= 0;                  // wait_cnt 重新累積
       PREADY     <= 0;
       ready_next <= 0;
     end 
@@ -69,9 +69,9 @@ module apb_write_slave (
         wait_cnt <= wait_cnt + 1;
         if (wait_cnt == 2) begin
           PREADY     <= 1;
-          ready_next <= 1;    // 此 flag 代表下個 clk 可以收資料了
+          ready_next <= 1;    // 此 flag 代表下個 clk 可以收 write data 了
         end else begin
-          PREADY <= 0;        // 還超過 2 posedge 不能舉起 PREADY
+          PREADY <= 0;        // 還未等 2 個 posedge (PSEL && PENABLE && !PREADY)
         end
       end
       // [完成等待寫入並回到 idle]
@@ -79,10 +79,11 @@ module apb_write_slave (
         if (PWRITE) begin
           mem[PADDR[9:2]] <= PWDATA;
         end
+        wait_cnt   <= 0;
         PREADY     <= 0;
         ready_next <= 0;
-        wait_cnt   <= 0;
       end 
+      // [其他狀況 PREADY 都必須為 0]
       else begin
         PREADY <= 0;
       end
