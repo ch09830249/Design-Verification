@@ -1,19 +1,18 @@
-class apb_write_sequence extends uvm_sequence #(ahb_transaction);
-  `uvm_object_utils(apb_write_sequence)
+class axi_write_sequence extends uvm_sequence #(axi_write_transaction);
+  `uvm_object_utils(axi_write_sequence)
 
-  function new(string name = "apb_write_sequence");
+  function new(string name = "axi_write_sequence");
     super.new(name);
   endfunction
 
-  task body();
-    ahb_transaction tx;
-    repeat (5) begin
-      tx = ahb_transaction::type_id::create("tx");
-      assert(tx.randomize() with {
-        addr inside {[32'h0000_0000 : 32'h0000_00FF]};
-      });
-      start_item(tx);
-      finish_item(tx);
+  virtual task body();
+    axi_write_transaction tr;
+    for (int i = 0; i < 3; i++) begin       // 發送 3 筆 write
+      tr = axi_write_transaction::type_id::create("tr");
+      assert(tr.randomize());
+      tr.print();
+      start_item(tr);
+      finish_item(tr);
     end
   endtask
 endclass
