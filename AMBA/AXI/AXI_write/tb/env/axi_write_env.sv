@@ -1,13 +1,15 @@
-class ahb_env extends uvm_env;
-  `uvm_component_utils(ahb_env)
+class axi_write_env extends uvm_env;
 
-  ahb_agent agent;
+  `uvm_component_utils(axi_write_env)
 
-  function new(string name, uvm_component parent);
+  axi_write_agent write_agent;
+
+  function new(string name = "axi_write_env", uvm_component parent = null);  
     super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
-    agent = ahb_agent::type_id::create("agent", this);
+    super.build_phase(phase);
+    write_agent = axi_write_agent::type_id::create("write_agent", this);
   endfunction
 endclass
