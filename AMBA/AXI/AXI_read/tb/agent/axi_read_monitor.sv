@@ -1,37 +1,41 @@
-class ahb_driver extends uvm_driver #(ahb_transaction);
-  `uvm_component_utils(ahb_driver)
+class axi_read_monitor extends uvm_monitor;
+  `uvm_component_utils(axi_read_monitor)
 
-  virtual ahb_if vif;
+  virtual axi_read_if vif;
+  uvm_analysis_port #(axi_read_transaction) ap;
 
-  function new(string name, uvm_component parent);
+  function new(string name = "axi_read_monitor", uvm_component parent = null);
     super.new(name, parent);
+    ap = new("ap", this);
   endfunction
 
   function void build_phase(uvm_phase phase);
-    if (!uvm_config_db#(virtual ahb_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "No virtual interface specified for ahb_driver")
+    super.build_phase(phase);
+    if (!uvm_config_db #(virtual axi_read_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal(get_type_name(), "Virtual interface not found!")
+    end
   endfunction
 
-  task run_phase(uvm_phase phase);
-    ahb_transaction tx;
+  virtual task run_phase(uvm_phase phase);
+
+    axi_read_transaction tr;
+
     forever begin
-      seq_item_port.get_next_item(tx);
+      @(posedge vif.ACLK);
+      if (vif.ARVALID && vif.ARREADY) begin                   // 當 ARVALID && ARREADY 舉起, Read address 已經送出
+        tr = axi_read_transaction::type_id::create("tr");
+        tr.araddr = vif.ARADDR;
+      end
 
-      // Setup phase
-      vif.HSEL   <= 1;
-      vif.HWRITE <= 1;
-      vif.HADDR  <= tx.addr;
-      vif.HWDATA <= tx.data;
-      vif.HTRANS <= 2'b10; // NONSEQ
-
-      // Wait for HREADY
-      do @(posedge vif.HCLK); while (!vif.HREADYOUT);
-
-      // Done
-      vif.HSEL   <= 0;
-      vif.HTRANS <= 2'b00;
-
-      seq_item_port.item_done();
+      if (vif.RVALID && vif.RREADY) begin                     // 當 RVALID && RREADY 舉起, Read data 已經收到
+        if (tr == null) tr = axi_read_transaction::type_id::create("tr");
+        tr.rdata = vif.RDATA;
+        tr.rresp = vif.RRESP;
+        `uvm_info(get_type_name(), "Monitor read data", UVM_MEDIUM)
+        tr.print();
+        ap.write(tr);     // 這是要送給 scoreboard 去比對用
+      end
     end
+
   endtask
 endclass
