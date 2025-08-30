@@ -16,7 +16,7 @@ class apb_read_test extends uvm_test;
   task run_phase(uvm_phase phase);
     phase.raise_objection(this);
     seq = apb_read_sequence::type_id::create("seq");
-    seq.start(env.write_agent.sequencer);
+    seq.start(env.read_agent.sequencer);
     phase.drop_objection(this);
   endtask
 endclass
