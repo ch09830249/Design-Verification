@@ -19,7 +19,7 @@ class axi_write_driver extends uvm_driver #(axi_write_transaction);
       seq_item_port.get_next_item(tr);
 
       // Write Address => assign AWADDR && AWVALID
-      @(posedge vif.ACLK);
+      // @(posedge vif.ACLK);
       vif.AWADDR  <= tr.addr;                         // 塞 tr 的 write address
       vif.AWVALID <= 1;                               // 舉 AWVALID 表示 module 可以取 write address
 
