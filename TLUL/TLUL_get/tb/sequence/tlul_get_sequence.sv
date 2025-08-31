@@ -1,10 +1,6 @@
 class tlul_get_sequence extends uvm_sequence #(tlul_transaction);
   `uvm_object_utils(tlul_get_sequence)
 
-  rand bit [31:0] address;
-  rand bit [31:0] data;
-  rand bit        is_get;
-
   function new(string name="tlul_get_sequence");
     super.new(name);
   endfunction
