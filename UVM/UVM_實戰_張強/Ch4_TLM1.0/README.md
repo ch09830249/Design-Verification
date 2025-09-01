@@ -2,68 +2,102 @@
 * transaction 就是把具有某一特定功能的一組資訊封裝在一起而成為的一個類別
   如 my_transaction 就是把一個 MAC 幀裡的各個字段封裝在了一起
 # TLM 通訊中有以下幾個常用的術語：
-1. **put 操作**，通訊的發起者 A 把一個 transaction 傳送給 B  
+1. **put 操作**，**通訊的發起者 A 把一個 transaction 傳送給 B**  
    * 在這個過程中，A 稱為 "發起者"，而 B 稱為 "目標"  
    * A 具有的連接埠 (以方框表示) 稱為 PORT，而 B 的連接埠 (以圓圈表示) 稱為 EXPORT
    * 資料流是從 A 流向 B 的
-2. **get 操作**，A 向 B 索取一個 transaction  
+2. **get 操作**，**A 向 B 索取一個 transaction**  
    * 在這個過程中，A 仍然是 "發起者"，B 仍然是 "目標"  
    * A 上的端口仍然是 PORT，而 B 上的埠還是 EXPORT
-   * 資料流是從 B 流向 A 的
+   * 資料流是從 B 流向 A 的  
 PS: PORT 和 EXPORT 體現的是**控制流而不是資料流**  
-  因為在 put 操作中，資料流是從 PORT 流向 EXPORT 的，而在 get 操作中，資料是從 EXPORT 流向 PORT的
-  但是無論是 get 還是 put 操作，其發起者擁有的都是 PORT 端口，而不是 EXPORT。作為一個 EXPORT 來說，只能被動地接收 PORT 的命令
+  因為在 put 操作中，資料流是從 PORT 流向 EXPORT 的，而在 get 操作中，資料是從 EXPORT 流向 PORT 的
+  但是無論是 get 還是 put 操作，其**發起者擁有的都是 PORT 端口，而不是 EXPORT。作為一個 EXPORT 來說，只能被動地接收 PORT 的命令**
 ![image](https://github.com/user-attachments/assets/8f72bf11-846e-4cf8-8d67-97207bb6a1b9)
 3. **transport操作**，transport 操作相當於一次 put 操作加一次 get 操作
    * 這兩次操作的「發起者」都是 A，目標都是 B
    * A 上的連接埠依然是 PORT，而 B 上的連接埠依然是 EXPORT
    * 資料流先從 A 流向 B，再從 B 流向 A
-   * 在現實世界中，相當於是 A 向 B 提交了一個請求（request），而 B 回傳給 A 一個應答（response） 
+   * 在現實世界中，**相當於是 A 向 B 提交了一個請求 (request)，而 B 回傳給 A 一個應答 (response)** 
      所以這種 transport 操作也常常被稱為做 request-response 操作
 ![image](https://github.com/user-attachments/assets/03fd7dd4-efd1-4d13-aba6-ad72d46264f3)
+  
+| 名稱       | 全名                 | 角色  | 誰呼叫誰        | 是否實作方法 | 主要用途               |
+| -------- | ------------------ | --- | ----------- | ------ | ------------------ |
+| `port`   | TLM Port           | 呼叫者 | 呼叫 export/imp   | ❌ 否    | 傳送資料、呼叫遠端函數        |
+| `export` | TLM Export         | 中繼者 | 呼叫 imp      | ❌ 否    | 將 port 傳來的呼叫轉給 imp |
+| `imp`    | TLM Implementation | 實作者 | 被 port/export 呼叫 | ✅ 是    | 實作真正功能（如 `put()`）  |
+
 # UVM 中的 PORT 與 EXPORT
-UVM 提供對 TLM 操作的支持，在其中實現了 PORT 與 EXPORT。對應於不同的操作，有不同的 PORT，UVM 中常用的 PORT 有：
+UVM 提供對 TLM 操作的支持，在其中實現了 PORT 與 EXPORT。對應於不同的操作，有不同的 PORT，UVM 中常用的 PORT 有：  
+| 接口類型          | 行為描述                          | 使用場景                              |
+| ------------- | ----------------------------- | --------------------------------- |
+| **Put**       | 主動將資料送出（producer → consumer）  | driver 傳 txn 給 monitor、scoreboard |
+| **Get**       | 主動從對方拿資料（consumer 拉 producer） | consumer 主動問 producer             |
+| **Peek**      | 檢視資料但不移除                      | scoreboard 檢查 monitor 資料          |
+| **Get+Peek**  | 同時支援 get() 與 peek()           | 可切換兩種模式                           |
+| **Transport** | 雙向：傳送資料並取得回應                  | 需返回結果的情境，例如計算、轉換等                 |
+
 ```
 // Put * 3
 uvm_blocking_put_port#(T);
 uvm_nonblocking_put_port#(T);
 uvm_put_port#(T);
+
 // Get * 3
 uvm_blocking_get_port#(T);
 uvm_nonblocking_get_port#(T);
 uvm_get_port#(T);
+
 // Peek * 3
 uvm_blocking_peek_port#(T);
 uvm_nonblocking_peek_port#(T);
 uvm_peek_port#(T);
+
 // Get Peek * 3
 uvm_blocking_get_peek_port#(T);
 uvm_nonblocking_get_peek_port#(T);
 uvm_get_peek_port#(T);
+
 // Transport * 3
 uvm_blocking_transport_port#(REQ, RSP);
 uvm_nonblocking_transport_port#(REQ, RSP);
 uvm_transport_port#(REQ, RSP);
 ```
+| Port 類型                        | 是否阻塞   | 方法                   | 用途建議       |
+| ------------------------------ | ------ | -------------------- | ---------- |
+| `uvm_blocking_put_port#(T)`    | ✅ 是    | `put()`              | 需要同步、等待的傳輸 |
+| `uvm_nonblocking_put_port#(T)` | ❌ 否    | `try_put()`          | 非同步、不等待    |
+| `uvm_put_port#(T)`             | ✅/❌ 皆可 | `put()`, `try_put()` | 通用型，靈活選擇方式 |
+
 * get_peek 系列端口集合了 get 操作和 peek 操作兩者的功能
-* 前 12 個定義中的參數就是這個 PORT 中的資料流類型
+* 前 12 個定義中的參數就是這個 PORT 中的**資料流類型**
 * 最後 3 個定義中的參數則表示 transport 操作中**發起請求時傳輸的資料類型和傳回的資料類型**
 * 這幾種 PORT 對應 TLM 中的操作，同時以 blocking 和 nonblocking 關鍵字區分
-* 對於名稱中不含這兩者的，則表示這個連接埠既可以用作是阻塞的，也可以用作是非阻塞的，否則只能用於阻塞的或只能用於非阻塞的
+* 對於名稱中**不含這兩者的，則表示這個連接埠既可以用作是阻塞的，也可以用作是非阻塞的**，否則只能用於阻塞的或只能用於非阻塞的
 UVM 中常用的 EXPORT 有：
 ```
+// Put * 3
 uvm_blocking_put_export#(T);
 uvm_nonblocking_put_export#(T);
 uvm_put_export#(T);
+
+// Get * 3
 uvm_blocking_get_export#(T);
 uvm_nonblocking_get_export#(T);
 uvm_get_export#(T);
+
+// Peek * 3
 uvm_blocking_peek_export#(T);
 uvm_nonblocking_peek_export#(T);
 uvm_peek_export#(T);
+
+// Get Peek * 3
 uvm_blocking_get_peek_export#(T);
 uvm_nonblocking_get_peek_export#(T);
 uvm_get_peek_export#(T);
+
+// Transport * 3
 uvm_blocking_transport_export#(REQ, RSP);
 uvm_nonblocking_transport_export#(REQ, RSP);
 uvm_transport_export#(REQ, RSP);
@@ -71,10 +105,10 @@ uvm_transport_export#(REQ, RSP);
 PORT 和 EXPORT 體現的是一種控制流，在這種控制流中，PORT 具有高優先級，而 EXPORT 具有低優先級。只有高優先級的連接埠才能向低優先權的連接埠發起三種操作
 # UVM 中各種連接埠的互連
 ## PORT 與 EXPORT 的連接
-* UVM 中使用 connect 函數來建立連線關係。  
+* UVM 中**使用 connect 函數來建立連線關係**  
   如 A 要和 B 通訊（A 是發起者），那麼可以這麼寫：  
-  A.port.connect（B.export），但是不能寫成 B.export.connect（A.port）。
-* 只有發起者才能呼叫 connect 函數，而被動承擔者則作為 connect 的參數。
+  A.port.connect（B.export），但是不能寫成 B.export.connect（A.port）
+* **只有發起者才能呼叫 connect 函數，而被動承擔者則作為 connect 的參數**
 * **Class A 的 code**
 ```
 class A extends uvm_component;
@@ -93,12 +127,9 @@ endtask
 ```
 以下為 PORT 的 new 函數
 ```
-function new(string name,
-             uvm_component parent,
-             int min_size = 1;
-             int max_size = 1);
+function new(string name, uvm_component parent, int min_size = 1, int max_size = 1);
 ```
-new 函數中的 min_size 和 max_size 指的是必須連接到這個 PORT 的下級連接埠數量的最小值和最大值，也即這一個 PORT 應該呼叫的connect 函數的最小值和最大值。如果採用默認值，即 min_size = max_size = 1，則只能連接一個 EXPORT
+new 函數中的 min_size 和 max_size 指的是必須連接到這個 PORT 的下級連接埠數量的最小值和最大值，也即這一個 PORT 應該呼叫的 connect 函數的最小值和最大值。如果**採用默認值，即 min_size = max_size = 1，則只能連接一個 EXPORT**
 * **Class B 的 code**
 ```
 class B extends uvm_component;
@@ -143,21 +174,25 @@ IMP 承擔了 UVM 中 TLM 的絕大部分實作程式碼
 uvm_blocking_put_imp#(T, IMP);
 uvm_nonblocking_put_imp#(T, IMP);
 uvm_put_imp#(T, IMP);
+
 uvm_blocking_get_imp#(T, IMP);
 uvm_nonblocking_get_imp#(T, IMP);
 uvm_get_imp#(T, IMP);
+
 uvm_blocking_peek_imp#(T, IMP);
 uvm_nonblocking_peek_imp#(T, IMP);
 uvm_peek_imp#(T, IMP);
+
 uvm_blocking_get_peek_imp#(T, IMP);
 uvm_nonblocking_get_peek_imp#(T, IMP);
 uvm_get_peek_imp#(T, IMP);
+
 uvm_blocking_transport_imp#(REQ, RSP, IMP);
 uvm_nonblocking_transport_imp#(REQ, RSP, IMP);
 uvm_transport_imp#(REQ, RSP, IMP);
 ```
-* IMP 定義中的 blocking、nonblocking、put、get、peek、get_peek、transport 等關鍵字不是它們發起做對應類型的操作，而只意味著它們可以和相應類型的 PORT 或 EXPORT 進行通信，且通信時作為被動承擔者
-* 依照控制流的優先排序，IMP的優先權最低，一個 PORT 可以連接到一個 IMP，並發起三種操作，反之則不行
+* IMP 定義中的 blocking、nonblocking、put、get、peek、get_peek、transport 等關鍵字不是它們發起做對應類型的操作，而**只意味著它們可以和相應類型的 PORT 或 EXPORT 進行通信，且通信時作為被動承擔者**
+* 依照控制流的優先排序，IMP 的優先權最低，一個 PORT 可以連接到一個 IMP，並發起三種操作，反之則不行
 * 前六個 IMP 定義中的**第一個參數 T 是這個 IMP 傳輸的資料型態**。**第二個參數 IMP，為實現這個介面的一個 component (就是該 port 所在 component 的 pointer)**
 * **Class A 的 code**
 ```
@@ -197,14 +232,14 @@ function void B::put(my_transaction tr);      // Class B 實作 put 函數, 單�
   tr.print();
 endfunction
 ```
-PS: 在 B 的程式碼中，關鍵是要實作一個 put 函數/任務。如果不實現，將會給出如下的錯誤提示：
+**PS: 在 B 的程式碼中，關鍵是要實作一個 put 函數/任務。如果不實現，將會給出如下的錯誤提示：**
 ```
 # ** Error: /home/landy/uvm/uvm-1.1d/src/tlm1/uvm_imps.svh(85): No field named 'put'.
 # Region: /uvm_pkg::uvm_blocking_put_imp #(top_tb_sv_unit::my_transact
 ion, top_tb_sv_unit::B)
 ```
 * env 的 code 相同，連接 A 的 port 到 B 的 export
-* IMP 是作為連結的終點。在 UVM 中，只有 IMP 才能作為連結關係的終點。如果是 PORT 或 EXPORT 作為終點，則會報錯
+* **IMP 是作為連結的終點**。在 UVM 中，只有 IMP 才能作為連結關係的終點。**如果是 PORT 或 EXPORT 作為終點，則會報錯**
 ## PORT 與 IMP 的連接
 ![image](https://github.com/user-attachments/assets/07eb0e42-0acb-4ebb-b7bc-fa5002fd108b)  
 | **Port 類型 (`A_port`)**           | **Imp 類型 (`B_imp`)**            | **B 中需定義的方法**                                                                                                                                                                                           |
@@ -222,7 +257,13 @@ ion, top_tb_sv_unit::B)
 | `uvm_get_peek_port`              | `uvm_get_peek_imp`              | `task get(output T t);` <br> `function bit try_get(output T t);` <br> `function bit can_get();` <br> `task peek(output T t);` <br> `function bit try_peek(output T t);` <br> `function bit can_peek();` |
 | `uvm_blocking_transport_port`    | `uvm_blocking_transport_imp`    | `task transport(input T req, output T rsp);`                                                                                                                                                            |
 | `uvm_nonblocking_transport_port` | `uvm_nonblocking_transport_imp` | `function bit nb_transport(input T req, output T rsp);`                                                                                                                                                 |
-| `uvm_transport_port`             | `uvm_transport_imp`             | `task transport(input T req, output T rsp);` <br> `function bit nb_transport(input T req, output T rsp);`                                                                                               |
+| `uvm_transport_port`             | `uvm_transport_imp`             | `task transport(input T req, output T rsp);` <br> `function bit nb_transport(input T req, output T rsp);`                                                                                               |  
+
+| 方法          | 阻塞？ | 功能描述                  | 回傳值         |
+| ----------- | --- | --------------------- | ----------- |
+| `put()`     | ✅ 是 | 阻塞式傳送資料。直到接收方處理完成為止。  | 無（`void`）   |
+| `try_put()` | ❌ 否 | 非阻塞傳送資料。只有接收方準備好才會成功。 | `bit`（成功與否） |
+| `can_put()` | ❌ 否 | 詢問是否**可以送**資料，但不會真的送。 | `bit`（是否能送） |
 
 在前述的這些規律中，對於所有blocking系列的連接埠來說，可以定義對應的任務或函數，如對於blocking_put連接埠來說，可以定
 義名字為put的任務，也可以定義名字為put的函數。這是因為A會呼叫B中名字為put的接口，而不管這個接口的型別。由於A中的
