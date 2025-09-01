@@ -43,24 +43,22 @@ module tlul_get_slave (
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-      resp_pending <= 0;
       rdata_reg    <= 0;
       r_source     <= 0;
+      resp_pending <= 0;
     end 
     else begin
       if (!resp_pending) begin  // a_ready 拉起, d_valid 拉下
         // 接收 Get 請求
         if (a_valid && a_ready && a_opcode == 4) begin
-          // 這裡加個 mask 功能
-          logic [31:0] masked_data;
-          masked_data = 32'h1A2B3C4F;       // 回傳的 data pattern 固定 32'h1A2B3C4F
-          // 根據 a_mask 清掉不需要的 byte
-          masked_data[7:0]   = a_mask[0] ? masked_data[7:0]   : 8'h00;
-          masked_data[15:8]  = a_mask[1] ? masked_data[15:8]  : 8'h00;
-          masked_data[23:16] = a_mask[2] ? masked_data[23:16] : 8'h00;
-          masked_data[31:24] = a_mask[3] ? masked_data[31:24] : 8'h00;
-
-          rdata_reg    <= masked_data;
+          /* 
+            這裡加個 mask 功能, 回傳的 data pattern 固定 32'h1A2B3C4F
+            然後根據 a_mask 清掉不需要的 byte 
+          */
+          rdata_reg[7:0]   = a_mask[0] ? 8'h4F : 8'h00;
+          rdata_reg[15:8]  = a_mask[1] ? 8'h3C : 8'h00;
+          rdata_reg[23:16] = a_mask[2] ? 8'h2B : 8'h00;
+          rdata_reg[31:24] = a_mask[3] ? 8'h1A : 8'h00;
           r_source     <= a_source;
           resp_pending <= 1;            // a_ready 拉下, d_valid 拉起
         end
