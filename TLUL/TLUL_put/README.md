@@ -1,6 +1,7 @@
 # command line
 xrun -uvm -access +r ./tb/tlul_put_top.sv ./rtl/tlul_put_slave.sv -f ./tb/tlul_put_flist.f
 # xrun.log
+很明顯 mask 只有在 PutPartial 的時候才作用 (data_reg), PutFull 則依然後寫入完整 data
 <img width="1561" height="583" alt="image" src="https://github.com/user-attachments/assets/e2b7cf5b-4710-4851-930b-398de7183774" />
 
 ```
