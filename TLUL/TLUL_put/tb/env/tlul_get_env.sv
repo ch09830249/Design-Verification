@@ -1,7 +1,7 @@
-class tlul_get_env extends uvm_env;
-  `uvm_component_utils(tlul_get_env)
+class tlul_put_env extends uvm_env;
+  `uvm_component_utils(tlul_put_env)
 
-  tlul_get_agent agent;
+  tlul_put_agent agent;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -9,6 +9,6 @@ class tlul_get_env extends uvm_env;
 
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    agent = tlul_get_agent::type_id::create("agent", this);
+    agent = tlul_put_agent::type_id::create("agent", this);
   endfunction
 endclass
