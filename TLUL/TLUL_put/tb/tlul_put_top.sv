@@ -1,7 +1,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
   
-module tlul_get_top;
+module tlul_put_top;
   logic clk = 0;
   logic rst_n = 0;
 
@@ -9,7 +9,7 @@ module tlul_get_top;
   tlul_if tlul_if(clk, rst_n);
 
   // DUT instance
-  tlul_get_slave dut (
+  tlul_put_slave dut (
     .clk      (clk),
     .rst_n    (rst_n),
     .a_valid  (tlul_if.a_valid),
@@ -44,7 +44,7 @@ module tlul_get_top;
 
   initial begin
     uvm_config_db#(virtual tlul_if)::set(null, "*", "vif", tlul_if);
-    run_test("tlul_get_test");
+    run_test("tlul_put_test");
   end
 
   initial begin
