@@ -1,5 +1,5 @@
-class tlul_get_monitor extends uvm_monitor;
-  `uvm_component_utils(tlul_get_monitor)
+class tlul_put_monitor extends uvm_monitor;
+  `uvm_component_utils(tlul_put_monitor)
   virtual tlul_if vif;
   uvm_analysis_port#(tlul_transaction) ap;
 
@@ -11,7 +11,7 @@ class tlul_get_monitor extends uvm_monitor;
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(virtual tlul_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "Virtual interface not set for tlul_get_monitor");
+      `uvm_fatal("NOVIF", "Virtual interface not set for tlul_put_monitor");
   endfunction
 
   virtual task run_phase(uvm_phase phase);
