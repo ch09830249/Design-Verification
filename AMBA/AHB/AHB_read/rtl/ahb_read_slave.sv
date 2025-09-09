@@ -1,28 +1,26 @@
-module ahb_write_slavel (
-  input  logic         HCLK,
-  input  logic         HRESETn,
-  input  logic         HSEL,
-  input  logic         HWRITE,
-  input  logic [1:0]   HTRANS,
-  input  logic [31:0]  HADDR,
-  input  logic [31:0]  HWDATA,
-  output logic         HREADYOUT
+module ahb_read_slave(
+  input logic HCLK,
+  input logic HRESETn,
+  input logic [31:0] HADDR,
+  input logic [1:0]  HTRANS,
+  input logic        HWRITE,
+  input logic [2:0]  HSIZE,
+  input logic [31:0] HWDATA,
+  output logic [31:0] HRDATA,
+  output logic        HREADY,
+  output logic        HRESP
 );
-
-  logic [31:0] mem [0:255];
-
-  assign HREADYOUT = 1;
-
   always_ff @(posedge HCLK or negedge HRESETn) begin
     if (!HRESETn) begin
-      int i;
-      for (i = 0; i < 256; i++)
-        mem[i] <= 0;
+      HRDATA <= 0;
+      HREADY <= 1;
+      HRESP  <= 0;
     end else begin
-      if (HSEL && HWRITE && HTRANS[1]) begin
-        mem[HADDR[9:2]] <= HWDATA;
+      if (HTRANS == 2'b10 && !HWRITE) begin
+        HRDATA <= HADDR + 32'h0000_A5A5; // Dummy data
       end
+      HREADY <= 1;
+      HRESP  <= 0;
     end
   end
-
 endmodule
