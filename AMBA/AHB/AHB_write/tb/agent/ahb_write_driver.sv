@@ -1,5 +1,5 @@
-class ahb_driver extends uvm_driver #(ahb_transaction);
-  `uvm_component_utils(ahb_driver)
+class ahb_write_driver extends uvm_driver #(ahb_transaction);
+  `uvm_component_utils(ahb_write_driver)
 
   virtual ahb_if vif;
 
@@ -8,30 +8,34 @@ class ahb_driver extends uvm_driver #(ahb_transaction);
   endfunction
 
   function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
     if (!uvm_config_db#(virtual ahb_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "No virtual interface specified for ahb_driver")
+      `uvm_fatal("NOVIF", "Virtual interface not set")
   endfunction
 
   task run_phase(uvm_phase phase);
-    ahb_transaction tx;
-    forever begin
-      seq_item_port.get_next_item(tx);
+  forever begin
+    ahb_transaction tr;
+    seq_item_port.get_next_item(tr);
+    `uvm_info(get_type_name(), "Write data transaction", UVM_MEDIUM)
+    tr.print();
+    
+    // Drive write address phase
+    vif.cb.HADDR  <= tr.addr;
+    vif.cb.HTRANS <= 2'b10;   // NONSEQ
+    vif.cb.HWRITE <= 1'b1;
+    vif.cb.HSIZE  <= tr.size;
 
-      // Setup phase
-      vif.HSEL   <= 1;
-      vif.HWRITE <= 1;
-      vif.HADDR  <= tx.addr;
-      vif.HWDATA <= tx.data;
-      vif.HTRANS <= 2'b10; // NONSEQ
+    // Write data
+    @(posedge vif.HCLK iff vif.HREADY);
+    // Drive write data phase
+    vif.cb.HWDATA <= tr.data;
 
-      // Wait for HREADY
-      do @(posedge vif.HCLK); while (!vif.HREADYOUT);
+    @(posedge vif.HCLK iff vif.HREADY);
 
-      // Done
-      vif.HSEL   <= 0;
-      vif.HTRANS <= 2'b00;
+    // Done
+    seq_item_port.item_done();
+  end
+endtask
 
-      seq_item_port.item_done();
-    end
-  endtask
 endclass
