@@ -14,28 +14,28 @@ class ahb_write_driver extends uvm_driver #(ahb_transaction);
   endfunction
 
   task run_phase(uvm_phase phase);
-  forever begin
-    ahb_transaction tr;
-    seq_item_port.get_next_item(tr);
-    `uvm_info(get_type_name(), "Write data transaction", UVM_MEDIUM)
-    tr.print();
-    
-    // Drive write address phase
-    vif.cb.HADDR  <= tr.addr;
-    vif.cb.HTRANS <= 2'b10;   // NONSEQ
-    vif.cb.HWRITE <= 1'b1;
-    vif.cb.HSIZE  <= tr.size;
+    forever begin
+      ahb_transaction tr;
+      seq_item_port.get_next_item(tr);
+      `uvm_info(get_type_name(), "Write data transaction", UVM_MEDIUM)
+      tr.print();
+      
+      // Drive write address phase
+      vif.cb.HADDR  <= tr.addr;
+      vif.cb.HTRANS <= 2'b10;   // NONSEQ
+      vif.cb.HWRITE <= 1'b1;
+      vif.cb.HSIZE  <= tr.size;
 
-    // Write data
-    @(posedge vif.HCLK iff vif.HREADY);
-    // Drive write data phase
-    vif.cb.HWDATA <= tr.data;
+      // Write data
+      @(posedge vif.HCLK iff vif.HREADY);
+      // Drive write data phase
+      vif.cb.HWDATA <= tr.data;
 
-    @(posedge vif.HCLK iff vif.HREADY);
+      @(posedge vif.HCLK iff vif.HREADY);
 
-    // Done
-    seq_item_port.item_done();
-  end
-endtask
+      // Done
+      seq_item_port.item_done();
+    end
+  endtask
 
 endclass
