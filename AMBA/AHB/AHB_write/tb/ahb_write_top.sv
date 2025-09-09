@@ -1,42 +1,42 @@
-module top;
+`timescale 1ns/1ps
+import uvm_pkg::*;
+`include "uvm_macros.svh"
 
-  logic HCLK;
-  logic HRESETn;
+module ahb_write_top;
 
-  // Instantiate interface
-  ahb_if ahb_if_inst(.HCLK(HCLK), .HRESETn(HRESETn));
+  logic clk = 0;
+  logic rst_n = 0;
 
-  // Clock generation
-  initial begin
-    HCLK = 0;
-    forever #5 HCLK = ~HCLK;
-  end
+  always #5 clk = ~clk;
 
-  // Reset generation
-  initial begin
-    HRESETn = 0;
-    #20 HRESETn = 1;
-  end
+  ahb_if ahb_write_if(.HCLK(clk), .HRESETn(rst_n));
 
-  // DUT instance
-  ahb_write_slavel dut (
-    .HCLK      (HCLK),
-    .HRESETn   (HRESETn),
-    .HSEL      (ahb_if_inst.HSEL),
-    .HWRITE    (ahb_if_inst.HWRITE),
-    .HTRANS    (ahb_if_inst.HTRANS),
-    .HADDR     (ahb_if_inst.HADDR),
-    .HWDATA    (ahb_if_inst.HWDATA),
-    .HREADYOUT (ahb_if_inst.HREADYOUT)
+  ahb_write_slave dut (
+    .HCLK    (ahb_write_if.HCLK),
+    .HRESETn (ahb_write_if.HRESETn),
+    .HADDR   (ahb_write_if.HADDR),
+    .HTRANS  (ahb_write_if.HTRANS),
+    .HWRITE  (ahb_write_if.HWRITE),
+    .HSIZE   (ahb_write_if.HSIZE),
+    .HWDATA  (ahb_write_if.HWDATA),
+    .HRDATA  (ahb_write_if.HRDATA),
+    .HREADY  (ahb_write_if.HREADY),
+    .HRESP   (ahb_write_if.HRESP)
   );
 
-  // Connect VIP to interface
   initial begin
-    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", ahb_if_inst);
+    rst_n = 0;
+    #20                 // 20 ns 後 not rst 舉起來 => 開始運作
+    rst_n = 1;
   end
 
   initial begin
-    run_test("ahb_test");
+    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", ahb_write_if);
+    run_test("ahb_write_test");
   end
 
+  initial begin
+    $shm_open("waves.shm");
+    $shm_probe("AS");
+  end
 endmodule
