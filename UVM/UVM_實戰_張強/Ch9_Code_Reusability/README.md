@@ -181,7 +181,7 @@ my_callback 的實例化是在 connect_phase 中完成的，實例化完成後�
 開發第二代產品，需要建造一個新的驗證平台。這個新的驗證平台大部分與舊的驗證平台一致，只是需要擴充 my_driver 的功能，
 即需要從原來的 driver 中派生一個新的類別 new_driver。另外，需要確保第一代產品的所有測試案例在盡量不改動的前提下能在新的
 驗證平台上通過。在第一代產品的測試案例中，大量使用了 callback 機制。由於一個 callback 池（即 A_pool）在聲明的時候指明了這個池子只能裝載用於 my_driver 的 callback。那麼怎樣才能使原來的 callback 函數/任務能夠用於 new_driver 中呢？
-這就牽扯到了子類別繼承父類別的 callback 函數/任務問題。 my_driver 使用上節中的定義，在此基礎上派生新的類別 new_driver：
+這就牽扯到了**子類別繼承父類別的 callback 函數/任務問題**。 my_driver 使用上節中的定義，在此基礎上派生新的類別 new_driver：
 ```
 class new_driver extends my_driver;
   `uvm_component_utils(new_driver)
@@ -217,7 +217,7 @@ endfunction
 ## 使用 callback 函數/任務來實現所有的測試案例
 可以在 pre_tran 中做很多事情，那麼是否可以將 driver 中的 drive_one_pkt 也移到 pre_tran 中呢？答案是可以
 的。更進一步，將 seq_item_port.get_nex_item 移到 pre_tran 中也是可以的。
-其實完全可以不用 sequence，只用 callback 函數/任務就可以實現所有的測試案例。假設 A 類定義如下：
+**其實完全可以不用 sequence，只用 callback 函數/任務就可以實現所有的測試案例**。假設 A 類定義如下：
 ```
 class A extends uvm_callback;
   my_transaction tr;
@@ -362,22 +362,3 @@ UVM 的 sequence 功能非常強大，許多用戶喜歡將他們的 sequence �
 * rd_from_txt_sequence
 ……
 盡量做到一看名字就知道這個 sequence 的用處，這樣可以最大程度上方便自己，方便大家。
-## 參數化類別的必要性
-程式碼的重用分為很多層次。凡是在某個專案中開發的程式碼用於其他項目，都可以稱為重用，如：
-* A用戶在項目P中的代碼被A用戶自己用於項目P
-* A用戶在專案P中的程式碼被A用戶自己用於專案Q
-* A用戶在專案P中的程式碼被B用戶用於專案Q
-* A用戶在專案P中開發的程式碼被B用戶或更多的用戶用於專案P或專案Q
-以上四種應用場景對程式碼可重複使用性的要求逐漸提高。在第一種中，可能只是幾個sequence被幾個不同的測試案例使用；在最
-後者中，可能A用戶開發的是一個匯流排功能模型，大家都會重複使用這些程式碼。
-為了增加程式碼的可重複使用性，參數化的類別是一個很好的選擇。 UVM中廣泛使用了參數化的類別。對使用者來說，使用最多的參數化
-的類別莫過於uvm_sequence了，其原型為：
-```
-virtual class uvm_sequence #(type REQ = uvm_sequence_item, type RSP = REQ) extends uvm_sequence_base;
-```
-在派生 uvm_sequence 時指定參數的類型，即 transaction 的類型，可以方便地產生 transaction 並建立測試案例。除了 
-uvm_sequence 外，還有 uvm_analysis_port 等，不再一一列舉。
-相較於普通的類，參數化的類別在定義時會有些複雜，其古怪的語法可能會使人望而卻步。並不是說所有的類別一定要定義成參數
-化的類。對很多類來說，根本沒有參數可言，如果定義成參數化的類，根本沒有任何優勢可言。所以，定義成參數化的類別的前
-提是，這個參數是有意義的、可行的。 2.3.1節的my_transaction是沒有任何必要定義成一個參數化的類別的。相反，一條總線
-transaction（如7.1.1節的bus_transaction）可能需要定義成參數化的類，因為總線位寬可能是16位的、32位的或64位的。
