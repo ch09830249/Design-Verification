@@ -1,5 +1,6 @@
 `include "my_sequencer.sv"
 class my_agent extends uvm_agent;
+
     my_driver drv;
     my_monitor mon;
     my_sequencer sqr;
@@ -13,6 +14,7 @@ class my_agent extends uvm_agent;
     extern virtual function void connect_phase(uvm_phase phase);
 
     `uvm_component_utils(my_agent)
+
 endclass
 
 function void my_agent::build_phase(uvm_phase phase);
