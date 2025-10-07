@@ -1,6 +1,3 @@
-/*
-    DUT 的增加了一組資料口，這組新的資料口與原先的資料口功能完全一樣
-*/
 module dut(clk, rst_n, 
             rxd0, rx_dv0, txd0, tx_en0, 
             rxd1, rx_dv1, txd1, tx_en1);
