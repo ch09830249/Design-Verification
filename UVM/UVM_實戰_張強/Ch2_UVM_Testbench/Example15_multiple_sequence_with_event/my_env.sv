@@ -13,12 +13,11 @@ class my_env extends uvm_env;
 
     function new(string name = "my_env", uvm_component parent);
         super.new(name, parent);
-        `uvm_info("my_env", "my_envs is new", UVM_LOW);
+        `uvm_info("my_env", $sformatf("my_envs (%s) is new", name), UVM_LOW)
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        `uvm_info("my_env", "my_env build phase!!", UVM_LOW);
         uvm_config_db#(uvm_active_passive_enum)::set(this, "i_agt", "is_active", UVM_ACTIVE);
         uvm_config_db#(uvm_active_passive_enum)::set(this, "o_agt", "is_active", UVM_PASSIVE);
         i_agt = my_agent::type_id::create("i_agt", this);
