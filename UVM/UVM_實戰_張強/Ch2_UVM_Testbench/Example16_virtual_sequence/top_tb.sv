@@ -12,10 +12,6 @@ module top_tb;
 
     reg clk;
     reg rst_n;
-
-    /*
-        在 top_tb 中做相應更改，多增加一組 my_if，並透過 config_db 將其設定為新的 env 中的 driver 和 monitor
-    */
     
     my_if input_if0(clk, rst_n);
     my_if output_if0(clk, rst_n);
@@ -34,7 +30,7 @@ module top_tb;
                 .tx_en1(output_if1.valid));
 
     initial begin
-        run_test("my_case0");   // 將 base test 改為 my_case0
+        run_test("my_case0");
     end
 
     initial begin
