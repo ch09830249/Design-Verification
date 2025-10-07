@@ -6,51 +6,35 @@ import uvm_pkg::*;
 `include "my_monitor.sv"
 `include "my_if.sv"
 `include "my_env.sv"
-`include "base_test.sv"
 `include "my_case0.sv"
-`include "my_case1.sv"
 
 module top_tb;
 
     reg clk;
     reg rst_n;
+
+    /*
+        在 top_tb 中做相應更改，多增加一組 my_if，並透過 config_db 將其設定為新的 env 中的 driver 和 monitor
+    */
     
-    my_if input_if(clk, rst_n);
-    my_if output_if(clk, rst_n);
+    my_if input_if0(clk, rst_n);
+    my_if output_if0(clk, rst_n);
+    my_if input_if1(clk, rst_n);
+    my_if output_if1(clk, rst_n);
 
     dut my_dut(.clk(clk),
                 .rst_n(rst_n),
-                .rxd(input_if.data),
-                .rx_dv(input_if.valid),
-                .txd(output_if.data),
-                .tx_en(output_if.valid));
-
-    /*
-        要啟動 my_case0 或 my_case1，需要在 top_tb 中更改 run_test 的參數
-        initial begin
-            run_test("my_case0");
-        end
-
-        initial begin
-            run_test("my_case1");
-        end
-    */
-
-    /*
-        當 my_case0 運行的時候需要修改程式碼，重新編譯後才能運行；
-        當 my_case1 運行時也需如此，這相當不方便。事實上，UVM 提供對不加參數的 run_test 的支持
-        在這種情況下，UVM 會利用 UVM_TEST_NAME 從命令列中尋找測試案例的名字，創建它的實例並運行
-        EX:
-            <sim command>
-            … +UVM_TEST_NAME=my_case0
-            or
-            … +UVM_TEST_NAME=my_case1
-    */
+                .rxd0(input_if0.data),
+                .rx_dv0(input_if0.valid),
+                .txd0(output_if0.data),
+                .tx_en0(output_if0.valid),
+                .rxd1(input_if1.data),
+                .rx_dv1(input_if1.valid),
+                .txd1(output_if1.data),
+                .tx_en1(output_if1.valid));
 
     initial begin
-        // run_test();
-        // run_test("my_case0");
-        run_test("my_case1");
+        run_test("my_case0");   // 將 base test 改為 my_case0
     end
 
     initial begin
@@ -72,9 +56,13 @@ module top_tb;
     end
 
     initial begin
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.drv", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.i_agt.mon", "vif", input_if);
-        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env.o_agt.mon", "vif", output_if);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.i_agt.drv", "vif", input_if0);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.i_agt.mon", "vif", input_if0);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env0.o_agt.mon", "vif", output_if0);
+
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.i_agt.drv", "vif", input_if1);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.i_agt.mon", "vif", input_if1);
+        uvm_config_db#(virtual my_if)::set(null, "uvm_test_top.env1.o_agt.mon", "vif", output_if1);
     end
 
 endmodule
