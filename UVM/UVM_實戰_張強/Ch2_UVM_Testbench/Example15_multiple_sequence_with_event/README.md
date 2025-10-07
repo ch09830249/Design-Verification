@@ -3,6 +3,10 @@
 <img width="1455" height="396" alt="image" src="https://github.com/user-attachments/assets/265f4d81-4da8-422f-9983-38afa318a1ea" />  
 <img width="1055" height="742" alt="image" src="https://github.com/user-attachments/assets/073de54c-ae1a-4ee0-a03a-234f8519ac12" />
 <img width="1472" height="398" alt="image" src="https://github.com/user-attachments/assets/74c8461f-485c-44c5-baf2-2a3460041c36" />  
+2. 後續兩個 port 各自 seq 發送 transaction
+<img width="1486" height="382" alt="image" src="https://github.com/user-attachments/assets/a4a6205c-5e97-4636-b171-f3d54676d955" />
+<img width="1060" height="652" alt="image" src="https://github.com/user-attachments/assets/a1c0a6b3-7e65-49e1-b575-c25c268ec373" />
+<img width="1057" height="657" alt="image" src="https://github.com/user-attachments/assets/b4ed85a7-0229-40bb-8dc6-45e2c7385b59" />  
 
 ```
 UVM_INFO my_case0.sv(61) @ 0: uvm_test_top [my_case0] my_case0 base test is new
