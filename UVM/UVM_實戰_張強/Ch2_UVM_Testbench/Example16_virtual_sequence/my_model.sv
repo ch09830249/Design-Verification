@@ -11,12 +11,10 @@ endclass
 
 function my_model::new(string name, uvm_component parent);
     super.new(name, parent);
-    `uvm_info("my_model", "my_model is new", UVM_LOW);
 endfunction
 
 function void my_model::build_phase(uvm_phase phase);
     super.build_phase(phase);
-    `uvm_info("my_model", "main_phase is called", UVM_LOW);
     port = new("port", this);
     ap = new("ap", this);
 endfunction
@@ -29,7 +27,7 @@ task my_model::main_phase(uvm_phase phase);
         port.get(tr);
         new_tr = new("new_tr");
         new_tr.copy(tr);
-        `uvm_info("my_model", "get one transaction, copy and print it:", UVM_LOW)
+        `uvm_info("my_model", "get one transaction, copy, print and send it to scb:", UVM_LOW)
         new_tr.print();
         ap.write(new_tr);
     end

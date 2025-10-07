@@ -13,8 +13,6 @@ class my_monitor extends uvm_monitor;
         super.build_phase(phase);
         if (!uvm_config_db#(virtual my_if)::get(this, "", "vif", vif))
             `uvm_fatal("my_monitor", "virtual interface must be set for vif!!!")
-        else
-            `uvm_info("my_monitor", "get virtual interface vif successfully!!!", UVM_LOW);
         ap = new("ap", this);
     endfunction
 
@@ -25,13 +23,11 @@ endclass
 
 task my_monitor::main_phase(uvm_phase phase);
     my_transaction tr;
-    `uvm_info("my_monitor", "main_phase is called", UVM_LOW);
     while (1) begin
         tr = new("tr");
         collect_one_pkt(tr);
         ap.write(tr);
     end
-    `uvm_info("my_monitor", "main_phase is ended", UVM_LOW);
 endtask
 
 task my_monitor::collect_one_pkt(my_transaction tr);
