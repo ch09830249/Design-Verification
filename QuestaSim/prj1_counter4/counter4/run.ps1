@@ -8,10 +8,10 @@ New-Item -ItemType Directory -Path "./log" -Force | Out-Null
 # 指定工作庫資料夾為 ./log/work
 vlib ./log/work
 
-# 編譯 DUT
+# 編譯設計（DUT）：counter4.sv
 vlog -work ./log/work ./rtl/counter4.sv
 
-# 編譯 TB，加上 incdir
+# 編譯測試平台（TB）：tb_top.sv，並加入 ./tb 為 include 路徑。 
 vlog -work ./log/work +incdir+./tb ./tb/tb_top.sv
 
 # 執行模擬，指定：
@@ -21,5 +21,6 @@ vlog -work ./log/work +incdir+./tb ./tb/tb_top.sv
 # - 將 transcript 檔案寫到 ./log/transcript
 & vsim -sv_seed $seed -lib ./log/work tb_top `
       -wlf ./log/wave.wlf `
-      -do "log -r /*; run -all" `
+      -do "log -r /*; run -all" `	# 自動記錄所有 signal (log -r /*)，並執行模擬直到結束 (run -all)
       > ./log/transcript 2>&1
+	 
