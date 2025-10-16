@@ -2,6 +2,18 @@
 * Terminal ./run.ps1 或 vsim -do ./run.do  
   PS: run.ps1 檔有加 randomize seed 設定為目前時間
 
+# PowerShell 執行策略（Execution Policy）
+1. 暫時允許腳本執行
+```
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+* -Scope Process：只針對這個 PowerShell 視窗有效，關掉視窗就還原，比較安全
+* -ExecutionPolicy Bypass：完全忽略執行限制
+  
+2. 要用「系統管理員權限」執行 PowerShell 
+```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
 # ./run.ps1
 ```
 # 產生亂數種子（用時間）
@@ -30,3 +42,4 @@ vlog -work ./log/work +incdir+./tb ./tb/tb_top.sv
       -do "log -r /*; run -all" `
       > ./log/transcript 2>&1
 ```
+
