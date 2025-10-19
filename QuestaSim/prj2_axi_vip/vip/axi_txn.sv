@@ -11,24 +11,20 @@ class axi_txn extends uvm_sequence_item;
     rand bit                 lock;
     rand bit [3:0]           qos;
 
-    `uvm_object_utils(axi_txn)
+    `uvm_object_utils_begin(axi_txn)
+        `uvm_field_int(id, UVM_DEFAULT)
+        `uvm_field_int(addr, UVM_DEFAULT)
+        `uvm_field_queue_int(data, UVM_DEFAULT)
+        `uvm_field_int(burst_len, UVM_DEFAULT)
+        `uvm_field_int(burst_size, UVM_DEFAULT)
+        `uvm_field_int(burst_type, UVM_DEFAULT)
+        `uvm_field_int(is_write, UVM_DEFAULT)
+        `uvm_field_int(lock, UVM_DEFAULT)
+        `uvm_field_int(qos, UVM_DEFAULT)
+    `uvm_object_utils_end
 
     function new(string name = "axi_txn");
         super.new(name);
-    endfunction
-
-    function void do_print(uvm_printer printer);
-        super.do_print(printer);
-        printer.print_field_int("id", id, 4);
-        printer.print_field_int("addr", addr, 32);
-        printer.print_field_int("burst_len", burst_len, 8);
-        printer.print_field_int("burst_size", burst_size, 3);
-        printer.print_field_int("burst_type", burst_type, 2);
-        printer.print_field_int("lock", lock, 1);
-        printer.print_field_int("qos", qos, 4);
-        printer.print_field_int("is_write", is_write, 1);
-        foreach (data[i])
-            printer.print_field_int($sformatf("data[%0d]", i), data[i], 32);
     endfunction
 
 endclass

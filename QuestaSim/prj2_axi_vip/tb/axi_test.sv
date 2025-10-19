@@ -14,26 +14,11 @@ class axi_test extends uvm_test;
     endfunction
 
     task run_phase(uvm_phase phase);
-        axi_txn tr;
-
+        axi_basic_seq seq;
         phase.raise_objection(this);
 
-        repeat (5) begin
-            tr = axi_txn::type_id::create("tr");
-            tr.id         = $urandom_range(0, 15);
-            tr.addr       = $urandom();
-            tr.burst_len  = 4;
-            tr.burst_type = 2'b01;
-            tr.burst_size = 3'b010; // 4 bytes
-            tr.lock       = 0;
-            tr.qos        = $urandom_range(0, 15);
-            tr.is_write   = $urandom_range(0, 1);
-            foreach (int i in tr.burst_len+1)
-                tr.data.push_back($urandom());
-
-            env.master_agent.sequencer.start_item(tr);
-            env.master_agent.sequencer.finish_item(tr);
-        end
+        seq = axi_basic_seq::type_id::create("seq");
+        seq.start(env.master_agent.sequencer);
 
         phase.drop_objection(this);
     endtask

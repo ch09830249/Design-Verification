@@ -23,6 +23,9 @@ class axi_driver extends uvm_driver #(axi_txn);
         forever begin
             seq_item_port.get_next_item(tr);
 
+            `uvm_info(get_type_name(), $sformatf("Get txn (is_write: %d)", tr.is_write), UVM_MEDIUM)
+            tr.print();
+
             if (is_master) begin
                 if (tr.is_write)
                     drive_write(tr);
@@ -46,7 +49,7 @@ class axi_driver extends uvm_driver #(axi_txn);
         vif.AWLOCK  <= tr.lock;
         vif.AWQOS   <= tr.qos;
         vif.AWVALID <= 1;
-
+        
         wait (vif.AWREADY);
         vif.AWVALID <= 0;
 
@@ -67,6 +70,7 @@ class axi_driver extends uvm_driver #(axi_txn);
     endtask
 
     task drive_read(axi_txn tr);
+        int r_count = 0;
         // 發出讀取請求
         vif.ARID    <= tr.id;
         vif.ARADDR  <= tr.addr;
@@ -81,7 +85,6 @@ class axi_driver extends uvm_driver #(axi_txn);
         vif.ARVALID <= 0;
 
         // 接收 R channel 資料
-        int r_count = 0;
         while (r_count <= tr.burst_len) begin
             vif.RREADY <= 1;
             wait (vif.RVALID);

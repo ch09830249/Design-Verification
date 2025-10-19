@@ -37,9 +37,10 @@ class axi_monitor extends uvm_monitor;
     endfunction
 
     task run_phase(uvm_phase phase);
+        axi_txn tr;
         forever begin
             wait (vif.AWVALID && vif.AWREADY);
-            axi_txn tr = axi_txn::type_id::create("tr", this);
+            tr = axi_txn::type_id::create("tr", this);
             tr.id         = vif.AWID;
             tr.addr       = vif.AWADDR;
             tr.burst_len  = vif.AWLEN;
