@@ -1,5 +1,6 @@
 // 整體 top-level testbench
 `timescale 1ns/1ps
+`include "../rtl/axi_if.sv"
 
 module top_tb;
 
