@@ -19,5 +19,5 @@
 **Note**: master 和 slave 中還有一對常用的 master 和 slave，就是 default master 和 default slave。當沒有 master 在工作的時候，就選擇 default master 來控制總線，這個 master 可以直接存取總線而不需要兩個仲裁週期的時間，他是最常用的 master。當沒有 slave 被控制的時候就選擇default slave 來被控制。
 # Reference
 AHB總線筆記（一）: https://www.bilibili.com/opus/639338820199776256  
-AHB總線筆記（二）: https://www.bilibili.com/opus/639615918584889361?spm_id_from=333.1387.0.0
+AHB總線筆記（二）: https://www.bilibili.com/opus/639615918584889361?spm_id_from=333.1387.0.0  
 AHB匯流排筆記（三）附AMBA2.0面試提問: https://www.bilibili.com/opus/639640082077188135?spm_id_from=333.1387.0.0
