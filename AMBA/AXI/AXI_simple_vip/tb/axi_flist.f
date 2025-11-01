@@ -1,14 +1,24 @@
-# === RTL and Interface
-./rtl/axi_write_slave.sv
+# RTL and Interface
+./rtl/axi_slave_dut.sv
 
-# === UVM TB Components
-./tb/interface/axi_write_if.sv
-./tb/sequence/axi_write_transaction.sv
-./tb/sequence/axi_write_sequence.sv
-./tb/agent/axi_write_driver.sv
-./tb/agent/axi_write_agent.sv
-./tb/env/axi_write_env.sv
-./tb/test/axi_write_test.sv
+# UVM TB Components – Interfaces, Sequences
+./tb/axi_if.sv
+./tb/sequence/axi_txn.sv
+./tb/sequence/axi_basic_seq.sv
+./tb/sequence/axi_sequencer.sv
 
-# === Top-level
-./tb/axi_write_top.sv
+# UVM TB Components – Agents / Monitor / Driver
+./tb/agent/axi_monitor.sv
+./tb/agent/axi_driver.sv
+./tb/agent/axi_agent.sv
+
+# Scoreboard / Coverage
+./tb/axi_scoreboard.sv
+./tb/coverage.sv
+
+# Environment / Test
+./tb/axi_env.sv
+./tb/axi_test.sv
+
+# Top‐level testbench
+./tb/top_tb.sv
