@@ -1,5 +1,5 @@
 # command line
-xrun -uvm -access +r ./tb/axi_read_top.sv ./rtl/axi_read_slave.sv -f ./tb/axi_read_flist.f
+xrun -uvm -access +r ./tb/top_tb.sv ./rtl/axi_slave_dut.sv -f ./tb/axi_flist.f
 
 # xrun.log
 * 回傳的 read data  
