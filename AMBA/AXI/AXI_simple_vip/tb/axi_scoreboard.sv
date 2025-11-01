@@ -1,21 +1,27 @@
-class axi_write_test extends uvm_test;
-  `uvm_component_utils(axi_write_test)
+class axi_scoreboard extends uvm_component;
+  `uvm_component_utils(axi_scoreboard)
+  // uvm_analysis_export#(axi_txn) mon_export;
 
-  axi_write_env env;
-  axi_write_sequence seq;
 
-  function new(string name = "axi_write_test", uvm_component parent = null); 
+  function new(string name = "axi_scoreboard", uvm_component parent = null);
     super.new(name, parent);
+    // mon_export = new("mon_export", this);
   endfunction
+
 
   function void build_phase(uvm_phase phase);
-    env = axi_write_env::type_id::create("env", this);
+    super.build_phase(phase);
   endfunction
 
+
   task run_phase(uvm_phase phase);
-    phase.raise_objection(this);
-    seq = axi_write_sequence::type_id::create("seq");
-    seq.start(env.write_agent.sequencer);
-    phase.drop_objection(this);
+    axi_txn tr;
+    forever begin
+      // mon_export.analysis_if.read(tr);
+      // do simple check: just print events for now
+      `uvm_info(get_type_name(), $sformatf("Scoreboard observed: %s", tr.convert2string()), UVM_LOW)
+    end
   endtask
+
+
 endclass
