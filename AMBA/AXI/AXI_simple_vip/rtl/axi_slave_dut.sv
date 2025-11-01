@@ -169,6 +169,7 @@ module axi_slave_dut #(
                         if (RLAST) begin
                             RVALID  <= 0;
                             RLAST   <= 0;
+                            ARREADY <= 1;
                             rstate  <= R_IDLE;
                         end else begin
                             raddr      <= raddr + 4;
