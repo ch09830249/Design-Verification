@@ -1,21 +1,21 @@
-class axi_write_test extends uvm_test;
-  `uvm_component_utils(axi_write_test)
+class axi_coverage extends uvm_subscriber #(axi_txn);
+    `uvm_component_utils(axi_coverage)
 
-  axi_write_env env;
-  axi_write_sequence seq;
+    covergroup cov;
+        burst_cp: coverpoint trans.burst_type;
+        size_cp:  coverpoint trans.burst_size;
+        qos_cp:   coverpoint trans.qos;
+    endgroup
 
-  function new(string name = "axi_write_test", uvm_component parent = null); 
-    super.new(name, parent);
-  endfunction
+    axi_txn trans;
 
-  function void build_phase(uvm_phase phase);
-    env = axi_write_env::type_id::create("env", this);
-  endfunction
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+        cov = new();
+    endfunction
 
-  task run_phase(uvm_phase phase);
-    phase.raise_objection(this);
-    seq = axi_write_sequence::type_id::create("seq");
-    seq.start(env.write_agent.sequencer);
-    phase.drop_objection(this);
-  endtask
+    function void write(axi_txn t);
+        this.trans = t;
+        cov.sample();
+    endfunction
 endclass
