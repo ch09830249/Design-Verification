@@ -1,37 +1,55 @@
-class ahb_driver extends uvm_driver #(ahb_transaction);
-  `uvm_component_utils(ahb_driver)
+// 帶 coverage 收集功能
+class axi_monitor extends uvm_monitor;
+    `uvm_component_utils(axi_monitor)
 
-  virtual ahb_if vif;
+    virtual axi_if vif;
+    uvm_analysis_port #(axi_txn) ap;
 
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-  endfunction
+    covergroup axi_cov;
+        option.per_instance = 1;
+        burst_type_cp: coverpoint vif.AWBURST {
+            bins fixed  = {2'b00};
+            bins incr   = {2'b01};
+            bins wrap   = {2'b10};
+        }
+        burst_len_cp: coverpoint vif.AWLEN {
+            bins len_1  = {1};
+            bins len_4  = {4};
+            bins len_8  = {8};
+            bins len_16 = {16};
+        }
+        qos_cp: coverpoint vif.AWQOS {
+            bins qos0 = {0};
+            bins qosF = {15};
+        }
+    endgroup
 
-  function void build_phase(uvm_phase phase);
-    if (!uvm_config_db#(virtual ahb_if)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF", "No virtual interface specified for ahb_driver")
-  endfunction
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+        ap = new("ap", this);
+        axi_cov = new();
+    endfunction
 
-  task run_phase(uvm_phase phase);
-    ahb_transaction tx;
-    forever begin
-      seq_item_port.get_next_item(tx);
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        if (!uvm_config_db#(virtual axi_if)::get(this, "", "vif", vif))
+            `uvm_fatal("AXI_MON", "No virtual interface")
+    endfunction
 
-      // Setup phase
-      vif.HSEL   <= 1;
-      vif.HWRITE <= 1;
-      vif.HADDR  <= tx.addr;
-      vif.HWDATA <= tx.data;
-      vif.HTRANS <= 2'b10; // NONSEQ
+    task run_phase(uvm_phase phase);
+        axi_txn tr;
+        // forever begin
+        //     wait (vif.AWVALID && vif.AWREADY);
+        //     tr = axi_txn::type_id::create("tr", this);
+        //     tr.id         = vif.AWID;
+        //     tr.addr       = vif.AWADDR;
+        //     tr.burst_len  = vif.AWLEN;
+        //     tr.burst_type = vif.AWBURST;
+        //     tr.qos        = vif.AWQOS;
+        //     tr.is_write   = 1;
 
-      // Wait for HREADY
-      do @(posedge vif.HCLK); while (!vif.HREADYOUT);
-
-      // Done
-      vif.HSEL   <= 0;
-      vif.HTRANS <= 2'b00;
-
-      seq_item_port.item_done();
-    end
-  endtask
+        //     axi_cov.sample(); // collect coverage
+        //     ap.write(tr);
+        // end
+    endtask
 endclass
