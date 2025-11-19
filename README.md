@@ -47,7 +47,6 @@ ChipVerify(UVM): [https://www.chipverify.com/systemverilog  ](https://www.chipve
 | **系統函式**      | $display, $monitor | $display, $monitor, $clog2, $bitstoreal, $urandom             | SystemVerilog 有更多方便函式      |
 
 ## 3️⃣ 主要改進方向
-
 * 驗證能力強化
   * SystemVerilog 支援 class、interface、random、constraint、assertion，讓 testbench 更容易寫和維護  
   * 適合 UVM 驗證環境  
@@ -57,3 +56,38 @@ ChipVerify(UVM): [https://www.chipverify.com/systemverilog  ](https://www.chipve
   * 可以定義 struct、union、enum，讓程式更清晰、可讀性更高  
 * 模組介面化
   * interface 可以簡化模組間訊號連接，避免傳統 Verilog 需要大量 port 列表  
+
+## 4-state logic
+| 值     | 意義                  |
+| ----- | ------------------- |
+| **0** | 邏輯 0                |
+| **1** | 邏輯 1                |
+| **X** | 不確定（unknown）        |
+| **Z** | 高阻抗（high-impedance） |
+
+常見於 RTL 設計、模擬、tri-state bus。
+* 典型型別：
+  * reg（Verilog）
+  * logic（SystemVerilog）
+  * wire（大多數情況 4-state）
+
+## 2-state logic
+| 值     | 意義   |
+| ----- | ---- |
+| **0** | 邏輯 0 |
+| **1** | 邏輯 1 |
+
+沒有 X、Z 概念。
+* 典型型別：
+  * bit（SystemVerilog）
+  * int、byte 等整數型別（本質上也是 2-state）
+
+
+| 特性   | reg (4-state)     | bit (2-state)          |
+| ---- | ----------------- | ---------------------- |
+| 表示值  | 0, 1, X, Z        | 0, 1                   |
+| 模擬精度 | 高（可表示未知/浮動）       | 低（未知會被強制為 0/1）         |
+| 設計用途 | RTL 設計訊號、時序邏輯     | 不需 X/Z 的資料運算、testbench |
+| 硬體對應 | 代表真實硬體行為（線會有 X/Z） | 純軟體運算概念，不存在 X/Z        |
+| 效能   | 模擬較慢              | 模擬較快                   |
+| 收斂性  | 可能因 X 擴散影響結果      | 無 X，結果確定               |
