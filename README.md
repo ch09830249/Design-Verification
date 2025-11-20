@@ -131,3 +131,11 @@ b <= a;
 | --------------- | ------------------------------ | --------------------------------------------------- |
 | **m_sequencer** | UVM 自動提供的 untyped sequencer 變數 | **只需要基本 sequence/sequencer 功能，不需呼叫客製化函式時使用**        |
 | **p_sequencer** | 使用者宣告的 typed sequencer handle  | **需要存取 sequencer 的特定變數/方法時（例如：config、mailbox、API）** |
+
+* m_sequencer：UVM 自動提供、無型別、不能存取 sequencer 自訂內容
+* p_sequencer：使用者宣告、有型別、能存取 sequencer 內部變數與函式
+👉 如果 sequence 要做一般送 transaction → 用 m_sequencer 即可
+👉 如果 sequence 需要讀參數、呼叫 sequencer API → 必須用 p_sequencer
+
+## 當 driver 從 seqr 取得 transaction 並要 trigger vif 的時候，要用 blocking 還是 non-blocking assignment? 為什麼?
+A: 應該使用 blocking assignment (=)
