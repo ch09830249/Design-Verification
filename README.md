@@ -91,3 +91,28 @@ ChipVerify(UVM): [https://www.chipverify.com/systemverilog  ](https://www.chipve
 | 硬體對應 | 代表真實硬體行為（線會有 X/Z） | 純軟體運算概念，不存在 X/Z        |
 | 效能   | 模擬較慢              | 模擬較快                   |
 | 收斂性  | 可能因 X 擴散影響結果      | 無 X，結果確定               |
+
+## =（blocking assignment）
+像程式語言的普通賦值，一條語句做完才做下一條。
+```
+a = b;   // 先做這個
+c = a;   // 然後做這個
+```
+## <=（non-blocking assignment）
+像「排隊更新」，不會阻塞下一行。
+```
+a <= 1;
+b <= a;   // 使用 a 的舊值（因為 a 還沒更新）
+```
+
+## swap 兩個值
+```
+a = b;
+b = a;
+結果：a = b；b = b（不能交換）
+```
+```
+a <= b;
+b <= a;
+因為兩個都用舊值 → 能正確交換！
+```
