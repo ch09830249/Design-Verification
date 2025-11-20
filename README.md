@@ -116,3 +116,18 @@ a <= b;
 b <= a;
 因為兩個都用舊值 → 能正確交換！
 ```
+
+## m_sequencer 與 p_sequencer 是什麼? 使用情景為何?
+1. m_sequencer
+  * 由 UVM 自動建立的 sequencer 變數（untyped）
+  * 型態為 uvm_sequencer_base
+  * 用途：讓 sequence 可以知道「自己是跑在誰的 sequencer 上」
+  * 特點
+    * 不需要手動宣告
+    * 由 UVM_DO、start_item() 等機制自動填入
+    * 因為是 base class，所以不能直接使用 sequencer 上特有的 function 或變數
+
+| 名稱              | 說明                             | 何時使用                                                |
+| --------------- | ------------------------------ | --------------------------------------------------- |
+| **m_sequencer** | UVM 自動提供的 untyped sequencer 變數 | **只需要基本 sequence/sequencer 功能，不需呼叫客製化函式時使用**        |
+| **p_sequencer** | 使用者宣告的 typed sequencer handle  | **需要存取 sequencer 的特定變數/方法時（例如：config、mailbox、API）** |
