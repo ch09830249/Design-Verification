@@ -31,7 +31,7 @@ ChipVerify(UVM): [https://www.chipverify.com/systemverilog  ](https://www.chipve
 ## Verilog 和 SystemVerilog 的差別
 | 項目            | Verilog            | SystemVerilog                                                 | 備註                         |
 | ------------- | ------------------ | ------------------------------------------------------------- | -------------------------- |
-| **語言類型**      | 專注於硬體描述，語法簡單，但驗證能力弱             | Verilog 的超集 (HDL + Verification featuresVerilog)，加入了物件導向、驗證功能、抽象化建模等現代設計特性，適合大型 ASIC/FPGA 開發與驗證                        | SystemVerilog 向下兼容 Verilog |
+| **語言類型**      | 專注於硬體描述，語法簡單，但驗證能力弱             | Verilog 的超集 (HDL + Verification features)，加入了物件導向、驗證功能、抽象化建模等現代設計特性，適合大型 ASIC/FPGA 開發與驗證                        | SystemVerilog 向下兼容 Verilog |
 | **RTL 設計**    | ✅ 支援               | ✅ 支援                                                          | 兩者都可描述數位電路                 |
 | **資料型別**      | reg, wire, integer | logic, bit, byte, shortint, int, longint, struct, union, enum | SystemVerilog 型別更強，支援結構化資料 |
 | **強型別檢查**     | ❌                  | ✅                                                             | SystemVerilog 可以檢查型別不匹配    |
