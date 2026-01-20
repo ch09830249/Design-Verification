@@ -33,7 +33,7 @@ endfunction
 ```
 * 由於需要牽扯到**層次引用 (就是上面例子的路徑)**，所以**需要在 connect_phase 及以後的 phase 才能呼叫這個函數 (這樣各個 component 才都已經實例化)**  
 * 如果不牽扯到任何層次引用，如設置目前 component 的冗餘度閾值，那麼可以在 connect_phase 之前呼叫
-* 只對某個特定的component運作
+* 只對某個特定的 component 運作
 ## set_report_verbosity_level_hier 函數
 * UVM 同樣提供遞歸的設定函數 set_report_verbosity_level_hier ，**如把 env.i_agt 及其下所有的 component 的冗餘度閾值設定為 UVM_HIGH 的代碼為**：
 ```
@@ -61,7 +61,7 @@ env.i_agt.set_report_id_verbosity_hier("ID1", UVM_HIGH);
 或者：
 <sim command> +UVM_VERBOSITY=HIGH
 ```
-* 相當於在 base_test 中調用 set_report_verbosity_level_hier 函數，把 base_test 及以下所有 component 的冗餘度等級設定為UVM_HIGH
+* 上述的命令列參數會把整個驗證平台的冗餘度閾值設定為 UVM_HIGH。相當於在 base_test 中調用 set_report_verbosity_level_hier 函數，把 base_test 及以下所有 component 的冗餘度等級設定為 UVM_HIGH
 # 重載列印資訊的嚴重性
 ## set_report_severity_override 和 set_report_severity_id_override 函數
 ```
