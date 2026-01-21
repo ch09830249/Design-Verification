@@ -97,8 +97,8 @@ UVM_ERROR my_driver.sv(29) @ 1100000: uvm_test_top.env.i_agt.drv [my_driver] thi
 ```
 # UVM_ERROR 到達一定數量結束仿真
 * 當 uvm_fatal 出現時，表示出現了致命錯誤，模擬會馬上停止
-* UVM 同樣支援 UVM_ERROR 達到一定數量時結束仿真。這個功能非常有用
-* 對於某個測試案例，如果出現了大量的UVM_ERROR，根據這些錯誤已經可以確定bug所在了，再繼續模擬下去意義已經不大，此時就可以結束仿真，而不必等到所有的 objection 被撤銷
+* UVM 同樣支援 UVM_ERROR 達到一定數量時結束仿真
+* 對於某個測試案例，如果出現了大量的 UVM_ERROR，根據這些錯誤已經可以確定 bug 所在了，再繼續模擬下去意義已經不大，此時就可以結束仿真，而不必等到所有的 objection 被撤銷
 ## set_report_max_quit_count 函數
 ```
 function void base_test::build_phase(uvm_phase phase);
@@ -113,7 +113,7 @@ endfunction
 Quit count reached!
 # Quit count : 5 of 5
 ```
-* 如果測試用例與 base_test 中同時設定了，則以測試用例中的設定為準
+* 如果測試用例與 base_test 中同時設定了，則**以測試用例中的設定為準**
 * 除了在 build_phase 之外，在其他 phase 設定也是可以的
 ## get_max_quit_count 函數
 * 與 set_max_quit_count 相對應的是 get_max_quit_count，可以用來查詢目前的退出閾值
@@ -122,7 +122,7 @@ Quit count reached!
 ```
 <sim command> +UVM_MAX_QUIT_COUNT=6,NO
 ```
-PS: 其中第一個參數 6 表示退出閾值，而第二個參數 NO 表示此值是不可以被後面的設定語句重載，其值還可以是 YES
+PS: 其中第一個參數 6 表示退出閾值，而**第二個參數 NO 表示此值是不可以被後面的設定語句重載，其值還可以是 YES**
 # 設定計數的目標
 ## set_report_severity_action 函式
 在上一節中，當 UVM_ERROR 達到一定數量時，可以自動退出模擬。在計數當中，是不含 UVM_WARNING 的。可以透過設定 set_report_severity_action 函式來把 UVM_WARNING 加入計數目標：
@@ -148,7 +148,7 @@ env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY| UVM_COUNT);
 上述程式碼將 ID 為 my_drv 的所有資訊加入計數中，無論是 UVM_INFO，或是 UVM_WARNING 或是 UVM_ERROR、UVM_FATAL
 ## set_report_id_action_hier 函式
 ```
-env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_COUNT);    // set_report_id_action同樣有其遞歸呼叫方式
+env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_COUNT);    // set_report_id_action 同樣有其遞歸呼叫方式
 ```
 ## set_report_severity_id_action 函式
 UVM 還支援將它們聯合起來 (嚴重性和 ID) 進行設置
@@ -172,8 +172,8 @@ env.i_agt.set_report_severity_id_action_hier(UVM_WARNING, "my_driver", UVM_DISPL
 <sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv, _ALL_, UVM_WARNING, UVM_DISPLAY|UVM_COUNT"
 ```
 # UVM 的斷點功能
-* 在程式運作時，預先在某語句處設定一斷點。當程式執行到此處時，停止仿真，進入交互模式，從而進行調試。
-* 斷點功能需要從模擬器的角度進行設置，不同模擬器的設置方式不同。為了消除這些設定方式的不同，UVM支援內建的斷點功能，執行到斷點時，自動停止仿真，進入互動模式
+* 在程式運作時，預先在某語句處設定一斷點。當程式執行到此處時，停止仿真，進入交互模式，從而進行調試
+* 斷點功能需要從模擬器的角度進行設置，不同模擬器的設置方式不同。為了消除這些設定方式的不同，UVM 支援內建的斷點功能，執行到斷點時，自動停止仿真，進入互動模式
 ## UVM_STOP
 ```
 virtual function void connect_phase(uvm_phase phase);
