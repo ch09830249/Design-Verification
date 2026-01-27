@@ -56,7 +56,7 @@ task my_driver::drive_one_pkt(my_transaction tr);
     // Push smac to data_q (6 Bytes)
     tmp_data = tr.smac;
     for (int i = 0; i < 6; i++) begin
-        data_q.push_back(tmp_data[7:0]);        
+        data_q.push_back(tmp_data[7:0]);        // LSB: 不斷取 tmp_data[7:0]（最低位元組，LSB）放入佇列，然後右移 8 位元 (LSB (Least Significant Byte) 先進入佇列)
         tmp_data = (tmp_data >> 8);
     end
 
@@ -97,3 +97,11 @@ task my_driver::drive_one_pkt(my_transaction tr);
     vif.valid <= 1'b0;
     `uvm_info("my_driver", "end drive one pkt", UVM_LOW);
 endtask
+
+/*
+Little-endian 打包 (LSB first)
+data_q = { << byte {tr.dmac, tr.smac, tr.ether_type, ...}};
+
+Big-endian 打包 (MSB first)
+data_q = { >> byte {tr.dmac, tr.smac, tr.ether_type, ...}};
+*/

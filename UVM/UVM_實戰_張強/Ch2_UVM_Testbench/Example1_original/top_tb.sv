@@ -53,3 +53,13 @@ endmodule
 /*
     可以看到「data is drived」被輸出了 256 次。
 */
+
+/*
+參數組合	    全名 / 描述	                                作用範圍
+"A"	        All signals	        Dump 目前層級（Scope）的所有埠（Ports）與內部變數（Variables）。但不包含子模組。
+"S"	        Sub-scopes	        配合其他參數，代表**遞迴（Recursive）地包含所有子模組。
+"AS"	    All + Sub	        最常用。 Dump 目前層級及其下方所有子模組的所有訊號。
+"AC"	    All + Class	        除了一般訊號，額外 Dump SystemVerilog Class 的成員變數（對 UVM 除錯極其重要）。
+"M"	        Memories	        包含記憶體陣列（Memories）**。預設情況下，為了節省硬碟空間，波形是不會 dump 大陣列的。
+"U"	        Union/Packed	    包含 Packed unions 等特殊資料結構。
+*/
