@@ -34,7 +34,7 @@ task my_model::main_phase(uvm_phase phase);
     my_transaction new_tr;
     super.main_phase(phase);
     while(1) begin
-        port.get(tr);               // 透過該 port 取出 tr
+        port.get(tr);               // 透過該 port 取出 tr (env 的 fifo 中取 tr)
         new_tr = new("new_tr");     // new 一個新 tr
         new_tr.my_copy(tr);         // 複製一份
         `uvm_info("my_model", "get one transaction, copy and print it:", UVM_LOW)

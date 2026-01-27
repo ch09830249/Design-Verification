@@ -8,10 +8,11 @@ class my_env extends uvm_env;
     my_model mdl;
     // 建立 scoreboard handle
     my_scoreboard scb;
+    // 這是一個 fifo for mon => mdl 的 handle (igt 的 mon 將 tr 送到 env 中的這個 fifo, mdl 再從此 fifo 取得 tr)
     uvm_tlm_analysis_fifo #(my_transaction) agt_mdl_fifo;
-    // 建立 fifo for mdl => scb 的 handle
+    // 建立 fifo for mdl => scb 的 handle     (mdl 將 tr 送到 env 中的這個 fifo, scb 再從此 fifo 取得 tr)
     uvm_tlm_analysis_fifo #(my_transaction) mdl_scb_fifo;
-    // 建立 fifo for o_agt => scb 的 handle
+    // 建立 fifo for o_agt => scb 的 handle   (igt 的 mon 將 tr 送到 env 中的這個 fifo, scb 再從此 fifo 取得 tr)
     uvm_tlm_analysis_fifo #(my_transaction) agt_scb_fifo;
 
     function new(string name = "my_env", uvm_component parent);
