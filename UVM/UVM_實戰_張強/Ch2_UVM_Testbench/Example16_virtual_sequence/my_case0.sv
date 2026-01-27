@@ -34,7 +34,7 @@ class drv1_seq extends uvm_sequence #(my_transaction);      // 改成只傳輸 m
   `uvm_object_utils(drv1_seq)
 endclass
 
-// 增加一個 virtual sequence
+// 增加一個 virtual sequence (包 drv0_seq 和 drv1_seq)
 class case0_vseq extends uvm_sequence #(my_transaction);
   `uvm_object_utils(case0_vseq)
   `uvm_declare_p_sequencer(my_vsqr)   // p_sequencer 轉成 my_vsqr 類別

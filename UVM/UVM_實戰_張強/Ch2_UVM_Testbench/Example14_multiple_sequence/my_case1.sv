@@ -8,13 +8,13 @@ class case1_sequence extends uvm_sequence #(my_transaction);
     virtual task body();
         `uvm_info("my_case1", "my_case1's my_sequence", UVM_LOW);
         if (starting_phase != null)
-        starting_phase.raise_objection(this);
+          starting_phase.raise_objection(this);
         repeat (10) begin
-        `uvm_do_with(m_trans, { m_trans.pload.size() == 60; })  // 相較於 case0 差在 case1_sequence 中出現了 uvm_do_with 宏，它是 uvm_do 系列宏中的一個，用於在隨機化時提供對某些欄位的約束。
+          `uvm_do_with(m_trans, { m_trans.pload.size() == 60; })  // 相較於 case0 差在 case1_sequence 中出現了 uvm_do_with 宏，它是 uvm_do 系列宏中的一個，用於在隨機化時提供對某些欄位的約束。
         end
         #100;   
         if (starting_phase != null)
-        starting_phase.drop_objection(this);
+          starting_phase.drop_objection(this);
     endtask
 
     `uvm_object_utils(case1_sequence)

@@ -1,4 +1,5 @@
 class my_vsqr extends uvm_sequencer #(my_transaction);
+    // 該 vsqr 須包含兩個 my_sequencer
     my_sequencer p_sqr0;
     my_sequencer p_sqr1;
 
