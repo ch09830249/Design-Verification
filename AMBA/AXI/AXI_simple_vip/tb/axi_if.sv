@@ -56,4 +56,63 @@ interface axi_if #(
     logic                    RVALID;
     logic                    RREADY;
 
+    // 尚未使用到
+    // =======================
+    // Clocking blocks
+    // =======================
+    clocking cb_wr @(posedge ACLK);
+        input  AWREADY, WREADY, BVALID;
+        output AWVALID, AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWLOCK, AWCACHE, AWPROT, AWQOS;
+        output WVALID, WDATA, WSTRB, WLAST;
+        output BREADY;
+    endclocking
+
+    clocking cb_rd @(posedge ACLK);
+        input  ARREADY, RVALID, RDATA, RRESP, RLAST;
+        output ARVALID, ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARQOS;
+        output RREADY;
+    endclocking
+
+    // =======================
+    // Modports
+    // =======================
+    // Master writes
+    modport master_wr (
+        input  AWREADY, WREADY, BVALID,
+        output AWVALID, AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWLOCK, AWCACHE, AWPROT, AWQOS,
+        output WVALID, WDATA, WSTRB, WLAST,
+        output BREADY
+    );
+
+    // Master reads
+    modport master_rd (
+        input  ARREADY, RVALID, RDATA, RRESP, RLAST,
+        output ARVALID, ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARQOS,
+        output RREADY
+    );
+
+    // Slave interface (input = master output, output = master input)
+    modport slave_wr (
+        input  AWVALID, AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWLOCK, AWCACHE, AWPROT, AWQOS,
+        input  WVALID, WDATA, WSTRB, WLAST,
+        input  BREADY,
+        output AWREADY, WREADY, BVALID
+    );
+
+    modport slave_rd (
+        input  ARVALID, ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARQOS,
+        input  RREADY,
+        output ARREADY, RVALID, RDATA, RRESP, RLAST
+    );
+
+    /*
+        Clocking blocks (cb_wr, cb_rd)
+            包含主動抓取（input）和主動驅動（output）訊號
+            在 driver/monitor 裡可以直接用 @cb_wr / @cb_rd 同步觸發
+        Modports
+            master_wr / master_rd → master 使用
+            slave_wr / slave_rd → slave 使用
+            保證訊號方向正確，方便在 UVM driver/monitor 中直接綁定 virtual interface
+    */
+
 endinterface
