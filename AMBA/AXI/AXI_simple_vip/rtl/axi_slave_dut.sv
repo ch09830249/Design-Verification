@@ -166,7 +166,7 @@ module axi_slave_dut #(
 
                 R_DATA_RESP_SENT: begin
                     if (RREADY) begin
-                        if (RLAST) begin
+                        if (RLAST || rburst_cnt == 0) begin
                             RVALID  <= 0;
                             RLAST   <= 0;
                             ARREADY <= 1;
@@ -174,7 +174,8 @@ module axi_slave_dut #(
                         end else begin
                             raddr      <= raddr + 4;
                             rburst_cnt <= rburst_cnt - 1;
-                            RDATA      <= mem[(raddr + 4) >> 2];
+                            // RDATA      <= mem[(raddr + 4) >> 2];
+                            RDATA      <= {raddr[DATA_WIDTH-1:16], 16'b0};
                             RVALID     <= 1;
                             RLAST      <= (rburst_cnt == 1);
                         end
