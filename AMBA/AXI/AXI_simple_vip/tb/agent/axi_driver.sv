@@ -1,9 +1,9 @@
-// 支援 Master/Slave 模式
+// 目前不支援 Master/Slave 模式
 class axi_driver extends uvm_driver #(axi_txn);
     `uvm_component_utils(axi_driver)
 
     virtual axi_if vif;
-    bit is_master;
+    bit is_master = 1;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -14,8 +14,8 @@ class axi_driver extends uvm_driver #(axi_txn);
         if (!uvm_config_db#(virtual axi_if)::get(this, "", "vif", vif))
             `uvm_fatal("AXI_DRV", "Get virtual interface failed!")
 
-        if (!uvm_config_db#(bit)::get(this, "", "is_master", is_master))
-            `uvm_fatal("AXI_DRV", "Get is_master failed!")
+        // if (!uvm_config_db#(bit)::get(this, "", "is_master", is_master))
+        //     `uvm_fatal("AXI_DRV", "Get is_master failed!")
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -24,15 +24,16 @@ class axi_driver extends uvm_driver #(axi_txn);
         forever begin
             seq_item_port.get_next_item(tr);
 
-            `uvm_info(get_type_name(), $sformatf("Get txn (is_write: %d)", tr.is_write), UVM_MEDIUM)
-            tr.print();
+            // `uvm_info(get_type_name(), $sformatf("Get txn (is_write: %d)", tr.is_write), UVM_MEDIUM)
+            // tr.print();
 
             if (is_master) begin
                 if (tr.is_write)
                     drive_write(tr);
                 else
                     drive_read(tr);
-            end else begin
+            end 
+            else begin
                 respond_slave(tr);
             end
 
@@ -132,6 +133,7 @@ class axi_driver extends uvm_driver #(axi_txn);
         end
     endtask
 
+    // 目前是以寫一個 DUT 的形式去做
     task respond_slave(axi_txn tr);
         // slave 被動等 master 發送訊號，這裡可視具體 DUT 模擬需要擴寫
         `uvm_info("AXI_DRV", "Slave response stub (implement as needed)", UVM_LOW)
