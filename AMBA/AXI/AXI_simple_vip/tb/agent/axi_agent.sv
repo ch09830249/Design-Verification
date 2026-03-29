@@ -5,6 +5,7 @@ class axi_agent extends uvm_agent;
     axi_driver                  driver;
     axi_monitor                 monitor;
     uvm_active_passive_enum     is_active;
+    bit                         is_master;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -15,6 +16,9 @@ class axi_agent extends uvm_agent;
 
         if (!uvm_config_db#(uvm_active_passive_enum)::get(this, "", "is_active", is_active))
             `uvm_fatal("AXI_AGT", "Get is_active failed!")
+
+        // if (!uvm_config_db#(bit)::get(this, "", "is_master", is_master))
+        //     `uvm_fatal("AXI_DRV", "Get is_master failed!")
 
         if (is_active == UVM_ACTIVE) begin
             sequencer = axi_sequencer::type_id::create("sequencer", this);
