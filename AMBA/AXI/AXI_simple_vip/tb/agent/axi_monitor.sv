@@ -38,18 +38,20 @@ class axi_monitor extends uvm_monitor;
 
     task run_phase(uvm_phase phase);
         axi_txn tr;
-        // forever begin
-        //     wait (vif.AWVALID && vif.AWREADY);
-        //     tr = axi_txn::type_id::create("tr", this);
-        //     tr.id         = vif.AWID;
-        //     tr.addr       = vif.AWADDR;
-        //     tr.burst_len  = vif.AWLEN;
-        //     tr.burst_type = vif.AWBURST;
-        //     tr.qos        = vif.AWQOS;
-        //     tr.is_write   = 1;
-
-        //     axi_cov.sample(); // collect coverage
-        //     ap.write(tr);
-        // end
+        forever begin
+            @(posedge vif.ACLK);
+            if (vif.AWVALID && vif.AWREADY)begin
+                tr = axi_txn::type_id::create("tr", this);
+                tr.id         = vif.AWID;
+                tr.addr       = vif.AWADDR;
+                tr.burst_len  = vif.AWLEN;
+                tr.burst_type = vif.AWBURST;
+                tr.qos        = vif.AWQOS;
+                tr.is_write   = 1;
+                tr.print();
+                axi_cov.sample(); // collect coverage
+                ap.write(tr);
+            end
+        end
     endtask
 endclass
