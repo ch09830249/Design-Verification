@@ -9,6 +9,8 @@ class axi_basic_seq extends uvm_sequence #(axi_txn);
         axi_txn tr;
         repeat (5) begin
             tr = axi_txn::type_id::create("tr");
+            tr.randomize();
+            tr.print();
             tr.id         = $urandom_range(0, 15);
             tr.addr       = $urandom();
             tr.burst_len  = 4;
