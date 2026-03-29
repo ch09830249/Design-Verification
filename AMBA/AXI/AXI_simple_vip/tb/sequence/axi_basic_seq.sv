@@ -7,7 +7,6 @@ class axi_basic_seq extends uvm_sequence #(axi_txn);
 
     task body();
         axi_txn tr;
-
         repeat (5) begin
             tr = axi_txn::type_id::create("tr");
             tr.id         = $urandom_range(0, 15);
