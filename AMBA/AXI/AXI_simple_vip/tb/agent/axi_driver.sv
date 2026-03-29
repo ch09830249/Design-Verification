@@ -12,9 +12,10 @@ class axi_driver extends uvm_driver #(axi_txn);
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         if (!uvm_config_db#(virtual axi_if)::get(this, "", "vif", vif))
-            `uvm_fatal("AXI_DRV", "virtual interface not found")
+            `uvm_fatal("AXI_DRV", "Get virtual interface failed!")
+
         if (!uvm_config_db#(bit)::get(this, "", "is_master", is_master))
-            is_master = 1; // default: master
+            `uvm_fatal("AXI_DRV", "Get is_master failed!")
     endfunction
 
     task run_phase(uvm_phase phase);
