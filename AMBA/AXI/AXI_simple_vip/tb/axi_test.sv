@@ -18,7 +18,7 @@ class axi_test extends uvm_test;
         phase.raise_objection(this);
 
         seq = axi_basic_seq::type_id::create("seq");
-        seq.start(env.master_agent.sequencer);
+        seq.start(env.active_agent.sequencer);
 
         phase.drop_objection(this);
     endtask
