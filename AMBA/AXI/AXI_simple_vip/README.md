@@ -1,9 +1,11 @@
 # command line
+```
 xrun -uvm -access +rwc \
      -coverage all \
      -covtest run1 \
      -covworkdir ./cov_db \
      ./tb/top_tb.sv ./rtl/axi_slave_dut.sv -f ./tb/axi_flist.f
+```
 
 # xrun.log
 * 回傳的 read data  
