@@ -5,8 +5,8 @@ import uvm_pkg::*;
 
 module top_tb;
 
-    bit clk = 0;
-    bit rst_n  = 0;
+    bit clk     = 0;
+    bit rst_n   = 0;
 
     always #5 clk = ~clk;
 
@@ -61,8 +61,7 @@ module top_tb;
 
     initial begin
         rst_n = 0;
-        // repeat (5) @(posedge clk);
-        #48
+        repeat (5) @(posedge clk);
         rst_n = 1;
     end
 
