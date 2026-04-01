@@ -1,0 +1,45 @@
+# Run Project
+* Terminal ./run.ps1 或 vsim -do ./run.do  
+  PS: run.ps1 檔有加 randomize seed 設定為目前時間
+
+# PowerShell 執行策略（Execution Policy）
+1. 暫時允許腳本執行
+```
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+* -Scope Process：只針對這個 PowerShell 視窗有效，關掉視窗就還原，比較安全
+* -ExecutionPolicy Bypass：完全忽略執行限制
+  
+2. 要用「系統管理員權限」執行 PowerShell 
+```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+# ./run.ps1
+```
+# 產生亂數種子（用時間）
+$seed = Get-Date -Format "HHmmssff"
+Write-Host "Using seed: $seed"
+
+# 確保 log 資料夾存在
+New-Item -ItemType Directory -Path "./log" -Force | Out-Null
+
+# 指定工作庫資料夾為 ./log/work
+vlib ./log/work
+
+# 編譯 DUT
+vlog -work ./log/work ./rtl/counter4.sv
+
+# 編譯 TB，加上 incdir
+vlog -work ./log/work +incdir+./tb ./tb/tb_top.sv
+
+# 執行模擬，指定：
+# - 指定亂數種子
+# - 指定工作庫位置
+# - 指定 wlf 波形輸出檔
+# - 將 transcript 檔案寫到 ./log/transcript
+& vsim -sv_seed $seed -lib ./log/work tb_top `
+      -wlf ./log/wave.wlf `
+      -do "log -r /*; run -all" `
+      > ./log/transcript 2>&1
+```
+
