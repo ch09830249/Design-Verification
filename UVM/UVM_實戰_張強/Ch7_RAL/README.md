@@ -522,3 +522,87 @@ extern virtual task write(output uvm_status_e status,
 * 第二個要寫的值，是一個輸入
 * 第三個是寫入操作的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR 
 暫存器模型對 sequence 的 transaction 類型沒有任何要求。因此，可以在一個發送 my_transaction 的 sequence 中使用暫存器模型對暫存器進行讀寫操作
+## 後門訪問與前門訪問
+* **UVM中前門存取的實現**
+所謂前門存取操作就是透過暫存器配置匯流排（如 APB 協定、OCP 協定、I2C 協定等）來對 DUT 進行操作。無論在任何總線協議中，前門存取操作只有兩種：**讀取操作**和**寫入操作**。前門訪問操作是比較正統的用法。對一塊實際焊接在電路板上正常運作的晶片來說，此時若要存取其中的某些暫存器，前門存取操作是唯一的方法。在 7.1.2 節介紹暫存器模型時曾經講過，對於參考模型來說，最大的問題是如何在其中啟動一個 sequence，當時列舉了全局變數和 config_db 的兩種方式。除了這兩種方式之外，如果能夠在參考模型中得到一個 sequencer 的指針，也可以在此 sequencer 上啟動一個 sequence。這通常比較容易實現，只要在其中設定一個 p_sqr 的變量，並在 env 中將 sequencer 的指標賦值給此變數即可。接下來的關鍵就是分別寫一個讀寫的 sequence：
+src/ch7/section7.2/7.3.1/reg_access_sequence.sv
+
+```
+class reg_access_sequence extends uvm_sequence#(bus_transaction);
+  string tID = get_type_name();
+
+  bit[15:0] addr;
+  bit[15:0] rdata;
+  bit[15:0] wdata;
+  bit is_wr;
+…
+  virtual task body();
+    bus_transaction tr;
+    tr = new("tr");
+    tr.addr = this.addr;
+    tr.wr_data = this.wdata;
+    tr.bus_op = (is_wr) ? BUS_WR : BUS_RD;
+
+    `uvm_info(tID, $sformatf("begin to access register: is_wr = %0d, addr = %0h", is_wr, addr), UVM_MEDIUM)
+    `uvm_send(tr)
+    `uvm_info(tID, "successful access register", UVM_MEDIUM)
+
+    this.rdata = tr.rd_data;
+  endtask
+
+endclass
+```
+
+之後，在參考模型中使用如下的方式來進行讀取操作：
+
+```
+task my_model::main_phase(uvm_phase phase);
+…
+  reg_access_sequence reg_seq;
+  super.main_phase(phase);
+  // 建立並啟動寄存器存取 sequence
+  reg_seq = new("reg_seq");
+  reg_seq.addr = 16'h9;
+  reg_seq.is_wr = 0;
+  reg_seq.start(p_sqr);
+
+  while(1) begin
+    // … 此處應有交易獲取邏輯 (如 port.get) …
+    
+    // 根據讀取到的寄存器數值決定是否翻轉交易
+    if(reg_seq.rdata)
+      invert_tr(new_tr);
+      
+    ap.write(new_tr);
+  end
+endtask
+```
+
+sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在寄存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指針，而在在暫存器模型中也有一個這樣的指針，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指針。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的
+ transaction 都非常相似，在綜合了它們的特徵後，UVM 內建了一種 transaction：uvm_reg_item。透過 adapter 的 bus2reg 及 reg2bus，可以實現 uvm_reg_item 與目標 transaction 的轉換。以讀取操作為例，其完整的流程為：
+* 參考模型呼叫暫存器模型的讀取任務
+* 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
+* 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
+* 把 bus_req 交給 bus_sequencer
+* driver 得到 bus_req 後驅動它，得到讀取的值，並將讀取值放入 bus_req 中，呼叫 item_done
+* 暫存器模型呼叫 adapter.bus2reg（bus_req，rw）將 bus_req 中的讀取值傳遞給 rw
+* 將 rw 中的讀取資料回傳參考模型
+在 6.7.2 節介紹 sequence 的應答機制時提到過，如果 driver 一直發送應答而 sequence 不收集應答，那麼將會導致 sequencer 的應答案隊列溢出。UVM 考慮到這種情況，在 adapter 中設定了 provide_responses 選項：
+UVM source code
+
+```
+virtual class uvm_reg_adapter extends uvm_object;
+…
+  bit provides_responses;
+…
+endclass
+```
+
+在設定了此選項後，暫存器模型在呼叫 bus2reg 將目標 transaction 轉換成 uvm_reg_item 時，其傳入的參數是 rsp，而不是 req。使用應答機制的操作流程為：
+* 參考模型呼叫暫存器模型的讀取任務
+* 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
+* 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
+* 將 bus_req 交給 bus_sequencer
+* driver 得到 bus_req，驅動它，得到讀取的值，並將讀取值放入 rsp 中，呼叫 item_done
+* 暫存器模型呼叫 adapter.bus2reg（rsp，rw）將 rsp 中的讀取值傳遞給 rw
+* 將 rw 中的讀取資料回傳參考模型
