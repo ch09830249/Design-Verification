@@ -327,3 +327,91 @@ endclass
 * uvm_reg 則是一個"空殼子"，或者用專業名詞來說，它是一個純虛類，因此是不能直接使用的，必須由其派生一個新類，在這個新類別中至少加入一個 uvm_reg_field，然後這個新類別才可以使用
 * uvm_reg_block 則是用來組織大量 uvm_reg 的一個大容器
 打個比方說，uvm_reg 是一個小瓶子，其中必須裝上藥丸（uvm_reg_field）才有意義，這個裝藥丸的過程就是定義派生類的過程，而 uvm_reg_block 則是一個大箱子，它中可以放許多小瓶子（uvm_reg），也可以放其他稍微小一點的箱子（uvm_reg_block）。整個暫存器模型就是一個大箱子（uvm_reg_block）
+* **將寄存器模型整合到驗證平台中**
+暫存器模型的前門存取方式工作流程如圖 7-5 所示，其中圖 a 為讀取操作，圖 b 為寫入操作：
+<img width="1194" height="739" alt="image" src="https://github.com/user-attachments/assets/bed2cd08-8ea4-4dca-92f8-fff73ae17099" />  
+暫存器模型的前門存取操作可以分成讀取和寫入兩種。無論是讀或寫，暫存器模型都會透過 sequence 產生一個 uvm_reg_bus_op 的變量，此變數中儲存操作類型（讀取或寫入）和操作的位址，如果是寫入操作，還會有要寫入的資料。此變數中的資訊要經過一個轉換器（adapter）轉換後交給 bus_sequencer，隨後交給 bus_driver，由 bus_driver 實作最終的前門存取讀寫操作。因此，必須要定義好一個轉換器。如下例為一個簡單的轉換器的程式碼：
+src/ch7/section7.2/my_adapter.sv
+  
+```
+class my_adapter extends uvm_reg_adapter;
+  string tID = get_type_name();
+
+  `uvm_object_utils(my_adapter)
+
+  function new(string name="my_adapter");
+    super.new(name);
+  endfunction : new
+
+  function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+    bus_transaction tr;
+    tr = new("tr");
+    tr.addr = rw.addr;
+    tr.bus_op = (rw.kind == UVM_READ) ? BUS_RD : BUS_WR;
+    if (tr.bus_op == BUS_WR)
+      tr.wr_data = rw.data;
+    return tr;
+  endfunction : reg2bus
+
+  function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);
+    bus_transaction tr;
+    if(!$cast(tr, bus_item)) begin
+      `uvm_fatal(tID, "Provided bus_item is not of the correct type. Expecting bus_transaction")
+      return;
+    end
+    rw.kind = (tr.bus_op == BUS_RD) ? UVM_READ : UVM_WRITE;
+    rw.addr = tr.addr;
+    rw.byte_en = 'h3;
+    rw.data = (tr.bus_op == BUS_RD) ? tr.rd_data : tr.wr_data;
+    rw.status = UVM_IS_OK;
+  endfunction : bus2reg
+
+endclass : my_adapter
+```
+  
+一個轉換器要定義好兩個函數，一是 **reg2bus，其作用為將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式**，二是 **bus2reg，其作用為當監測到總線上有操作時，它將收集來的 transaction 轉換成寄存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值**。說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於總線的特殊性，bus_driver 在驅動總線進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
+src/ch7/section7.2/base_test.sv
+  
+```
+class base_test extends uvm_test;
+
+  my_env env;
+  my_vsqr v_sqr;
+  reg_model rm;  // 新加的 reg model
+  my_adapter reg_sqr_adapter;  // 新加的 reg sqr adapter
+…
+  extern function new(string name = "base_test", uvm_component parent = null);
+  extern virtual function void build_phase(uvm_phase phase);
+  extern virtual function void connect_phase(uvm_phase phase);
+
+endclass
+
+function void base_test::build_phase(uvm_phase phase);
+  super.build_phase(phase);
+  env = my_env::type_id::create("env", this);
+  v_sqr = my_vsqr::type_id::create("v_sqr", this);
+  rm = reg_model::type_id::create("rm", this);
+  rm.configure(null, "");
+  rm.build();
+  rm.lock_model();
+  rm.reset();
+  reg_sqr_adapter = new("reg_sqr_adapter");
+  env.p_rm = this.rm;
+endfunction
+
+function void base_test::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  v_sqr.p_my_sqr = env.i_agt.sqr;
+  v_sqr.p_bus_sqr = env.bus_agt.sqr;
+  v_sqr.p_rm = this.rm;
+  rm.default_map.set_sequencer(env.bus_agt.sqr, reg_sqr_adapter);
+  rm.default_map.set_auto_predict(1);
+endfunction
+```
+  
+要將一個暫存器模型整合到 base_test 中，那麼至少需要在 base_test 中定義兩個成員變量，一是 reg_model，另外一個就是 reg_sqr_adapter。將所有用到的類別在 build_phase 中實例化。在實例化後 reg_model 還要做四件事：
+* 第一個是呼叫 configure 函數，其第一個參數是 parent block，由於是最頂層的 reg_block，因此填入 null，第二個參數是後門訪問路徑，請參考7.3節，這裡傳入一個空的字串
+* 第二是呼叫 build 函數，將所有的暫存器實例化
+* 第三是呼叫 lock_model 函數，呼叫此函數後，reg_model 中就不能再加入新的寄存器了
+* 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，呼叫此函數後，所有暫存器的值都將變為設定的重設值  
+暫存器模型的前門存取操作最終都會由 uvm_reg_map 完成，因此在 connect_phase 中，需要將轉換器和 bus_sequencer 通過 set_sequencer 函數告知 reg_model 的 default_map，並將 default_map 設定為自動預測狀態
