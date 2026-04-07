@@ -415,3 +415,110 @@ endfunction
 * 第三是呼叫 lock_model 函數，呼叫此函數後，reg_model 中就不能再加入新的寄存器了
 * 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，呼叫此函數後，所有暫存器的值都將變為設定的重設值  
 暫存器模型的前門存取操作最終都會由 uvm_reg_map 完成，因此在 connect_phase 中，需要將轉換器和 bus_sequencer 通過 set_sequencer 函數告知 reg_model 的 default_map，並將 default_map 設定為自動預測狀態
+  
+* **在驗證平台中使用暫存器模型**
+當一個暫存器模型被建立好後，可以在 sequence 和其他 component 中使用。以在參考模型中使用為例，需要在參考模型中有一個暫存器模型的指標：
+src/ch7/section7.2/my_model.sv
+  
+```
+class my_model extends uvm_component;
+…
+  reg_model p_rm;
+…
+endclass
+```
+  
+在程式碼清單 7-10 中已經為 env 的 p_rm 賦值，因此只需要在 env 中將 p_rm 傳遞給參考模型即可：
+src/ch7/section7.2/my_env.sv
+  
+```
+function void my_env::connect_phase(uvm_phase phase);
+…
+  mdl.p_rm = this.p_rm;
+endfunction
+```
+  
+對於暫存器，暫存器模型提供了兩個基本的任務：read 和 write。若要在參考模型中讀取暫存器，使用 read 任務：
+src/ch7/section7.2/my_model.sv
+
+```
+task my_model::main_phase(uvm_phase phase);
+  my_transaction tr;
+  my_transaction new_tr;
+  uvm_status_e status;
+  uvm_reg_data_t value;
+
+  super.main_phase(phase);
+  
+  // 從寄存器模型讀取初始值
+  p_rm.invert.read(status, value, UVM_FRONTDOOR);
+
+  while(1) begin
+    port.get(tr);
+    new_tr = new("new_tr");
+    new_tr.copy(tr);
+
+    // 如果 invert 寄存器的值為非零，則進行翻轉處理
+    if(value)
+      invert_tr(new_tr);
+
+    ap.write(new_tr);
+  end
+endtask
+```
+
+read 任務的原型如下圖所示：
+UVM source code
+  
+```
+extern virtual task read(output uvm_status_e status,
+                          output uvm_reg_data_t value,
+                          input uvm_path_e path = UVM_DEFAULT_PATH,
+                          input uvm_reg_map map = null,
+                          input uvm_sequence_base parent = null,
+                          input int prior = -1,
+                          input uvm_object extension = null,
+                          input string fname = "",
+                          input int lineno = 0);
+```
+
+它有多個參數，常用的是其前三個參數。
+* 第一個是 uvm_status_e 型的變量，這是一個輸出，用來表明讀取操作是否成功
+* 第二個是讀取的數值，也是輸出
+* 第三個是讀取的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR
+由於參考模型一般不會寫入暫存器，因此對於 write 任務，以在 virtual sequence 進行寫入操作為例說明。在 sequence 中使用暫存器模型，通常透過 p_sequencer 的形式引用。需要先在 sequencer 中有一個暫存器模型的指針，程式碼清單 7-10 中已經為 v_sqr.p_rm 賦值了。因此可以直接以如下方式進行寫入操作：
+src/ch7/section7.2/my_case0.sv
+
+```
+class case0_cfg_vseq extends uvm_sequence;
+…
+  virtual task body();
+    uvm_status_e status;
+    uvm_reg_data_t value;
+  …
+    // 透過 sequencer 中的寄存器模型指標 (p_rm) 進行前門存取寫入
+    p_sequencer.p_rm.invert.write(status, 1, UVM_FRONTDOOR);
+  …
+  endtask
+endclass
+```
+
+write 任務的原型如下圖所示：
+  
+```
+extern virtual task write(output uvm_status_e status,
+                          input uvm_reg_data_t value,
+                          input uvm_path_e path = UVM_DEFAULT_PATH,
+                          input uvm_reg_map map = null,
+                          input uvm_sequence_base parent = null,
+                          input int prior = -1,
+                          input uvm_object extension = null,
+                          input string fname = "",
+                          input int lineno = 0);
+```
+
+它的參數也有很多個，但是與 read 類似，常用的只有前三個。
+* 第一個為 uvm_status_e 型的變量，這是一個輸出，用於表明寫操作是否成功
+* 第二個要寫的值，是一個輸入
+* 第三個是寫入操作的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR 
+暫存器模型對 sequence 的 transaction 類型沒有任何要求。因此，可以在一個發送 my_transaction 的 sequence 中使用暫存器模型對暫存器進行讀寫操作
