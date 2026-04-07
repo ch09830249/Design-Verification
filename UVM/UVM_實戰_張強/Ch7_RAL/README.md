@@ -624,3 +624,34 @@ end
 當然，與前門訪問操作相比，後門訪問操作也有其劣勢。如所有的前門存取操作都可以在波形檔案中找到總線訊號變化的波形及所有操作的記錄。但是**後門存取操作則無法在波形檔案中找到操作痕跡**。**其操作記錄只能仰仗驗證平台編寫者在進行後門訪問操作時輸出的列印訊息**，這樣便增加了調試的難度
 
 * **使用interface進行後門存取操作**
+上一節中提到在 top_tb 中使用絕對路徑對寄存器進行後門存取操作，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以新建一個後門 interface：
+src/ch7/section7.3/7.3.3/backdoor_if.sv
+
+```
+interface backdoor_if(input clk, input rst_n);
+
+  function void poke_counter(input bit[31:0] value);
+    top_tb.my_dut.counter = value;
+  endfunction
+
+  function void peek_counter(output bit[31:0] value);
+    value = top_tb.my_dut.counter;
+  endfunction
+
+endinterface
+```
+
+poke_counter 為後門寫，而 peek_counter 為後門讀。在測試用例（或 drvier、scoreboard ）中，若要對暫存器賦初值可以直接呼叫此函數：
+
+```
+task my_case0::configure_phase(uvm_phase phase);
+  phase.raise_objection(this);
+  @(posedge vif.rst_n);
+  vif.poke_counter(32'hFFFD);
+  phase.drop_objection(this);
+endtask
+```
+
+如果有 n 個寄存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用寄存器模型提供的後門存取或根本不想建立寄存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
+
+* **UVM中後門存取操作的實作：DPI+VPI**
