@@ -1,7 +1,8 @@
 # 寄存器模型簡介
 ## 暫存器模型簡介
 * **帶暫存器配置匯流排的 DUT**
-先前所有的例子中，所使用的 DUT 幾乎都只有一組資料輸入輸出口，而沒有行為控制口，這樣的 DUT 幾乎是沒有任何價值的。通常來說，**DUT 中會有一組控制端口，透過控制端口，可以配置 DUT 中的暫存器，DUT 可以根據暫存器的值來改變其行為**。這組控制埠就是**暫存器配置匯流排**。如附錄 B 的程式碼清單 B-2 所示。  
+先前所有的例子中，所使用的 DUT 幾乎都只有一組資料輸入輸出口，而沒有行為控制口，這樣的 DUT 幾乎是沒有任何價值的。通常來說，**DUT 中會有一組控制端口，透過控制端口，可以配置 DUT 中的暫存器，DUT 可以根據暫存器的值來改變其行為**。這組控制埠就是**暫存器配置匯流排**。如附錄 B 的程式碼清單 B-2 所示。
+  
 ```
 module dut(clk, rst_n, bus_cmd_valid, bus_op, bus_addr, bus_wr_data, bus_rd_data, rxd, rx_dv, txd, tx_en);
     input clk;
@@ -66,7 +67,8 @@ module dut(clk, rst_n, bus_cmd_valid, bus_op, bus_addr, bus_wr_data, bus_rd_data
     end
 
 endmodule
-```  
+```
+  
 1. 在這個 DUT 中，只有一個 1 bit 的暫存器 invert，為其分配位址 16’h9  
     如果它的值為 1，那麼 DUT 在輸出時會將輸入的資料取反  
     如果為 0，則將輸入資料直接發送出去
@@ -81,7 +83,8 @@ endmodule
 6. 不支援 burst 操作，不支援延遲回應等
   
 針對此總線，有以下的transaction定義：  
-src/ch7/section7.1/7.1.1/bus_transaction.sv  
+src/ch7/section7.1/7.1.1/bus_transaction.sv
+
 ```  
 typedef enum {BUS_RD, BUS_WR} bus_op_e;
 
@@ -106,9 +109,10 @@ class bus_transaction extends uvm_sequence_item;
 
 endclass
 ```  
-
+  
 有如下的 driver 定義:  
 src/ch7/section7.1/7.1.1/bus_driver.sv
+  
 ```  
 task bus_driver::run_phase(uvm_phase phase);
 …
@@ -142,47 +146,56 @@ task bus_driver::drive_one_pkt(bus_transaction tr);
   `uvm_info("bus_driver", "end drive one pkt", UVM_LOW);
 endtask
 ```
+  
 需要說明的是，如果是讀取操作，這裡直接將讀到的資料賦值給 rd_data。  
 在 sequence 中，可以使用以下方式**進行讀取操作**：  
 src/ch7/section7.1/7.1.1/my_case0.sv
+  
 ```  
 virtual task body();
   `uvm_do_with(m_trans, {m_trans.addr == 16'h9;
                          m_trans.bus_op == BUS_RD;})
   `uvm_info("case0_bus_seq", $sformatf("invert's initial value is %0h", m_trans.rd_data), UVM_LOW)
 endtask
-```  
+```
+  
 這裡用到了 6.7.3 節介紹的另類的 response，在 sequence 中直接引用 m_trans.rd_data 可以得到讀取資料的值。  
   
 以如下的方式**進行寫入操作**：
 src/ch7/section7.1/7.1.1/my_case0.sv
+  
 ```  
 virtual task body();
   `uvm_do_with(m_trans, {m_trans.addr == 16'h9;
                          m_trans.bus_op == BUS_WR;
                          m_trans.wr_data == 16'h1;})
 endtask
-```  
+```
+  
 現在，整個驗證平台的框圖變成如圖 7-1 所示的形式。
 <img width="1148" height="812" alt="image" src="https://github.com/user-attachments/assets/45d0f449-afdb-4864-a727-e1b974d0ce7c" />  
 * **需要寄存器模型才能做的事情**  
 考慮下一個問題，在上節所示的 DUT 中，invert 暫存器用於控制 DUT 是否將輸入的激勵位元取反。在取反的情況下，參考模型 (Reference Model) 需要讀取此暫存器的值，如果為 1，那麼其輸出 transaction 也需要進行反轉。可是如何在參考模型中讀取一個暫存器的值呢？就目前讀者所掌握的知識來說，**只能先透過使用 bus_driver 向總線上發送讀取指令，並給出要讀的暫存器位址來查看一個暫存器的值。** 要實現這個過程，需要啟動一個 sequence，這個 sequence 會發送一個 transaction 給 bus_driver。所以  
 * 第一個問題是**如何在參考模型的控制下來啟動一個 sequence 以讀取暫存器**  
     **A:** 一個簡單的想法是設定一個**全域事件（又是全域變數！）**，然後在參考模型中觸發這個事件。在 virtual sequence 中等待這個事件的到來，等到了，則啟動 sequence。這裡用到了全域變量，這是相當忌諱的。如果不使用全域變量，那麼可以用一個非全域事件來取代。利用 config 機制分別為 virtual sequencer 和 scoreboard 設定一個 config_object，在此 object 中設定一個事件，例如 rd_reg_event，然後在 scoreboard 中觸發這個事件，而在 virtual sequence 中則要等待這個事件的到來：(這個事件等到後就啟動一個 sequence，開始讀取暫存器)
+  
 ```  
 @p_sequencer.config_object.rd_reg_event;
 ```
+  
 * 第二個問題是，**sequence 讀取的暫存器的值如何傳遞給參考模型**  
   **A:** 當 sequence 讀取到暫存器後，可以再透過 6.6.2 節所示的 config_db 傳遞給參考模型，在**參考模型中使用 6.6.3 節所示的 wait_modified 來更新資料**。  
   
 從上面可以看出這個過程相當麻煩。在一個大的設計中，其暫存器有數百上千個。為了區分這麼多的暫存器，又需要許多其他額外的設定。其實，這個讀取過程可以使用寄存器模型來實作。如果有了寄存器模型，那麼這個過程就可以簡化為：
+  
 ```
 task my_model::main_phase(uvm_phase phase);
 …
   reg_model.INVERT_REG.read(status, value, UVM_FRONTDOOR);
 …
 endtask
-```  
+```
+  
 只要一條語句就可以實現上述複雜的過程。像是啟動 sequence 及將讀取結果回傳這些事情，都會由暫存器模型來自動完成。如下圖顯示了讀取暫存器的過程，其中左圖為不使用暫存器模型，右圖為使用暫存器模型的讀取方式
 <img width="1182" height="770" alt="image" src="https://github.com/user-attachments/assets/7278cf97-fc0d-4cf5-822b-d8641380e1ca" />  
 * **在沒有暫存器模型之前**
@@ -205,6 +218,7 @@ endtask
 * **只有一個暫存器的暫存器模型**
 本節為 7.1.1 節所示的 DUT 建立暫存器模型。這個 DUT 非常簡單，它只有一個暫存器 invert。要為其建造寄存器模型，首先要從 uvm_reg 派生一個 invert 類別：
 src/ch7/section7.2/reg_model.sv
+  
 ```  
 class reg_invert extends uvm_reg;
 
@@ -225,6 +239,7 @@ class reg_invert extends uvm_reg;
 
 endclass
 ```
+  
 在 new 函數中，要將 invert 暫存器的寬度作為參數傳遞給 super.new 函數。
 * super.new 函數
     * 第一個參數: **這裡的寬度並不是指這個暫存器的有效寬度，而是指這個暫存器中總共的位數**。如對於一個 16 位的暫存器，其中可能只使用了 8 位，那麼這裡要填寫的是 16，而不是 8。**這個數字一般與系統匯流排的寬度一致**
@@ -268,7 +283,8 @@ endclass
     * 第八個參數表示這個域是否可以隨機化。這主要用於對暫存器進行隨機寫入測試，如果選擇了 0，那麼此域將不會隨機化，而一直是重設值，否則將會隨機出一個數值來。這一個參數當且僅當第四個參數為 RW、WRC、WRS、WO、W1、WO1 時才有效
     * 第九個參數表示這個域是否可以單獨存取
 定義好此暫存器後，需要在一個由 reg_block 派生的類別中將其實例化：
-src/ch7/section7.2/reg_model.sv  
+src/ch7/section7.2/reg_model.sv
+  
 ```  
 class reg_model extends uvm_reg_block;
   rand reg_invert invert;
@@ -289,7 +305,8 @@ class reg_model extends uvm_reg_block;
   endfunction
 
 endclass
-```  
+```
+  
 同 uvm_reg 衍生的類別一樣，每一個由 uvm_reg_block 衍生的類別也要定義一個 build 函數，一般在此函數中實作所有暫存器的實例化。一個 uvm_reg_block 中一定要對應一個 uvm_reg_map，系統已經有一個宣告好的 default_map，只需要在 build 中將其實例化。這個**實例化的過程並不是直接呼叫 uvm_reg_map 的 new 函數，而是透過呼叫 uvm_reg_block 的 create_map 來實現**， create_map 有眾多的參數，
 * create_map 函數
     * 第一個參數是名字
