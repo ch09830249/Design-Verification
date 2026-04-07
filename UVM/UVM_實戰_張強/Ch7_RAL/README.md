@@ -166,23 +166,16 @@ endtask
 現在，整個驗證平台的框圖變成如圖 7-1 所示的形式。
 <img width="1148" height="812" alt="image" src="https://github.com/user-attachments/assets/45d0f449-afdb-4864-a727-e1b974d0ce7c" />  
 * **需要寄存器模型才能做的事情**  
-考慮下一個問題，在上節所示的 DUT 中，invert 暫存器用於控制 DUT 是否將輸入的激勵位元取反。
-在取反的情況下，參考模型需要讀取此暫存器的值，如果為 1，那麼其輸出 transaction 也需要進行反轉。
-可是如何在參考模型中讀取一個暫存器的值呢？
-就目前讀者所掌握的知識來說，只能先透過使用 bus_driver 向總線上發送讀取指令，並給出要讀的暫存器位址來查看一個暫存器的值。
-要實現這個過程，需要啟動一個 sequence，這個 sequence 會發送一個 transaction 給 bus_driver。所以第一個問題是如何在參考模型的控制下來啟動一個 sequence 以讀取暫存器。第二個問題是，sequence 讀取的暫存器的值如何傳遞給參考模型。
-對於第一個問題，一個簡單的想法是設定一個全域事件（又是全域變數！），然後在參考模型中觸發這個事件。在virtual sequence 中等待這個事件的到來，等到了，則啟動 sequence。這裡用到了全域變量，這是相當忌諱的。
-如果不使用全域變量，那麼可以用一個非全域事件來取代。利用config機制分別為virtual sequencer和scoreboard設定一個
-config_object，在此object中設定一個事件，例如rd_reg_event，然後在scoreboard中觸發這個事件，而在virtual sequence中則要等待這
-個事件的到來：  
+考慮下一個問題，在上節所示的 DUT 中，invert 暫存器用於控制 DUT 是否將輸入的激勵位元取反。在取反的情況下，參考模型 (Reference Model) 需要讀取此暫存器的值，如果為 1，那麼其輸出 transaction 也需要進行反轉。可是如何在參考模型中讀取一個暫存器的值呢？就目前讀者所掌握的知識來說，**只能先透過使用 bus_driver 向總線上發送讀取指令，並給出要讀的暫存器位址來查看一個暫存器的值。** 要實現這個過程，需要啟動一個 sequence，這個 sequence 會發送一個 transaction 給 bus_driver。所以  
+* 第一個問題是**如何在參考模型的控制下來啟動一個 sequence 以讀取暫存器**  
+    **A:** 一個簡單的想法是設定一個**全域事件（又是全域變數！）**，然後在參考模型中觸發這個事件。在 virtual sequence 中等待這個事件的到來，等到了，則啟動 sequence。這裡用到了全域變量，這是相當忌諱的。如果不使用全域變量，那麼可以用一個非全域事件來取代。利用 config 機制分別為 virtual sequencer 和 scoreboard 設定一個 config_object，在此 object 中設定一個事件，例如 rd_reg_event，然後在 scoreboard 中觸發這個事件，而在 virtual sequence 中則要等待這個事件的到來：(這個事件等到後就啟動一個 sequence，開始讀取暫存器)
 ```  
 @p_sequencer.config_object.rd_reg_event;
 ```
-這個事件等到後就啟動一個 sequence，開始讀取暫存器。
-對於第二個問題，當 sequence 讀取到暫存器後，可以再透過6.6.2節所示的 config_db 傳遞給參考模型，在參考模型中使用6.6.3
-節所示的 wait_modified 來更新資料。
-從上面可以看出這個過程相當麻煩。在一個大的設計中，其暫存器有數百上千個。為了區分這麼多的暫存器，又需要許多其
-他額外的設定。其實，這個讀取過程可以使用暫存器模型來實作。如果有了寄存器模型，那麼這個過程就可以簡化為：
+* 第二個問題是，**sequence 讀取的暫存器的值如何傳遞給參考模型**  
+  **A:** 當 sequence 讀取到暫存器後，可以再透過 6.6.2 節所示的 config_db 傳遞給參考模型，在**參考模型中使用 6.6.3 節所示的 wait_modified 來更新資料**。  
+  
+從上面可以看出這個過程相當麻煩。在一個大的設計中，其暫存器有數百上千個。為了區分這麼多的暫存器，又需要許多其他額外的設定。其實，這個讀取過程可以使用寄存器模型來實作。如果有了寄存器模型，那麼這個過程就可以簡化為：
 ```
 task my_model::main_phase(uvm_phase phase);
 …
@@ -190,13 +183,12 @@ task my_model::main_phase(uvm_phase phase);
 …
 endtask
 ```  
-只要一條語句就可以實現上述複雜的過程。像是啟動sequence及將讀取結果回傳這些事情，都會由暫存器模型來自動完成。
-圖7-2顯示了讀取暫存器的過程，其中左圖為不使用暫存器模型，右圖為使用暫存器模型的讀取方式。
-在沒有暫存器模型之前，只能啟動sequence透過前門（FRONTDOOR）存取的方式來讀取暫存器，局限較大，在
-scoreboard（或其他component）中難以控制。而有了暫存器模型之後，scoreboard只與暫存器模型打交道，無論是發送讀取的指令
-還是取得讀取操作的回傳值，都可以由暫存器模型完成。有了暫存器模型後，可以在任何耗費時間的phase中使用暫存器模型以前閘
-存取或後門（BACKDOOR）存取的方式來讀取暫存器的值，同時還能在某些不耗費時間的phase（如check_phase）中使用後門訪
-問的方式來讀取暫存器的值。
+只要一條語句就可以實現上述複雜的過程。像是啟動 sequence 及將讀取結果回傳這些事情，都會由暫存器模型來自動完成。如下圖顯示了讀取暫存器的過程，其中左圖為不使用暫存器模型，右圖為使用暫存器模型的讀取方式
+<img width="1182" height="770" alt="image" src="https://github.com/user-attachments/assets/7278cf97-fc0d-4cf5-822b-d8641380e1ca" />  
+* **在沒有暫存器模型之前**
+  只能啟動 sequence 透過前門（FRONTDOOR）存取的方式來讀取暫存器，局限較大，在 scoreboard（或其他 component）中難以控制
+* **有了暫存器模型之後**
+  scoreboard 只與暫存器模型打交道，無論是**發送讀取的指令**還是**取得讀取操作的回傳值**，都可以由暫存器模型完成。有了暫存器模型後，可以在任何耗費時間的 phase 中使用暫存器模型以前閘存取或後門（BACKDOOR）存取的方式來讀取暫存器的值，同時還能在**某些不耗費時間的 phase（如check_phase）中使用後門訪問的方式來讀取暫存器的值**
 前門存取與後門存取是兩種暫存器的存取方式。所謂前門訪問，指的是透過模擬cpu在總線上發出讀取指令，進行讀寫操作。在
 這個過程中，模擬時間（$time函數得到的時間）是一直往前走的。
 <img width="1182" height="770" alt="image" src="https://github.com/user-attachments/assets/7278cf97-fc0d-4cf5-822b-d8641380e1ca" />  
