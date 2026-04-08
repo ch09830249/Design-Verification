@@ -655,3 +655,16 @@ endtask
 如果有 n 個寄存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用寄存器模型提供的後門存取或根本不想建立寄存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
 
 * **UVM中後門存取操作的實作：DPI+VPI**
+在 7.3.2 節和 7.3.3 節提供了兩種廣義的後門存取方式，它們的共同點即都是在 SystemVerilog 中實現的。但是在實際的驗證平台中，還有在 C/C++ 程式碼中對 DUT 中的暫存器進行讀寫的需求。Verilog 提供 VPI 接口，可以將 DUT 的層次結構開放給外部的 C/C++ 代碼。常用的 VPI 介面有以下兩個：
+
+```
+vpi_get_value(obj, p_value);
+vpi_put_value(obj, p_value, p_time, flags);
+```
+
+其中 vpi_get_value 用於從 RTL 中得到一個暫存器的值。vpi_put_value 用於將 RTL 中的暫存器設定為某個值。但是如果單純地使用 VPI 進行後門存取操作，在 SystemVerilog 與 C/C++ 之間傳遞參數時將非常麻煩。VPI 是 Verilog 提供的接口，為了呼叫 C/C++ 中的函數，提供更好的使用者體驗，SystemVerilog 提供了一個更好的介面：DPI。如果使用 DPI，以讀取操作為例，在 C/C++ 中定義如下一個函數：
+
+```
+int uvm_hdl_read(char *path, p_vpi_vecval value);
+```
+
