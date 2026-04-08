@@ -655,16 +655,41 @@ endtask
 如果有 n 個寄存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用寄存器模型提供的後門存取或根本不想建立寄存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
 
 * **UVM中後門存取操作的實作：DPI+VPI**
-在 7.3.2 節和 7.3.3 節提供了兩種廣義的後門存取方式，它們的共同點即都是在 SystemVerilog 中實現的。但是在實際的驗證平台中，還有在 C/C++ 程式碼中對 DUT 中的暫存器進行讀寫的需求。Verilog 提供 VPI 接口，可以將 DUT 的層次結構開放給外部的 C/C++ 代碼。常用的 VPI 介面有以下兩個：
+在 7.3.2 節和 7.3.3 節提供了兩種廣義的後門存取方式，它們的共同點即都是在 SystemVerilog 中實現的。**但是在實際的驗證平台中，還有在 C/C++ 程式碼中對 DUT 中的暫存器進行讀寫的需求**。Verilog 提供 VPI 接口，可以將 DUT 的層次結構開放給外部的 C/C++ 代碼。常用的 VPI 介面有以下兩個：
 
 ```
 vpi_get_value(obj, p_value);
 vpi_put_value(obj, p_value, p_time, flags);
 ```
 
-其中 vpi_get_value 用於從 RTL 中得到一個暫存器的值。vpi_put_value 用於將 RTL 中的暫存器設定為某個值。但是如果單純地使用 VPI 進行後門存取操作，在 SystemVerilog 與 C/C++ 之間傳遞參數時將非常麻煩。VPI 是 Verilog 提供的接口，為了呼叫 C/C++ 中的函數，提供更好的使用者體驗，SystemVerilog 提供了一個更好的介面：DPI。如果使用 DPI，以讀取操作為例，在 C/C++ 中定義如下一個函數：
+其中 **vpi_get_value 用於從 RTL 中得到一個暫存器的值**。**vpi_put_value 用於將 RTL 中的暫存器設定為某個值**。但是如果單純地使用 VPI 進行後門存取操作，在 SystemVerilog 與 C/C++ 之間傳遞參數時將非常麻煩。VPI 是 Verilog 提供的接口，為了呼叫 C/C++ 中的函數，提供更好的使用者體驗，SystemVerilog 提供了一個更好的介面：DPI。如果使用 DPI，以讀取操作為例，在 C/C++ 中定義如下一個函數：
 
 ```
 int uvm_hdl_read(char *path, p_vpi_vecval value);
 ```
 
+在這個函數中透過最終呼叫 vpi_get_value 得到暫存器的值。在 SystemVerilog 中首先需要使用如下的方式將在 C/C++ 中定義的函數導入：
+  
+```
+import "DPI-C" context function int uvm_hdl_read(string path, output uvm_hdl_d ata_t value);
+```
+
+以後就可以在 SystemVerilog 中像普通函數一樣呼叫 uvm_hdl_read 函數了。這種方式比單純地使用 VPI 的方式簡練許多。它可以直接將參數傳遞給 C/C++ 中的對應函數，省去了單純使用 VPI 時繁雜的註冊系統函數的步驟。整個過程如圖 7-6 所示。
+<img width="1154" height="616" alt="image" src="https://github.com/user-attachments/assets/3577c941-4f0c-4ec7-bc8b-fbd655f170a5" />  
+在這種 DPI+VPI 的方式中，要操作的暫存器的路徑被抽像成了字串，而不再是絕對路徑：
+
+```
+uvm_hdl_read("top_tb.my_dut.counter", value);
+```
+
+與程式碼清單 7-21 相比，可以發現這種方式的優勢：路徑被抽像成了一個字串，從而可以以參數的形式傳遞，並可以存儲，這為建立寄存器模型提供了可能。一個單純的 Verilog 路徑，如 top_tb.my_dut.counter，它是不能傳遞的，也是無法儲存的。
+UVM 中使用 DPI+VPI 的方式來進行後門存取操作，它大體的流程是：
+1）在建立暫存器模型時將路徑參數設定好。  
+2）在進行後閘存取的寫入操作時，暫存器模型呼叫 uvm_hdl_deposit 函數：
+
+```
+import "DPI-C" context function int uvm_hdl_deposit(string path, uvm_hdl_data_t value);
+```
+
+在 C/C++ 側，此函式內部會呼叫 vpi_put_value 函式來對 DUT 中的暫存器進行寫入操作。
+3）進行後門存取的讀取操作時，呼叫 uvm_hdl_read 函數，在 C/C++ 側，此函數內部會呼叫 vpi_get_value 函數來對 DUT 中的寄存器進行讀取操作，並將讀取值傳回。
