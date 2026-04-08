@@ -693,3 +693,7 @@ import "DPI-C" context function int uvm_hdl_deposit(string path, uvm_hdl_data_t 
 
 在 C/C++ 側，此函式內部會呼叫 vpi_put_value 函式來對 DUT 中的暫存器進行寫入操作。
 3）進行後門存取的讀取操作時，呼叫 uvm_hdl_read 函數，在 C/C++ 側，此函數內部會呼叫 vpi_get_value 函數來對 DUT 中的寄存器進行讀取操作，並將讀取值傳回。
+
+* **UVM 中後門存取操作介面**
+在掌握 UVM 中後門存取操作的原理後，就可以使用暫存器模型的後門存取功能。要使用這個功能，需要做以下的準備：  
+在 reg_block 中呼叫 uvm_reg 的 configure 函數時，設定好第三個路徑參數：
