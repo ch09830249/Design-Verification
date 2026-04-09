@@ -722,11 +722,66 @@ endclass
 當上述工作完成後，將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root：
 ```
 function void base_test::build_phase(uvm_phase phase);
+…
   rm = reg_model::type_id::create("rm", this);
   rm.configure(null, "");
   rm.build();
   rm.lock_model();
   rm.reset();
   rm.set_hdl_path_root("top_tb.my_dut");
+…
 endfunction
 ```
+  
+UVM 提供兩類後門存取的函數：一是 UVM_BACKDOOR 形式的 read 和 write，二是 peek 和 poke。這兩類函數的差別是，第一類會在進行操作時模仿 DUT 的行為，第二類則完全不管 DUT 的行為。如對一個唯讀的暫存器進行寫入操作，那麼第一類由於要模擬 DUT 的唯讀行為，所以是寫不進去的，但使用第二類可以寫進去。poke 函數用於第二類寫入操作，其原型為：
+  
+```
+task uvm_reg::poke(output uvm_status_e status,
+                    input uvm_reg_data_t value,
+                    input string kind = "",
+                    input uvm_sequence_base parent = null,
+                    input uvm_object extension = null,
+                    input string fname = "",
+                    input int lineno = 0);
+```
+
+peek 函數用於第二類的讀取操作，其原型為：
+
+```
+task uvm_reg::peek(output uvm_status_e status,
+                    output uvm_reg_data_t value,
+                    input string kind = "",
+                    input uvm_sequence_base parent = null,
+                    input uvm_object extension = null,
+                    input string fname = "",
+                    input int lineno = 0);
+```
+
+無論是 peek 還是 poke，其常用的參數都是前兩者。各自的第一個參數表示操作是否成功，第二個參數表示讀寫的資料。在 sequence 中，可以使用如下的方式來呼叫這兩個任務：
+  
+```
+src/ch7/section7.3/7.3.5/my_case0.sv
+class case0_cfg_vseq extends uvm_sequence;
+…
+  virtual task body();
+…
+    uvm_status_e status;
+    uvm_reg_data_t value;
+    bit [31:0] counter;
+
+    // 使用 poke 進行後門寫入
+    p_sequencer.p_rm.counter_low.poke(status, 16'hFFFD);
+…
+    // 使用 peek 進行後門讀取並組合 32-bit 數值
+    p_sequencer.p_rm.counter_low.peek(status, value);
+    counter[15:0] = value[15:0];
+…
+    p_sequencer.p_rm.counter_high.peek(status, value);
+    counter[31:16] = value[15:0];
+
+    `uvm_info("case0_cfg_vseq", $sformatf("after poke, counter's value(BACKDOOR) is %0h", counter), UVM_LOW)
+  endtask
+
+endclass
+```
+
