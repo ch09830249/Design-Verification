@@ -785,3 +785,61 @@ class case0_cfg_vseq extends uvm_sequence;
 endclass
 ```
 
+## 複雜的寄存器模型
+* **層次化的暫存器模型**
+7.2 節的例子中的暫存器模型是一個最小、最簡單的暫存器模型。在整個實作過程中，只是將一個暫存器加入了 uvm_reg_block 中，並在最後的 base_test 中實例化此 reg_block。這個例子之所以這麼做是因為只有一個暫存器。在現實應用中，一般會將 uvm_reg_block 再加入一個 uvm_reg_block 中，然後在 base_test 中實例化後者。從邏輯關係來看，呈現出的是兩級的暫存器模型，如圖 7-7 所示
+<img width="1152" height="795" alt="image" src="https://github.com/user-attachments/assets/6cd3e02d-afac-4fda-9f39-ffd8262b12d3" />  
+一般的，只會在第一級的 uvm_reg_block 中加入暫存器，而第二級的 uvm_reg_block 通常只會加入 uvm_reg_block。這樣從整體上呈現出一個比較清晰的結構。假如一個 DUT 分了三個子模組：用來控制全域的 global 模組、用來快取資料的 buf 模組、用來接收發送乙太網路幀的 mac 模組。 global 模組暫存器的位址為 0x0000～0x0FFF，buf 部分的暫存器位址為 0x1000～0x1FFF，mac 部分的暫存器位址為 0x2000～0x2FFF，那麼可以如下定義暫存器模型：
+src/ch7/section7.4/7.4.1/reg_model.sv
+```
+class global_blk extends uvm_reg_block;
+  // ... (registers definition)
+endclass
+
+class buf_blk extends uvm_reg_block;
+  // ... (registers definition)
+endclass
+
+class mac_blk extends uvm_reg_block;
+  // ... (registers definition)
+endclass
+
+class reg_model extends uvm_reg_block;
+
+  rand global_blk gb_ins;
+  rand buf_blk bb_ins;
+  rand mac_blk mb_ins;
+
+  virtual function void build();
+    default_map = create_map("default_map", 0, 2, UVM_BIG_ENDIAN, 0);
+
+    gb_ins = global_blk::type_id::create("gb_ins");
+    gb_ins.configure(this, "");
+    gb_ins.build();
+    gb_ins.lock_model();
+    default_map.add_submap(gb_ins.default_map, 16'h0);
+
+    bb_ins = buf_blk::type_id::create("bb_ins");
+    bb_ins.configure(this, "");
+    bb_ins.build();
+    bb_ins.lock_model();
+    default_map.add_submap(bb_ins.default_map, 16'h1000);
+
+    mb_ins = mac_blk::type_id::create("mb_ins");
+    mb_ins.configure(this, "");
+    mb_ins.build();
+    mb_ins.lock_model();
+    default_map.add_submap(mb_ins.default_map, 16'h2000);
+  endfunction
+
+  `uvm_object_utils(reg_model)
+
+  function new(input string name="reg_model");
+    super.new(name, UVM_NO_COVERAGE);
+  endfunction
+
+endclass
+```
+
+要將一個子 reg_block 加入父 reg_block 中，第一步是先實例化子 reg_block。第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的路徑參數設定為空字串，不能發起後門存取操作）。第三步是呼叫子 reg_block 的 build 函數。第四步是調用子 reg_block 的 lock_model 函式。第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中。這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道寄存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。
+因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
