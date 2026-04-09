@@ -697,3 +697,36 @@ import "DPI-C" context function int uvm_hdl_deposit(string path, uvm_hdl_data_t 
 * **UVM 中後門存取操作介面**
 在掌握 UVM 中後門存取操作的原理後，就可以使用暫存器模型的後門存取功能。要使用這個功能，需要做以下的準備：  
 在 reg_block 中呼叫 uvm_reg 的 configure 函數時，設定好第三個路徑參數：
+src/ch7/section7.3/7.3.5/reg_model.sv
+
+```
+class reg_model extends uvm_reg_block;
+  rand reg_invert invert;
+  rand reg_counter_high counter_high;
+  rand reg_counter_low counter_low;
+
+  virtual function void build();
+…
+    invert.configure(this, null, "invert");
+…
+    counter_high.configure(this, null, "counter[31:16]");
+…
+    counter_low.configure(this, null, "counter[15:0]");
+…
+  endfunction
+…
+endclass
+```
+
+由於 counter 是 32 bit，佔據兩個位址，因此在暫存器模型中它是作為兩個暫存器存在的。7.4.4 節將會介紹使它們作為一個寄存器的方法。
+當上述工作完成後，將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root：
+```
+function void base_test::build_phase(uvm_phase phase);
+  rm = reg_model::type_id::create("rm", this);
+  rm.configure(null, "");
+  rm.build();
+  rm.lock_model();
+  rm.reset();
+  rm.set_hdl_path_root("top_tb.my_dut");
+endfunction
+```
