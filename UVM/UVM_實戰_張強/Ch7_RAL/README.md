@@ -569,7 +569,7 @@ endclass
 ```
 
 之後，在參考模型中使用如下的方式來進行讀取操作：
-
+  
 ```
 task my_model::main_phase(uvm_phase phase);
 …
@@ -592,7 +592,7 @@ task my_model::main_phase(uvm_phase phase);
   end
 endtask
 ```
-
+  
 sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在寄存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指針，而在在暫存器模型中也有一個這樣的指針，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指針。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的
  transaction 都非常相似，在綜合了它們的特徵後，UVM 內建了一種 transaction：uvm_reg_item。透過 adapter 的 bus2reg 及 reg2bus，可以實現 uvm_reg_item 與目標 transaction 的轉換。以讀取操作為例，其完整的流程為：
 * 參考模型呼叫暫存器模型的讀取任務
@@ -604,7 +604,7 @@ sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_
 * 將 rw 中的讀取資料回傳參考模型
 在 6.7.2 節介紹 sequence 的應答機制時提到過，如果 driver 一直發送應答而 sequence 不收集應答，那麼將會導致 sequencer 的應答案隊列溢出。UVM 考慮到這種情況，在 adapter 中設定了 provide_responses 選項：
 UVM source code
-
+  
 ```
 virtual class uvm_reg_adapter extends uvm_object;
 …
@@ -612,7 +612,7 @@ virtual class uvm_reg_adapter extends uvm_object;
 …
 endclass
 ```
-
+  
 在設定了此選項後，暫存器模型在呼叫 bus2reg 將目標 transaction 轉換成 uvm_reg_item 時，其傳入的參數是 rsp，而不是 req。使用應答機制的操作流程為：
 * 參考模型呼叫暫存器模型的讀取任務
 * 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
@@ -632,7 +632,7 @@ initial begin
   my_dut.counter = 32'hFFFD;
 end
 ```
-
+  
 所有後門存取操作都是不消耗模擬時間（即 $time 列印的時間）而只消耗運行時間的。這是後門訪問操作的最大優勢。既然有了前門訪問操作，那麼為什麼還需要後門訪問操作呢？後門訪問操作存在的意義在於：
 * 後門訪問操作能夠更好地完成前門訪問操作所做的事情。**後門存取不消耗模擬時間**，與前門存取操作相比，它消耗的運行時間要遠小於前門訪問操作的運行時間。在一個大型晶片的驗證中，在其正常工作前需要配置眾多的寄存器，配置時間可能要達到一個或幾個小時，而如果使用後門訪問操作，則時間可能會縮短為原來的1/100
 * **後門訪問操作能夠完成前門訪問操作不能完成的事情**。如在網路通訊系統中，計數器通常都是唯讀的（有些會附加清零功能），無法對其指定一個非零的初值。而大部分計數器都是多個加法器的疊加，需要測試它們的進位操作。本節 DUT 的 counter 使用了兩個疊加的 16 位元加法器，需要測試當計數到 32‘hFFFF 時能否順利進位成為 32’h1_0000，這可以透過延長模擬時間使其計數到 32‘hFFFF，這在本節的 DUT 中是可以的，因為計數器每個時脈都加 1。但是在實際應用中，可能要幾萬個或更多的時鐘才會加 1，因此需要大量的運行時間，如幾天。這只是 32 位元加法器的情況，如果是 48 位元的計數器，情況則會更糟。這種情況下，後閘存取操作能夠完成前門存取作業完成的事情，給唯讀的暫存器一個初值  
@@ -641,7 +641,7 @@ end
 * **使用 interface 進行後門存取操作**
 上一節中提到在 top_tb 中使用絕對路徑對寄存器進行後門存取操作，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以新建一個後門 interface：
 src/ch7/section7.3/7.3.3/backdoor_if.sv
-
+  
 ```
 interface backdoor_if(input clk, input rst_n);
 
@@ -655,9 +655,9 @@ interface backdoor_if(input clk, input rst_n);
 
 endinterface
 ```
-
+  
 poke_counter 為後門寫，而 peek_counter 為後門讀。在測試用例（或 drvier、scoreboard ）中，若要對暫存器賦初值可以直接呼叫此函數：
-
+  
 ```
 task my_case0::configure_phase(uvm_phase phase);
   phase.raise_objection(this);
@@ -666,7 +666,7 @@ task my_case0::configure_phase(uvm_phase phase);
   phase.drop_objection(this);
 endtask
 ```
-
+  
 如果有 n 個寄存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用寄存器模型提供的後門存取或根本不想建立寄存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
 
 * **UVM中後門存取操作的實作：DPI+VPI**
@@ -735,6 +735,7 @@ endclass
 
 由於 counter 是 32 bit，佔據兩個位址，因此在暫存器模型中它是作為兩個暫存器存在的。7.4.4 節將會介紹使它們作為一個寄存器的方法。
 當上述工作完成後，將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root：
+  
 ```
 function void base_test::build_phase(uvm_phase phase);
 …
@@ -759,9 +760,9 @@ task uvm_reg::poke(output uvm_status_e status,
                     input string fname = "",
                     input int lineno = 0);
 ```
-
+  
 peek 函數用於第二類的讀取操作，其原型為：
-
+  
 ```
 task uvm_reg::peek(output uvm_status_e status,
                     output uvm_reg_data_t value,
@@ -771,7 +772,7 @@ task uvm_reg::peek(output uvm_status_e status,
                     input string fname = "",
                     input int lineno = 0);
 ```
-
+  
 無論是 peek 還是 poke，其常用的參數都是前兩者。各自的第一個參數表示操作是否成功，第二個參數表示讀寫的資料。在 sequence 中，可以使用如下的方式來呼叫這兩個任務：
   
 ```
@@ -799,7 +800,7 @@ class case0_cfg_vseq extends uvm_sequence;
 
 endclass
 ```
-
+  
 ## 複雜的寄存器模型
 * **層次化的暫存器模型**
 7.2 節的例子中的暫存器模型是一個最小、最簡單的暫存器模型。在整個實作過程中，只是將一個暫存器加入了 uvm_reg_block 中，並在最後的 base_test 中實例化此 reg_block。這個例子之所以這麼做是因為只有一個暫存器。在現實應用中，一般會將 uvm_reg_block 再加入一個 uvm_reg_block 中，然後在 base_test 中實例化後者。從邏輯關係來看，呈現出的是兩級的暫存器模型，如圖 7-7 所示
@@ -857,5 +858,10 @@ class reg_model extends uvm_reg_block;
 endclass
 ```
   
-要將一個子 reg_block 加入父 reg_block 中，第一步是先實例化子 reg_block。第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的路徑參數設定為空字串，不能發起後門存取操作）。第三步是呼叫子 reg_block 的 build 函數。第四步是調用子 reg_block 的 lock_model 函式。第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中。這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道寄存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。
-因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
+要將一個子 reg_block 加入父 reg_block 中
+* 第一步是先實例化子 reg_block
+* 第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的路徑參數設定為空字串，不能發起後門存取操作）
+* 第三步是呼叫子 reg_block 的 build 函數
+* 第四步是調用子 reg_block 的 lock_model 函式
+* 第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中  
+這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道寄存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
