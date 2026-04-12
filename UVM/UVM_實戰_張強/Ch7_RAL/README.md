@@ -378,7 +378,13 @@ class my_adapter extends uvm_reg_adapter;
 endclass : my_adapter
 ```
   
-一個轉換器要定義好兩個函數，一是 **reg2bus，其作用為將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式**，二是 **bus2reg，其作用為當監測到總線上有操作時，它將收集來的 transaction 轉換成寄存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值**。說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於總線的特殊性，bus_driver 在驅動總線進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
+一個轉換器要定義好兩個函數
+* **reg2bus**
+  * 將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式
+* **bus2reg**
+  * 當監測到總線上有操作時，它將收集來的 transaction 轉換成寄存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值
+  
+說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於總線的特殊性，bus_driver 在驅動總線進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
 src/ch7/section7.2/base_test.sv
   
 ```
