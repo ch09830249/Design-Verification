@@ -378,7 +378,7 @@ class my_adapter extends uvm_reg_adapter;
 endclass : my_adapter
 ```
   
-一個轉換器要定義好兩個函數
+一個轉換器要定義好 2 個函數
 * **reg2bus**
   * 將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式
 * **bus2reg**
@@ -427,8 +427,8 @@ endfunction
 要將一個暫存器模型整合到 base_test 中，那麼至少需要在 base_test 中定義兩個成員變量，一是 reg_model，另外一個就是 reg_sqr_adapter。將所有用到的類別在 build_phase 中實例化。在實例化後 reg_model 還要做四件事：
 * 第一個是呼叫 configure 函數，其第一個參數是 parent block，由於是最頂層的 reg_block，因此填入 null，第二個參數是後門訪問路徑，請參考7.3節，這裡傳入一個空的字串
 * 第二是呼叫 build 函數，將所有的暫存器實例化
-* 第三是呼叫 lock_model 函數，呼叫此函數後，reg_model 中就不能再加入新的寄存器了
-* 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，呼叫此函數後，所有暫存器的值都將變為設定的重設值  
+* 第三是呼叫 lock_model 函數，**呼叫此函數後，reg_model 中就不能再加入新的寄存器了**
+* 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，**呼叫此函數後，所有暫存器的值都將變為設定的重設值**  
 暫存器模型的前門存取操作最終都會由 uvm_reg_map 完成，因此在 connect_phase 中，需要將轉換器和 bus_sequencer 通過 set_sequencer 函數告知 reg_model 的 default_map，並將 default_map 設定為自動預測狀態
   
 * **在驗證平台中使用暫存器模型**
@@ -557,11 +557,11 @@ class reg_access_sequence extends uvm_sequence#(bus_transaction);
     tr.addr = this.addr;
     tr.wr_data = this.wdata;
     tr.bus_op = (is_wr) ? BUS_WR : BUS_RD;
-
+    
     `uvm_info(tID, $sformatf("begin to access register: is_wr = %0d, addr = %0h", is_wr, addr), UVM_MEDIUM)
     `uvm_send(tr)
     `uvm_info(tID, "successful access register", UVM_MEDIUM)
-
+    
     this.rdata = tr.rd_data;
   endtask
 
