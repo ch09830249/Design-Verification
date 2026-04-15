@@ -1,189 +1,110 @@
-module axi_slave_dut #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter ID_WIDTH   = 4
-)(
-    input  logic ACLK,
-    input  logic ARESETn,
+`ifndef APB_PROTOCOL_SVA_SV
+`define APB_PROTOCOL_SVA_SV
 
-    // Write address channel
-    input  logic [ID_WIDTH-1:0]    AWID,
-    input  logic [ADDR_WIDTH-1:0]  AWADDR,
-    input  logic [7:0]             AWLEN,
-    input  logic [2:0]             AWSIZE,
-    input  logic [1:0]             AWBURST,
-    input  logic                   AWLOCK,
-    input  logic [3:0]             AWCACHE,
-    input  logic [2:0]             AWPROT,
-    input  logic [3:0]             AWQOS,
-    input  logic                   AWVALID,
-    output logic                   AWREADY,
+`include "apb_define.svh"
 
-    // Write data channel
-    input  logic [DATA_WIDTH-1:0]  WDATA,
-    input  logic [(DATA_WIDTH/8)-1:0] WSTRB,
-    input  logic                   WLAST,
-    input  logic                   WVALID,
-    output logic                   WREADY,
+module apb_protocol_sva (
+    input   logic                           PCLK,
+    input   logic                           PRESETn,
+    input   logic [`D_ADDR_WIDTH-1:0]       PADDR,
+    input   logic                           PWRITE,
+    input   logic [`D_SLV_COUNT-1:0]        PSEL,
+    input   logic                           PENABLE,
+    input   logic [`D_DATA_WIDTH-1:0]       PWDATA,
 
-    // Write response channel
-    output logic [ID_WIDTH-1:0]    BID,
-    output logic [1:0]             BRESP,
-    output logic                   BVALID,
-    input  logic                   BREADY,
-
-    // Read address channel
-    input  logic [ID_WIDTH-1:0]    ARID,
-    input  logic [ADDR_WIDTH-1:0]  ARADDR,
-    input  logic [7:0]             ARLEN,
-    input  logic [2:0]             ARSIZE,
-    input  logic [1:0]             ARBURST,
-    input  logic                   ARLOCK,
-    input  logic [3:0]             ARCACHE,
-    input  logic [2:0]             ARPROT,
-    input  logic [3:0]             ARQOS,
-    input  logic                   ARVALID,
-    output logic                   ARREADY,
-
-    // Read data channel
-    output logic [ID_WIDTH-1:0]    RID,
-    output logic [DATA_WIDTH-1:0]  RDATA,
-    output logic [1:0]             RRESP,
-    output logic                   RLAST,
-    output logic                   RVALID,
-    input  logic                   RREADY
+    // Slave Signal
+    input   logic                           PREADY,
+    input   logic [`D_DATA_WIDTH-1:0]       PRDATA,
+    input   logic                           PSLVERR
+    
 );
+    // -------------------------------------------------------
+    // Reset
+    // -------------------------------------------------------
+    property p_reset_psel;
+        @(posedge PCLK)
+        (!PRESETn && !$isunknown(PSEL)) |-> (PSEL == '0);
+    endproperty
+    apb_reset_psel_rule: assert property(p_reset_psel);
 
-    // ----------------------------
-    // Internal memory (1K words)
-    // ----------------------------
-    localparam MEM_DEPTH = 1024;
-    logic [DATA_WIDTH-1:0] mem[0:MEM_DEPTH-1];
-    logic [DATA_WIDTH-1:0] debug_mem;
+    property p_reset_penable;
+        @(posedge PCLK)
+        (!PRESETn && !$isunknown(PENABLE)) |-> !PENABLE;
+    endproperty
+    apb_reset_penable_rule: assert property(p_reset_penable);
 
-    // ----------------------------
-    // Write logic
-    // ----------------------------
-    typedef enum logic [2:0] {
-        W_IDLE, W_DATA, W_RESP_SENT
-    } wstate_t;
+    // -------------------------------------------------------
+    // Idle Phase
+    // -------------------------------------------------------
+    property p_idle_phase;
+        @(posedge PCLK) disable iff (!PRESETn)
+        (PSEL == '0) |-> !PENABLE;
+    endproperty
+    apb_idle_phase_rule: assert property(p_idle_phase);
 
-    wstate_t wstate;
-    logic [ADDR_WIDTH-1:0] waddr;
-    logic [7:0]            wburst_cnt;
-    logic [ID_WIDTH-1:0]   wid_reg;
+    // -------------------------------------------------------
+    // Setup Phase
+    // -------------------------------------------------------
+    property p_setup_phase_penable_low;
+        @(posedge PCLK) disable iff (!PRESETn)
+        ((PSEL == '0) ##1 (PSEL != '0)) |-> !PENABLE;
+    endproperty
+    apb_setup_phase_penable_low_rule: assert property(p_setup_phase_penable_low);
 
-    // ----------------------------
-    // Read logic
-    // ----------------------------
-    typedef enum logic [2:0] {
-        R_IDLE, R_ADDR_ACCEPTED, R_DATA_RESP_SENT
-    } rstate_t;
+    property p_psel_to_penable;
+        @(posedge PCLK) disable iff (!PRESETn)
+        ((PSEL == '0) ##1 (PSEL != '0)) |=> (PSEL != '0 && PENABLE);
+    endproperty
+    apb_psel_to_penable_rule: assert property(p_psel_to_penable);
 
-    rstate_t rstate;
-    logic [ADDR_WIDTH-1:0] raddr;
-    logic [7:0]            rburst_cnt;
-    logic [ID_WIDTH-1:0]   rid_reg;
+    // -------------------------------------------------------
+    // Access Phase — Signal Stability
+    // -------------------------------------------------------
+    property p_paddr_stable;
+        @(posedge PCLK) disable iff (!PRESETn)
+        (PSEL && PENABLE && !$rose(PENABLE) && !PREADY) |-> $stable(PADDR);
+    endproperty
+    apb_paddr_stable_rule: assert property(p_paddr_stable);
 
-    // ----------------------------
-    // Reset logic
-    // ----------------------------
-    always_ff @(posedge ACLK or negedge ARESETn) begin
-        if (!ARESETn) begin
-            // Write
-            wstate     <= W_IDLE;
-            AWREADY    <= 1;
-            WREADY     <= 0;
-            BVALID     <= 0;
+    property p_pwrite_stable;
+        @(posedge PCLK) disable iff (!PRESETn)
+        (PSEL && PENABLE && !$rose(PENABLE) && !PREADY) |-> $stable(PWRITE);
+    endproperty
+    apb_pwrite_stable_rule: assert property(p_pwrite_stable);
 
-            // Read
-            rstate     <= R_IDLE;
-            ARREADY    <= 1;
-            RVALID     <= 0;
-            RLAST      <= 0;
-        end else begin
+    property p_pwdata_stable;
+        @(posedge PCLK) disable iff (!PRESETn)
+        (PSEL && PENABLE && PWRITE && !$rose(PENABLE) && !PREADY) |-> $stable(PWDATA);
+    endproperty
+    apb_pwdata_stable_rule: assert property(p_pwdata_stable);
 
-            // ----------------------------
-            // Write channel FSM
-            // ----------------------------
-            case (wstate)
-                W_IDLE: begin
-                    if (AWVALID) begin
-                        waddr       <= AWADDR;
-                        wid_reg     <= AWID;
-                        wburst_cnt  <= AWLEN;
-                        AWREADY     <= 0;
-                        WREADY      <= 1;
-                        wstate      <= W_DATA;
-                    end
-                end
+    // -------------------------------------------------------
+    // Access Phase — Handshake
+    // -------------------------------------------------------
+    property p_pready_eventually;
+        @(posedge PCLK) disable iff (!PRESETn)
+        $rose(PENABLE) |-> ##[0:16] PREADY;
+    endproperty
+    apb_pready_eventually_rule: assert property(p_pready_eventually);
 
-                W_DATA: begin
-                    if (WVALID) begin
-                        // Byte write with WSTRB
-                        for (int i = 0; i < DATA_WIDTH/8; i++) begin
-                            if (WSTRB[i]) begin
-                                debug_mem[8*i +: 8] <= WDATA[8*i +: 8];
-                            end else begin
-                                debug_mem[8*i +: 8] <= 8'h00;
-                            end
-                        end
-                        waddr <= waddr + 4;
+    property p_transfer_done;
+        @(posedge PCLK) disable iff (!PRESETn)
+        (PSEL && PENABLE && PREADY) |=> !PENABLE;
+    endproperty
+    apb_transfer_done_rule: assert property(p_transfer_done);
 
-                        if (WLAST || (wburst_cnt == 0)) begin
-                            BRESP  <= 2'b00;  // OKAY
-                            BID    <= wid_reg;
-                            BVALID <= 1;
-                            wstate <= W_RESP_SENT;
-                        end else begin
-                            wburst_cnt <= wburst_cnt - 1;
-                        end
-                    end
-                end
+    property p_pslverr_with_pready;
+        @(posedge PCLK) disable iff (!PRESETn)
+        PSLVERR |-> PREADY;
+    endproperty
+    apb_pslverr_with_pready_rule: assert property(p_pslverr_with_pready);
 
-                W_RESP_SENT: begin
-                    if (BREADY) begin
-                        BVALID <= 0;
-                        AWREADY <= 1;
-                        wstate <= W_IDLE;
-                    end
-                end
-            endcase
-
-            // ----------------------------
-            // Read channel FSM
-            // ----------------------------
-            case (rstate)
-                R_IDLE: begin
-                    if (ARVALID) begin
-                        raddr       <= ARADDR;
-                        rid_reg     <= ARID;
-                        rburst_cnt  <= ARLEN;
-                        ARREADY     <= 0;
-                        rstate      <= R_DATA_RESP_SENT;
-                    end
-                end
-
-                R_DATA_RESP_SENT: begin
-                    if (RREADY) begin
-                        if (RLAST || rburst_cnt == 0) begin
-                            RVALID  <= 0;
-                            RLAST   <= 0;
-                            ARREADY <= 1;
-                            rstate  <= R_IDLE;
-                        end else begin
-                            raddr      <= raddr + 4;
-                            rburst_cnt <= rburst_cnt - 1;
-                            // RDATA      <= mem[(raddr + 4) >> 2];
-                            RDATA      <= {raddr[DATA_WIDTH-1:16], 16'b0};
-                            RVALID     <= 1;
-                            RLAST      <= (rburst_cnt == 1);
-                        end
-                    end
-                end
-            endcase
-
-        end
-    end
+    property p_pslverr_in_access;
+        @(posedge PCLK) disable iff (!PRESETn)
+        PSLVERR |-> (PSEL && PENABLE);
+    endproperty
+    apb_pslverr_in_access_rule: assert property(p_pslverr_in_access);
 
 endmodule
+
+`endif
