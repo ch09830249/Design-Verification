@@ -1,189 +1,60 @@
-module axi_slave_dut #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter ID_WIDTH   = 4
-)(
-    input  logic ACLK,
-    input  logic ARESETn,
+`timescale 1ps/1ps
 
-    // Write address channel
-    input  logic [ID_WIDTH-1:0]    AWID,
-    input  logic [ADDR_WIDTH-1:0]  AWADDR,
-    input  logic [7:0]             AWLEN,
-    input  logic [2:0]             AWSIZE,
-    input  logic [1:0]             AWBURST,
-    input  logic                   AWLOCK,
-    input  logic [3:0]             AWCACHE,
-    input  logic [2:0]             AWPROT,
-    input  logic [3:0]             AWQOS,
-    input  logic                   AWVALID,
-    output logic                   AWREADY,
+`include "apb_define.svh"
+`include "apb_protocol_sva.sv"
+`include "apb_interface.sv"
+`include "bind_apb_protocol_sva.sv"
 
-    // Write data channel
-    input  logic [DATA_WIDTH-1:0]  WDATA,
-    input  logic [(DATA_WIDTH/8)-1:0] WSTRB,
-    input  logic                   WLAST,
-    input  logic                   WVALID,
-    output logic                   WREADY,
+import uvm_pkg::*;
 
-    // Write response channel
-    output logic [ID_WIDTH-1:0]    BID,
-    output logic [1:0]             BRESP,
-    output logic                   BVALID,
-    input  logic                   BREADY,
+`include "apb_package.svh"
+import apb_package::*;
 
-    // Read address channel
-    input  logic [ID_WIDTH-1:0]    ARID,
-    input  logic [ADDR_WIDTH-1:0]  ARADDR,
-    input  logic [7:0]             ARLEN,
-    input  logic [2:0]             ARSIZE,
-    input  logic [1:0]             ARBURST,
-    input  logic                   ARLOCK,
-    input  logic [3:0]             ARCACHE,
-    input  logic [2:0]             ARPROT,
-    input  logic [3:0]             ARQOS,
-    input  logic                   ARVALID,
-    output logic                   ARREADY,
+// `include "apb_slave_bfm.sv"
 
-    // Read data channel
-    output logic [ID_WIDTH-1:0]    RID,
-    output logic [DATA_WIDTH-1:0]  RDATA,
-    output logic [1:0]             RRESP,
-    output logic                   RLAST,
-    output logic                   RVALID,
-    input  logic                   RREADY
-);
+module sim_top;
 
-    // ----------------------------
-    // Internal memory (1K words)
-    // ----------------------------
-    localparam MEM_DEPTH = 1024;
-    logic [DATA_WIDTH-1:0] mem[0:MEM_DEPTH-1];
-    logic [DATA_WIDTH-1:0] debug_mem;
+    logic           clk, rst_n;
+    apb_interface   vif();
 
-    // ----------------------------
-    // Write logic
-    // ----------------------------
-    typedef enum logic [2:0] {
-        W_IDLE, W_DATA, W_RESP_SENT
-    } wstate_t;
+    assign vif.PCLK     = clk;
+    assign vif.PRESETn  = rst_n;
 
-    wstate_t wstate;
-    logic [ADDR_WIDTH-1:0] waddr;
-    logic [7:0]            wburst_cnt;
-    logic [ID_WIDTH-1:0]   wid_reg;
+    // apb_slave_bfm slv (
+    //     .PCLK   (clk),
+    //     .PRESETn(rst_n),
+    //     .vif    (vif)
+    // );
 
-    // ----------------------------
-    // Read logic
-    // ----------------------------
-    typedef enum logic [2:0] {
-        R_IDLE, R_ADDR_ACCEPTED, R_DATA_RESP_SENT
-    } rstate_t;
+    always  #5  clk = ~clk;
 
-    rstate_t rstate;
-    logic [ADDR_WIDTH-1:0] raddr;
-    logic [7:0]            rburst_cnt;
-    logic [ID_WIDTH-1:0]   rid_reg;
+    initial begin
+        run_test();
+    end
 
-    // ----------------------------
-    // Reset logic
-    // ----------------------------
-    always_ff @(posedge ACLK or negedge ARESETn) begin
-        if (!ARESETn) begin
-            // Write
-            wstate     <= W_IDLE;
-            AWREADY    <= 1;
-            WREADY     <= 0;
-            BVALID     <= 0;
+    initial begin
 
-            // Read
-            rstate     <= R_IDLE;
-            ARREADY    <= 1;
-            RVALID     <= 0;
-            RLAST      <= 0;
-        end else begin
+        uvm_config_db #(virtual apb_interface) :: set (null, "*", "vif", vif);
 
-            // ----------------------------
-            // Write channel FSM
-            // ----------------------------
-            case (wstate)
-                W_IDLE: begin
-                    if (AWVALID) begin
-                        waddr       <= AWADDR;
-                        wid_reg     <= AWID;
-                        wburst_cnt  <= AWLEN;
-                        AWREADY     <= 0;
-                        WREADY      <= 1;
-                        wstate      <= W_DATA;
-                    end
-                end
+        clk     = 0;
+        rst_n   = 0;
 
-                W_DATA: begin
-                    if (WVALID) begin
-                        // Byte write with WSTRB
-                        for (int i = 0; i < DATA_WIDTH/8; i++) begin
-                            if (WSTRB[i]) begin
-                                debug_mem[8*i +: 8] <= WDATA[8*i +: 8];
-                            end else begin
-                                debug_mem[8*i +: 8] <= 8'h00;
-                            end
-                        end
-                        waddr <= waddr + 4;
+        #10;
+        rst_n   = 1;
+    end
 
-                        if (WLAST || (wburst_cnt == 0)) begin
-                            BRESP  <= 2'b00;  // OKAY
-                            BID    <= wid_reg;
-                            BVALID <= 1;
-                            wstate <= W_RESP_SENT;
-                        end else begin
-                            wburst_cnt <= wburst_cnt - 1;
-                        end
-                    end
-                end
+    initial begin
+        // original
+        // $fsdbDumpfile("wave.fsdb");
+        // $fsdbDumpvars;
 
-                W_RESP_SENT: begin
-                    if (BREADY) begin
-                        BVALID <= 0;
-                        AWREADY <= 1;
-                        wstate <= W_IDLE;
-                    end
-                end
-            endcase
+        // 改成 (Xcelium 原生 shm 格式)
+        $shm_open("wave.shm");
+        $shm_probe("AS");
 
-            // ----------------------------
-            // Read channel FSM
-            // ----------------------------
-            case (rstate)
-                R_IDLE: begin
-                    if (ARVALID) begin
-                        raddr       <= ARADDR;
-                        rid_reg     <= ARID;
-                        rburst_cnt  <= ARLEN;
-                        ARREADY     <= 0;
-                        rstate      <= R_DATA_RESP_SENT;
-                    end
-                end
-
-                R_DATA_RESP_SENT: begin
-                    if (RREADY) begin
-                        if (RLAST || rburst_cnt == 0) begin
-                            RVALID  <= 0;
-                            RLAST   <= 0;
-                            ARREADY <= 1;
-                            rstate  <= R_IDLE;
-                        end else begin
-                            raddr      <= raddr + 4;
-                            rburst_cnt <= rburst_cnt - 1;
-                            // RDATA      <= mem[(raddr + 4) >> 2];
-                            RDATA      <= {raddr[DATA_WIDTH-1:16], 16'b0};
-                            RVALID     <= 1;
-                            RLAST      <= (rburst_cnt == 1);
-                        end
-                    end
-                end
-            endcase
-
-        end
+        // 或改成標準 VCD
+        // $dumpfile("wave.vcd");
+        // $dumpvars(0, sim_top);
     end
 
 endmodule
