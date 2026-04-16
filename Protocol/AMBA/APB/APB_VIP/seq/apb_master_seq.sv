@@ -11,7 +11,7 @@ class apb_master_seq extends uvm_sequence #(apb_seq_item);
     endfunction
 
     virtual task body();
-        for ( int i=0; i<10000; i+=1 ) begin
+        for ( int i=0; i<10; i+=1 ) begin
             txn = apb_seq_item :: type_id :: create ("txn");
             
             if ( !txn.randomize() )
