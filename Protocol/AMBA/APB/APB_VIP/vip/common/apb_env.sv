@@ -15,12 +15,12 @@ class apb_env extends uvm_env;
 
     function new ( string name = "apb_env", uvm_component parent );
         super.new(name, parent);
-        fifo = new("fifo", this);
     endfunction
 
     function void build_phase ( uvm_phase phase );
         super.build_phase(phase);
-
+        fifo = new("fifo", this);
+        
         // Type override is written in master/slave env
         agt_mst = apb_master_agent :: type_id :: create ("agt_mst", this);
         agt_slv = apb_slave_agent :: type_id :: create ("agt_slv", this);
