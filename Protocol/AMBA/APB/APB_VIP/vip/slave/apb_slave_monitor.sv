@@ -11,14 +11,15 @@ class apb_slave_monitor extends apb_monitor_base;
     virtual task run_phase ( uvm_phase phase );
         forever begin
             @ ( posedge vif.PCLK );
-            if ( vif.PSEL && !vif.PENABLE ) begin  // Setup Phase
+            if ( vif.PSEL && vif.PENABLE ) begin  // Access Phase
                 txn = apb_seq_item :: type_id :: create ("txn");
+                // Only Master Signal
                 txn.PADDR   = vif.PADDR;
                 txn.PWRITE  = vif.PWRITE;
                 txn.PSEL    = vif.PSEL;
-                txn.PWDATA  = vif.PWDATA;
                 txn.PENABLE = vif.PENABLE;
-                port.write(txn);
+                txn.PWDATA  = vif.PWDATA;
+                port.write(txn);  // Send txn to agt_slv_drv
             end
         end
     endtask
