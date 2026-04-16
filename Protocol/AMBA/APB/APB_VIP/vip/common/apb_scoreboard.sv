@@ -17,13 +17,14 @@ class apb_scoreboard extends uvm_scoreboard;
     function void build_phase ( uvm_phase phase );
         super.build_phase(phase);
         imp = new("imp", this);
+        foreach ( mem[i] ) mem[i] = 0;
     endfunction: build_phase
 
     virtual function void write ( apb_seq_item txn );
         bit [`D_DATA_WIDTH-1:0]     exp_data;
 
         if ( txn.PSEL && txn.PENABLE && txn.PREADY ) begin  // TXN completes
-            if ( txn.PWRITE ) begin  // APB write
+            if ( txn.PWRITE && !txn.PSLVERR ) begin  // APB write
                 mem[txn.PADDR[$clog2(`D_MEM_SIZE)-1:0]] = txn.PWDATA;
             end else begin  // APB read
                 exp_data = mem[txn.PADDR[$clog2(`D_MEM_SIZE)-1:0]];
