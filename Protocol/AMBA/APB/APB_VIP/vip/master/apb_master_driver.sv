@@ -15,7 +15,6 @@ class apb_master_driver extends apb_driver_base;
                 reset_signal();
             end else begin
                 seq_item_port.get_next_item(txn);
-                txn.print();
 
                 // Setup Phase
                 vif.PADDR   <= txn.PADDR;
