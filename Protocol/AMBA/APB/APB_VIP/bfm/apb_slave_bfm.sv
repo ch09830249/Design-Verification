@@ -18,15 +18,15 @@ module apb_slave_bfm
 
     always @ ( posedge PCLK or negedge PRESETn ) begin
         if ( !PRESETn ) begin
-            vif.PRDATA  <= 0;
-            vif.PSLVERR <= 0;
             vif.PREADY  <= 1;
+            vif.PSLVERR <= 0;
+            vif.PRDATA  <= 0;
         end else begin
-            if ( vif.PSEL && !vif.PENABLE) begin
+            if ( vif.PSEL && vif.PENABLE) begin     // Access Phase
                 vif.PREADY  <= 0;
                 #1;  // simulate delay
                 vif.PREADY  <= 1;
-
+                vif.PSLVERR <= 0;
                 if ( vif.PWRITE ) begin
                     mem[vif.PADDR[$clog2(`D_MEM_SIZE)-1:0]] <= vif.PWDATA;
                 end else begin
