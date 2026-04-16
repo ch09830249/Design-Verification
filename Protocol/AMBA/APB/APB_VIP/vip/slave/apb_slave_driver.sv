@@ -19,20 +19,21 @@ class apb_slave_driver extends apb_driver_base;
         forever begin
             @ ( posedge vif.PCLK );
             if ( !vif.PRESETn ) begin
-                vif.PRDATA  <= 0;
                 vif.PREADY  <= 1;
+                vif.PRDATA  <= 0;
+                vif.PSLVERR <= 0;
             end else begin
                 seq_item_port.get_next_item(txn);
-                if ( txn.PSEL && txn.PENABLE ) begin  // Setup Phase
+                if ( txn.PSEL && txn.PENABLE ) begin  // Access Phase
                     vif.PREADY  <= 0;
                     #1;  // simulate delay
                     vif.PREADY  <= 1;
-                    vif.PSLVERR <= txn.PSLVERR;
                     if ( txn.PWRITE ) begin
                         mem[txn.PADDR[$clog2(`D_MEM_SIZE)-1:0]] <= txn.PWDATA;
                     end else begin
                         vif.PRDATA <= mem[txn.PADDR[$clog2(`D_MEM_SIZE)-1:0]];
                     end
+                    vif.PSLVERR <= 0;
                 end
                 seq_item_port.item_done();
             end
