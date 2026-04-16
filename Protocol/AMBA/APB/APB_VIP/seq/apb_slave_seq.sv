@@ -19,7 +19,6 @@ class apb_slave_seq extends uvm_sequence;
     virtual task body();
         forever begin
             fifo.get(txn);
-            // txn.print();
             start_item(txn);
             finish_item(txn);
         end
