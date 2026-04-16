@@ -14,37 +14,24 @@ class apb_master_driver extends apb_driver_base;
             if ( !vif.PRESETn ) begin
                 reset_signal();
             end else begin
-                txn = apb_seq_item :: type_id :: create ("txn");
-
                 seq_item_port.get_next_item(txn);
+                txn.print();
 
-                if ( txn.PWRITE ) begin  // APB write
-                    @ ( posedge vif.PCLK );
-                    vif.PADDR   <= txn.PADDR;
-                    vif.PSEL    <= txn.PSEL;
-                    vif.PWDATA  <= txn.PWDATA;
-                    vif.PWRITE  <= 1;
+                // Setup Phase
+                vif.PADDR   <= txn.PADDR;
+                vif.PWRITE  <= txn.PWRITE;
+                vif.PSEL    <= txn.PSEL;
+                vif.PWDATA  <= txn.PWDATA;
+                vif.PENABLE <= 0;
 
-                    @ ( posedge vif.PCLK );
-                    vif.PENABLE <= 1;
+                // Access Phase
+                @ ( posedge vif.PCLK );
+                vif.PENABLE <= 1;
 
-                    @ ( posedge vif.PCLK );
-                    wait ( vif.PREADY );
-                    reset_signal();
-                    
-                end else begin  // APB read
-                    @ ( posedge vif.PCLK );
-                    vif.PADDR   <= txn.PADDR;
-                    vif.PSEL    <= txn.PSEL;
-                    vif.PWRITE  <= 0;
-
-                    @ ( posedge vif.PCLK );
-                    vif.PENABLE <= 1;
-
-                    @ ( posedge vif.PCLK );
-                    wait ( vif.PREADY );
-                    reset_signal();
-                end
+                // Wait PREADY
+                @ ( posedge vif.PCLK );
+                wait ( vif.PREADY );
+                reset_signal();
 
                 seq_item_port.item_done();
             end
