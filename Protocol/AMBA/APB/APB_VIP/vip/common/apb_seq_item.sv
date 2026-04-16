@@ -5,6 +5,7 @@
 
 class apb_seq_item extends uvm_sequence_item;
     
+    // Only Randomize Master Signals
     rand bit [`D_ADDR_WIDTH-1:0]    PADDR;
     rand bit                        PWRITE;
     rand bit [`D_SLV_COUNT-1:0]     PSEL;
