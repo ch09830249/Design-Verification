@@ -1,27 +1,34 @@
-`ifndef APB_SLAVE_MONITOR_SV
-`define APB_SLAVE_MONITOR_SV
+`ifndef AHB_SLAVE_MONITOR_SV
+`define AHB_SLAVE_MONITOR_SV
 
 class ahb_slave_monitor extends ahb_monitor_base;
-    `uvm_component_utils(apb_slave_monitor)
+    `uvm_component_utils(ahb_slave_monitor)
 
-    function new ( string name = "apb_slave_monitor", uvm_component parent );
+    function new ( string name = "ahb_slave_monitor", uvm_component parent );
         super.new(name, parent);
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
         forever begin
-            @ ( posedge vif.PCLK );
-            if ( vif.PSEL && !vif.PENABLE ) begin  // Setup Phase
-                txn = apb_seq_item :: type_id :: create ("txn");
-                txn.PADDR   = vif.PADDR;
-                txn.PWRITE  = vif.PWRITE;
-                txn.PSEL    = vif.PSEL;
-                txn.PWDATA  = vif.PWDATA;
-                txn.PENABLE = vif.PENABLE;
+            @( posedge vif.HCLK );
+
+            if ( vif.HREADY && vif.HSEL &&
+               ( vif.HTRANS == `HTRANS_NONSEQ ||
+                 vif.HTRANS == `HTRANS_SEQ    )) begin  // Address Phase
+
+                txn = ahb_seq_item :: type_id :: create ("txn");
+                txn.HADDR   = vif.HADDR;
+                txn.HWRITE  = vif.HWRITE;
+                txn.HSIZE   = vif.HSIZE;
+                txn.HBURST  = vif.HBURST;
+                txn.HTRANS  = vif.HTRANS;
+                txn.HSEL    = vif.HSEL;
+                txn.HWDATA  = vif.HWDATA;  // 下一拍才有效，這裡先採樣
                 port.write(txn);
             end
         end
     endtask
+
 endclass
 
 `endif
