@@ -1,36 +1,51 @@
-`ifndef APB_SEQ_ITEM_SV
-`define APB_SEQ_ITEM_SV
+`ifndef AHB_SEQ_ITEM_SV
+`define AHB_SEQ_ITEM_SV
 
 `include "ahb_define.svh"
 
 class ahb_seq_item extends uvm_sequence_item;
-    
-    rand bit [`D_ADDR_WIDTH-1:0]    PADDR;
-    rand bit                        PWRITE;
-    rand bit [`D_SLV_COUNT-1:0]     PSEL;
-    rand bit [`D_DATA_WIDTH-1:0]    PWDATA;
 
-    bit                             PENABLE;
-    bit                             PREADY;
-    bit [`D_DATA_WIDTH-1:0]         PRDATA;
-    bit                             PSLVERR;
+    rand bit [`D_ADDR_WIDTH-1:0]    HADDR;
+    rand bit                        HWRITE;
+    rand bit [`D_SLV_COUNT-1:0]     HSEL;
+    rand bit [`D_DATA_WIDTH-1:0]    HWDATA;
+    rand bit [2:0]                  HBURST;
+    rand bit [2:0]                  HSIZE;
+    rand bit [1:0]                  HTRANS;
+    rand bit [3:0]                  HPROT;
+    rand bit                        HMASTLOCK;
+    rand int unsigned               burst_len;
 
-    `uvm_object_utils_begin(apb_seq_item)
-        `uvm_field_int(PADDR, UVM_ALL_ON)
-        `uvm_field_int(PWRITE, UVM_ALL_ON)
-        `uvm_field_int(PSEL, UVM_ALL_ON)
-        `uvm_field_int(PWDATA, UVM_ALL_ON)
-        `uvm_field_int(PENABLE, UVM_ALL_ON)
-        `uvm_field_int(PREADY, UVM_ALL_ON)
-        `uvm_field_int(PRDATA, UVM_ALL_ON)
-        `uvm_field_int(PSLVERR, UVM_ALL_ON)
+    bit [`D_DATA_WIDTH-1:0]         HRDATA;
+    bit                             HREADY;
+    bit                             HRESP;
+
+    `uvm_object_utils_begin(ahb_seq_item)
+        `uvm_field_int(HADDR,     UVM_ALL_ON)
+        `uvm_field_int(HWRITE,    UVM_ALL_ON)
+        `uvm_field_int(HSEL,      UVM_ALL_ON)
+        `uvm_field_int(HWDATA,    UVM_ALL_ON)
+        `uvm_field_int(HBURST,    UVM_ALL_ON)
+        `uvm_field_int(HSIZE,     UVM_ALL_ON)
+        `uvm_field_int(HTRANS,    UVM_ALL_ON)
+        `uvm_field_int(HPROT,     UVM_ALL_ON)
+        `uvm_field_int(HMASTLOCK, UVM_ALL_ON)
+        `uvm_field_int(burst_len, UVM_ALL_ON)
+        `uvm_field_int(HRDATA,    UVM_ALL_ON)
+        `uvm_field_int(HREADY, UVM_ALL_ON)
+        `uvm_field_int(HRESP,     UVM_ALL_ON)
     `uvm_object_utils_end
 
-    constraint psel_onehot_c { $onehot(PSEL); }
-    constraint addr_overflow_c { PADDR < `D_MEM_SIZE; }
-    constraint align_addr_to_width_c { PADDR % (`D_DATA_WIDTH / 8) == 0; }
+    constraint htrans_valid_c    { HTRANS inside {`HTRANS_IDLE, `HTRANS_NONSEQ, `HTRANS_SEQ}; }
+    constraint hsize_valid_c     { HSIZE  inside {`HSIZE_BYTE, `HSIZE_HALFWORD, `HSIZE_WORD}; }
+    constraint hburst_valid_c    { HBURST inside {`HBURST_SINGLE, `HBURST_INCR}; }
+    constraint hsel_onehot_c     { $onehot(HSEL); }
+    constraint addr_overflow_c   { HADDR < `D_MEM_SIZE; }
+    constraint align_addr_c      { HADDR % (1 << HSIZE) == 0; }
+    constraint burst_len_valid_c { burst_len inside {[1:16]}; }
+    constraint single_len_c      { ( HBURST == `HBURST_SINGLE ) -> ( burst_len == 1 ); }
 
-    function new ( string name = "apb_seq_item" );
+    function new ( string name = "ahb_seq_item" );
         super.new(name);
     endfunction
 
