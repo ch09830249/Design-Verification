@@ -1,33 +1,39 @@
-`ifndef APB_INTERFACE_SV
-`define APB_INTERFACE_SV
+`ifndef AHB_INTERFACE_SV
+`define AHB_INTERFACE_SV
 
-`include "apb_define.svh"
+`include "ahb_define.svh"
 
 interface ahb_interface;
 
-    logic                           PCLK;
-    logic                           PRESETn;
+    logic                           HCLK;
+    logic                           HRESETn;
 
     // Master Signal
-    logic [`D_ADDR_WIDTH-1:0]       PADDR;
-    logic                           PWRITE;
-    logic [`D_SLV_COUNT-1:0]        PSEL;
-    logic                           PENABLE;
-    logic [`D_DATA_WIDTH-1:0]       PWDATA;
+    logic [`D_ADDR_WIDTH-1:0]       HADDR;
+    logic [2:0]                     HBURST;
+    logic                           HMASTLOCK;
+    logic [3:0]                     HPROT;
+    logic [2:0]                     HSIZE;
+    logic [1:0]                     HTRANS;
+    logic [`D_DATA_WIDTH-1:0]       HWDATA;
+    logic                           HWRITE;
 
     // Slave Signal
-    logic                           PREADY;
-    logic [`D_DATA_WIDTH-1:0]       PRDATA;
-    logic                           PSLVERR;
+    logic [`D_DATA_WIDTH-1:0]       HRDATA;
+    logic                           HREADY;
+    logic                           HRESP;
+
+    // Decoder Signal
+    logic [`D_SLV_COUNT-1:0]        HSEL;
 
     modport master (
-        output  PADDR, PWRITE, PSEL, PENABLE, PWDATA,
-        input   PREADY, PRDATA, PSLVERR, PCLK, PRESETn
+        output  HADDR, HBURST, HMASTLOCK, HPROT, HSIZE, HTRANS, HWDATA, HWRITE, HSEL,
+        input   HRDATA, HREADY, HRESP, HCLK, HRESETn
     );
 
     modport slave (
-        input   PADDR, PWRITE, PSEL, PENABLE, PWDATA, PCLK, PRESETn,
-        output  PREADY, PRDATA, PSLVERR
+        input   HADDR, HBURST, HMASTLOCK, HPROT, HSIZE, HTRANS, HWDATA, HWRITE, HSEL, HCLK, HRESETn,
+        output  HRDATA, HREADY, HRESP
     );
 endinterface
 
