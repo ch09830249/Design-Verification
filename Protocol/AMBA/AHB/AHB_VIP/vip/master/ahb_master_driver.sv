@@ -4,116 +4,123 @@
 class ahb_master_driver extends ahb_driver_base;
     `uvm_component_utils(ahb_master_driver)
 
+    ahb_seq_item    addr_txn_queue[$];
+    ahb_seq_item    data_txn_queue[$];
+
     function new ( string name = "ahb_master_driver", uvm_component parent );
         super.new(name, parent);
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
         reset_signal();
+        fork
+            insert_cmd_queue();
+            addr_txn_drive();
+            data_txn_drive();
+        join
+    endtask
+
+    task insert_cmd_queue();
+        forever begin
+            seq_item_port.get_next_item(txn);
+            txn.print();
+            case ( txn.HBURST )
+                `HBURST_SINGLE: begin
+                    addr_txn_queue.push_back(txn);
+                end
+                `HBURST_INCR:   begin
+                    bit [`D_ADDR_WIDTH-1:0] cur_addr;
+                    // burst transfer - first beat
+                    addr_txn_queue.push_back(txn);
+                    
+                    // burst transfer - following beats
+                    cur_addr  = txn.HADDR;
+                    for ( int i = 1; i < txn.burst_len; i++ ) begin
+                        ahb_seq_item new_txn;
+                        $cast(new_txn, txn.clone());
+                        cur_addr        = cur_addr + (1 << txn.HSIZE);
+                        new_txn.HADDR   = cur_addr;
+                        new_txn.HTRANS  = `HTRANS_SEQ;
+                        addr_txn_queue.push_back(new_txn);
+                    end
+                end
+                default: begin
+                    `uvm_error("MSTDRV", $sformatf("Unsupported HBURST: %0h", txn.HBURST))
+                end
+            endcase
+            seq_item_port.item_done();
+        end
+    endtask
+
+    task addr_txn_drive();
+        ahb_seq_item                cur_txn;
         forever begin
             @( posedge vif.HCLK );
             if ( !vif.HRESETn ) begin
                 reset_signal();
             end else begin
-                seq_item_port.get_next_item(txn);
-
-                case ( txn.HBURST )
-                    `HBURST_SINGLE: do_single();
-                    `HBURST_INCR:   do_incr();
-                    default: begin
-                        `uvm_error("MSTDRV", $sformatf("Unsupported HBURST: %0h", txn.HBURST))
+                if ( addr_txn_queue.size() > 0  && vif.HREADY) begin    // 等 HREADY == 1 才能驅動下一筆 cmd
+                    // 驅動 Master Signals
+                    cur_txn = addr_txn_queue.pop_front();
+                    vif.HSEL        <= cur_txn.HSEL;
+                    vif.HADDR       <= cur_txn.HADDR;
+                    vif.HWRITE      <= cur_txn.HWRITE;
+                    vif.HSIZE       <= cur_txn.HSIZE;
+                    vif.HBURST      <= cur_txn.HBURST;
+                    vif.HTRANS      <= cur_txn.HTRANS;
+                    vif.HPROT       <= cur_txn.HPROT;
+                    vif.HMASTLOCK   <= cur_txn.HMASTLOCK;
+                    if ( cur_txn.HWRITE ) begin
+                        data_txn_queue.push_back(cur_txn);
                     end
-                endcase
-
-                seq_item_port.item_done();
+                end else if ( addr_txn_queue.size() == 0 && data_txn_queue.size() == 0 && vif.HREADY ) begin    // All txn 做完了
+                    reset_signal();
+                end
             end
         end
     endtask
 
-    // -------------------------------------------------------
-    // SINGLE transfer
-    // -------------------------------------------------------
-    task do_single();
-        // Clock N — Address Phase
-        vif.HSEL    <= txn.HSEL;
-        vif.HADDR   <= txn.HADDR;
-        vif.HWRITE  <= txn.HWRITE;
-        vif.HSIZE   <= txn.HSIZE;
-        vif.HBURST  <= `HBURST_SINGLE;
-        vif.HTRANS  <= `HTRANS_NONSEQ;
-        vif.HWDATA  <= '0;
+    task data_txn_drive();
+        ahb_seq_item                cur_txn;
+        logic [`D_DATA_WIDTH-1:0]   pending_HWDATA;
+        bit                         has_pending;
 
-        // Clock N+1 — Data Phase
-        // 等 HREADY，slave 可能插入 wait state
-        @( posedge vif.HCLK );
-        while ( !vif.HREADY ) @( posedge vif.HCLK );
-
-        // Data Phase：送出資料，同時送 IDLE 給下一筆
-        vif.HWDATA  <= txn.HWDATA;
-        vif.HTRANS  <= `HTRANS_IDLE;
-        vif.HSEL    <= '0;
-
-        // 等最後一筆 data phase 完成
-        @( posedge vif.HCLK );
-        while ( !vif.HREADY ) @( posedge vif.HCLK );
-
-        reset_signal();
-    endtask
-
-    // -------------------------------------------------------
-    // INCR burst — pipeline 版本
-    // -------------------------------------------------------
-    task do_incr();
-        bit [`D_ADDR_WIDTH-1:0] cur_addr;
-        int unsigned            byte_size;
-
-        cur_addr  = txn.HADDR;
-        byte_size = (1 << txn.HSIZE);
-
-        // Clock 1 — 第一筆 Address Phase
-        vif.HSEL    <= txn.HSEL;
-        vif.HADDR   <= cur_addr;
-        vif.HWRITE  <= txn.HWRITE;
-        vif.HSIZE   <= txn.HSIZE;
-        vif.HBURST  <= `HBURST_INCR;
-        vif.HTRANS  <= `HTRANS_NONSEQ;
-        vif.HWDATA  <= '0;
-
-        // Clock 2 ~ N — Pipeline：Data Phase[i] 和 Address Phase[i+1] 同時進行
-        for ( int i = 1; i < txn.burst_len; i++ ) begin
+        has_pending = 0;
+        forever begin
             @( posedge vif.HCLK );
-            while ( !vif.HREADY ) @( posedge vif.HCLK );
+            if ( !vif.HRESETn ) begin
+                reset_signal();
+            end else begin
+                if ( vif.HREADY ) begin
+                    // 先把上一拍記住的 data 驅動出去
+                    if ( has_pending ) begin
+                        vif.HWDATA  <= pending_HWDATA;
+                        has_pending  = 0;
+                    end else begin
+                        vif.HWDATA <= '0;
+                    end
 
-            // Data Phase[i-1] 和 Address Phase[i] 同時
-            cur_addr    =  cur_addr + byte_size;
-            vif.HADDR   <= cur_addr;
-            vif.HTRANS  <= `HTRANS_SEQ;
-            vif.HWDATA  <= txn.HWDATA;  // 上一筆的 data
+                    // 再看 queue 有沒有新的，記住但不馬上驅動
+                    if ( data_txn_queue.size() > 0 ) begin
+                        cur_txn        = data_txn_queue.pop_front();
+                        pending_HWDATA = cur_txn.HWDATA;
+                        has_pending    = 1;
+                    end
+                end
+            end
         end
-
-        // 最後一筆 Data Phase — 送完資料，同時拉 IDLE
-        @( posedge vif.HCLK );
-        while ( !vif.HREADY ) @( posedge vif.HCLK );
-
-        vif.HWDATA  <= txn.HWDATA;
-        vif.HTRANS  <= `HTRANS_IDLE;
-        vif.HSEL    <= '0;
-
-        // 等最後一筆 data phase 完成
-        @( posedge vif.HCLK );
-        while ( !vif.HREADY ) @( posedge vif.HCLK );
-
-        reset_signal();
     endtask
 
     task reset_signal();
-        vif.HSEL    <= '0;
-        vif.HADDR   <= '0;
-        vif.HWRITE  <= '0;
-        vif.HSIZE   <= '0;
-        vif.HBURST  <= '0;
-        vif.HTRANS  <= `HTRANS_IDLE;
-        vif.HWDATA  <= '0;
+        vif.HSEL        <= '0;
+        vif.HADDR       <= '0;
+        vif.HWRITE      <= '0;
+        vif.HSIZE       <= '0;
+        vif.HBURST      <= '0;
+        vif.HPROT       <= '0;
+        vif.HMASTLOCK   <= '0;
+        vif.HTRANS      <= `HTRANS_IDLE;
+        vif.HWDATA      <= '0;
     endtask
 
 endclass
