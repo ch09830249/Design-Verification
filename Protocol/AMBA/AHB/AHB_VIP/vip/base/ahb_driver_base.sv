@@ -14,6 +14,10 @@ class ahb_driver_base extends uvm_driver #(ahb_seq_item);
         super.new(name, parent);
     endfunction
 
+    virtual function bit is_idle();
+        return 1;  // base 預設回傳 1
+    endfunction
+
     function void build_phase ( uvm_phase phase );
         super.build_phase(phase);
 
