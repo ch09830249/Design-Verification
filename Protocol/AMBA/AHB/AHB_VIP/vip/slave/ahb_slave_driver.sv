@@ -6,11 +6,10 @@ class ahb_slave_driver extends ahb_driver_base;
 
     logic [`D_DATA_WIDTH-1:0]   mem [`D_MEM_SIZE-1:0];
 
-    // 暫存 address phase 資訊
     logic [`D_ADDR_WIDTH-1:0]   addr_reg;
     logic                       write_reg;
     logic [2:0]                 size_reg;
-    logic                       valid_reg;  // 有效的 address phase
+    logic                       valid_reg;
 
     function new ( string name = "ahb_slave_driver", uvm_component parent );
         super.new(name, parent);
@@ -34,37 +33,53 @@ class ahb_slave_driver extends ahb_driver_base;
                 seq_item_port.get_next_item(txn);
 
                 // ----------------------------------------
-                // Data Phase — 處理上一個 address phase
+                // Data Phase
                 // ----------------------------------------
                 if ( valid_reg ) begin
                     vif.HREADY  <= 1;
                     vif.HRESP   <= `HRESP_OKAY;
 
-                    if ( write_reg ) begin
-                        // Write
+                    if ( write_reg ) begin  // Write
                         case ( size_reg )
-                            `HSIZE_BYTE : begin
-                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <=
-                                    { mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][`D_DATA_WIDTH-1:8],
-                                      txn.HWDATA[7:0] };
+                            `HSIZE_BYTE     : begin
+                                int byte_offset = addr_reg[1:0] * 8;
+                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] =
+                                    ( mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] & ~(32'hFF << byte_offset) ) | ( {24'b0, vif.HWDATA[7:0]} << byte_offset );
                             end
                             `HSIZE_HALFWORD : begin
-                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <=
-                                    { mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][`D_DATA_WIDTH-1:16],
-                                      txn.HWDATA[15:0] };
+                                int byte_offset = addr_reg[1] * 16;
+                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] =
+                                    ( mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] & ~(32'hFFFF << byte_offset) ) | ( {16'b0, vif.HWDATA[15:0]} << byte_offset );
                             end
-                            default : begin  // HSIZE_WORD
-                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <= txn.HWDATA;
+                            `HSIZE_WORD     : begin
+                                mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] = vif.HWDATA;
+                            end
+                            default         : begin
+                                `uvm_error("SLVDRV", $sformatf("Unsupported HSIZE: %0h", size_reg))
                             end
                         endcase
-                    end else begin
-                        // Read
-                        vif.HRDATA <= mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]];
+                    end else begin          // Read
+                        case ( size_reg )
+                            `HSIZE_BYTE     : begin
+                                int byte_offset = addr_reg[1:0] * 8;
+                                vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][byte_offset +: 8] };
+                            end
+                            `HSIZE_HALFWORD : begin
+                                int byte_offset = addr_reg[1] * 16;
+                                vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][byte_offset +: 16] };
+                            end
+                            `HSIZE_WORD    : begin
+                                vif.HRDATA <= mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]];
+                            end
+                            default        : begin
+                                `uvm_error("SLVDRV", $sformatf("Unsupported HSIZE: %0h", size_reg))
+                            end
+                        endcase
                     end
                 end
 
                 // ----------------------------------------
-                // Address Phase — 採樣當前 address phase
+                // Address Phase
                 // ----------------------------------------
                 if ( txn.HSEL && ( txn.HTRANS == `HTRANS_NONSEQ ||
                                    txn.HTRANS == `HTRANS_SEQ    )) begin
@@ -72,8 +87,8 @@ class ahb_slave_driver extends ahb_driver_base;
                     write_reg = txn.HWRITE;
                     size_reg  = txn.HSIZE;
                     valid_reg = 1;
-                    vif.HREADY <= 1;  // 可以改成 0 模擬 wait state
-                end else begin
+                    vif.HREADY <= 1;
+                end else if ( txn.HTRANS == `HTRANS_IDLE ) begin
                     valid_reg = 0;
                 end
 
