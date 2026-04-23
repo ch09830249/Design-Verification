@@ -25,7 +25,7 @@ class ahb_basic_rw_test extends uvm_test;
         fork
             begin
                 mst_seq.start(env.agt_mst.seqr);
-                repeat(10) @ (posedge env.vif.HCLK);  // ensure the last transfer done
+                repeat(100) @ (posedge env.vif.HCLK);  // ensure the last transfer done
             end
             begin
                 // will be waiting for req forever
