@@ -12,13 +12,11 @@ module ahb_slave_bfm
 
     logic [`D_DATA_WIDTH-1:0]   mem [`D_MEM_SIZE-1:0];
 
-    // 暫存 address phase 資訊
     logic [`D_ADDR_WIDTH-1:0]   addr_reg;
     logic                       write_reg;
     logic [2:0]                 size_reg;
     logic                       valid_reg;
 
-    // 組合邏輯判斷是否為有效 address phase
     wire valid = vif.HSEL && vif.HREADY &&
                ( vif.HTRANS == `HTRANS_NONSEQ ||
                  vif.HTRANS == `HTRANS_SEQ    );
@@ -39,7 +37,7 @@ module ahb_slave_bfm
         end else begin
 
             // ----------------------------------------
-            // Data Phase — 處理上一個 address phase
+            // Data Phase
             // ----------------------------------------
             if ( valid_reg ) begin
                 vif.HREADY <= 1;
@@ -61,13 +59,17 @@ module ahb_slave_bfm
                             mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <= vif.HWDATA;
                         end
                     endcase
-                end else begin
-                    vif.HRDATA <= mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]];
+                end else begin  // Read
+                    case ( size_reg )
+                        `HSIZE_BYTE    : vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][7:0]  };
+                        `HSIZE_HALFWORD: vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][15:0] };
+                        default        : vif.HRDATA <= mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]];
+                    endcase
                 end
             end
 
             // ----------------------------------------
-            // Address Phase — 採樣當前 address phase
+            // Address Phase
             // ----------------------------------------
             addr_reg  <= vif.HADDR;
             write_reg <= vif.HWRITE;
