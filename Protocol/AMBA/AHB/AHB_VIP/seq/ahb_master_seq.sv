@@ -11,7 +11,7 @@ class ahb_master_seq extends uvm_sequence #(ahb_seq_item);
     endfunction
 
     virtual task body();
-        for ( int i = 0; i < 1000; i += 1 ) begin
+        for ( int i = 0; i < MASTER_TXN_NUM; i += 1 ) begin
             txn = ahb_seq_item :: type_id :: create ("txn");
 
             if ( !txn.randomize() )
