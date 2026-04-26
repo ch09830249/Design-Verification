@@ -30,7 +30,6 @@ class ahb_slave_monitor extends ahb_monitor_base;
                 addr_phase_valid = 0;  // Reset 時清除暫存
             end
             else begin
-
                 // ────────────────────────────────────────
                 // Data Phase：上一拍儲存的 Address + 這拍的 HWDATA
                 // ────────────────────────────────────────
@@ -52,8 +51,7 @@ class ahb_slave_monitor extends ahb_monitor_base;
                 // ────────────────────────────────────────
                 // Address Phase：只儲存，不送出
                 // ────────────────────────────────────────
-                if ( vif.HREADY && vif.HSEL &&
-                   ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
+                if ( vif.HREADY && vif.HSEL && ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
                     saved_haddr  = vif.HADDR;
                     saved_hwrite = vif.HWRITE;
                     saved_hsize  = vif.HSIZE;
@@ -62,7 +60,6 @@ class ahb_slave_monitor extends ahb_monitor_base;
                     saved_hsel   = vif.HSEL;
                     addr_phase_valid = 1;
                 end
-
             end
         end
     endtask
