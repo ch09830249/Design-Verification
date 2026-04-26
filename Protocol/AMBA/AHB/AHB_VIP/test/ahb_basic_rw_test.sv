@@ -18,9 +18,11 @@ class ahb_basic_rw_test extends uvm_test;
 
     virtual task run_phase ( uvm_phase phase );
         phase.raise_objection(this);
+
         mst_seq = ahb_master_seq :: type_id :: create("mst_seq");
         mst_seq.start(env.agt_mst.seqr);
         repeat(1000000) @ (posedge env.vif.HCLK);  // ensure the last transfer done
+        
         phase.drop_objection(this);
     endtask
 
