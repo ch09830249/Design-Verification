@@ -23,7 +23,6 @@ class ahb_master_driver extends ahb_driver_base;
     task insert_cmd_queue();
         forever begin
             seq_item_port.get_next_item(txn);
-            txn.print();
             case ( txn.HBURST )
                 `HBURST_SINGLE: begin
                     addr_txn_queue.push_back(txn);
@@ -59,9 +58,9 @@ class ahb_master_driver extends ahb_driver_base;
             if ( !vif.HRESETn ) begin
                 reset_signal();
             end else begin
-                if ( addr_txn_queue.size() > 0  && vif.HREADY) begin    // 等 HREADY == 1 才能驅動下一筆 cmd
-                    // 驅動 Master Signals
-                    cur_txn = addr_txn_queue.pop_front();
+                if ( addr_txn_queue.size() > 0  && vif.HREADY) begin    // Drive the next txn until HREADY == 1
+                    // Drive Master Signals
+                    cur_txn         = addr_txn_queue.pop_front();
                     vif.HSEL        <= cur_txn.HSEL;
                     vif.HADDR       <= cur_txn.HADDR;
                     vif.HWRITE      <= cur_txn.HWRITE;
@@ -73,7 +72,7 @@ class ahb_master_driver extends ahb_driver_base;
                     if ( cur_txn.HWRITE ) begin
                         data_txn_queue.push_back(cur_txn);
                     end
-                end else if ( addr_txn_queue.size() == 0 && data_txn_queue.size() == 0 && vif.HREADY ) begin    // All txn 做完了
+                end else if ( addr_txn_queue.size() == 0 && data_txn_queue.size() == 0 && vif.HREADY ) begin    // All txns finished
                     reset_signal();
                 end
             end
@@ -92,15 +91,14 @@ class ahb_master_driver extends ahb_driver_base;
                 reset_signal();
             end else begin
                 if ( vif.HREADY ) begin
-                    // 先把上一拍記住的 data 驅動出去
+                    // Drive the previous txn data
                     if ( has_pending ) begin
                         vif.HWDATA  <= pending_HWDATA;
                         has_pending  = 0;
-                    end else begin
+                    end else begin      // No previous txn
                         vif.HWDATA <= '0;
                     end
-
-                    // 再看 queue 有沒有新的，記住但不馬上驅動
+                    // Record the current txn and drive at the next clk
                     if ( data_txn_queue.size() > 0 ) begin
                         cur_txn        = data_txn_queue.pop_front();
                         pending_HWDATA = cur_txn.HWDATA;
