@@ -8,10 +8,7 @@ class ahb_env extends uvm_env;
     ahb_slave_agent         agt_slv;
     ahb_scoreboard          scb;
     ahb_coverage            cov;
-
     virtual ahb_interface   vif;
-
-    uvm_tlm_analysis_fifo #(ahb_seq_item)   fifo;
 
     function new ( string name = "ahb_env", uvm_component parent );
         super.new(name, parent);
@@ -19,7 +16,6 @@ class ahb_env extends uvm_env;
 
     function void build_phase ( uvm_phase phase );
         super.build_phase(phase);
-        fifo = new("fifo", this);
         
         // Type override is written in master/slave env
         agt_mst = ahb_master_agent :: type_id :: create ("agt_mst", this);
@@ -38,8 +34,6 @@ class ahb_env extends uvm_env;
         uvm_config_db #(uvm_active_passive_enum) :: set (this, "agt_mst", "agt_mode", UVM_ACTIVE);
         uvm_config_db #(uvm_active_passive_enum) :: set (this, "agt_slv", "agt_mode", UVM_ACTIVE);
 
-        // Set fifo for ahb_slave_seq
-        uvm_config_db #(uvm_tlm_analysis_fifo #(ahb_seq_item)) :: set (this, "*", "fifo", fifo);
     endfunction
 
     function void connect_phase ( uvm_phase phase );
@@ -50,9 +44,6 @@ class ahb_env extends uvm_env;
 
         // COV connection - slave mon connection is unnecessary
         agt_mst.mon.port.connect(cov.analysis_export);
-
-        // slave mon -> fifo -> slave seq -> slave driver -> vif
-        agt_slv.mon.port.connect(fifo.analysis_export);
     endfunction
 endclass
 
