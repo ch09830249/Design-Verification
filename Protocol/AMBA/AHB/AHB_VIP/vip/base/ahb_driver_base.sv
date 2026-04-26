@@ -5,9 +5,7 @@ class ahb_driver_base extends uvm_driver #(ahb_seq_item);
     `uvm_component_utils(ahb_driver_base)
 
     virtual ahb_interface       vif;
-
     ahb_seq_item                txn;
-
     uvm_active_passive_enum     agt_mode;
 
     function new ( string name = "ahb_driver_base", uvm_component parent );
