@@ -22,7 +22,6 @@ package ahb_package;
     `include "ahb_env.sv"
 
     `include "ahb_master_seq.sv"
-    `include "ahb_slave_seq.sv"
     `include "ahb_basic_rw_test.sv"
 
 endpackage
