@@ -7,7 +7,6 @@ class ahb_agent_base extends uvm_agent;
     ahb_driver_base                     drv;
     ahb_monitor_base                    mon;
     uvm_sequencer #(ahb_seq_item)       seqr;
-
     uvm_active_passive_enum             agt_mode;
 
     function new ( string name = "ahb_agent_base", uvm_component parent );
