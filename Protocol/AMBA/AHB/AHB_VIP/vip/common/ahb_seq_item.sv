@@ -32,7 +32,7 @@ class ahb_seq_item extends uvm_sequence_item;
         `uvm_field_int(HMASTLOCK, UVM_ALL_ON)
         `uvm_field_int(burst_len, UVM_ALL_ON)
         `uvm_field_int(HRDATA,    UVM_ALL_ON)
-        `uvm_field_int(HREADY, UVM_ALL_ON)
+        `uvm_field_int(HREADY,    UVM_ALL_ON)
         `uvm_field_int(HRESP,     UVM_ALL_ON)
     `uvm_object_utils_end
 
