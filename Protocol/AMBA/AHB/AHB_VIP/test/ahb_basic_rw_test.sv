@@ -6,7 +6,6 @@ class ahb_basic_rw_test extends uvm_test;
 
     ahb_env                     env;
     ahb_master_seq              mst_seq;
-    ahb_slave_seq               slv_seq;
 
     function new ( string name = "ahb_basic_rw_test", uvm_component parent );
         super.new(name, parent);
@@ -19,20 +18,9 @@ class ahb_basic_rw_test extends uvm_test;
 
     virtual task run_phase ( uvm_phase phase );
         phase.raise_objection(this);
-
         mst_seq = ahb_master_seq :: type_id :: create("mst_seq");
-        slv_seq = ahb_slave_seq :: type_id :: create("slv_seq");
-        fork
-            begin
-                mst_seq.start(env.agt_mst.seqr);
-                repeat(100) @ (posedge env.vif.HCLK);  // ensure the last transfer done
-            end
-            begin
-                // will be waiting for req forever
-                slv_seq.start(env.agt_slv.seqr);
-            end
-        join_any
-        disable fork;
+        mst_seq.start(env.agt_mst.seqr);
+        repeat(1000000) @ (posedge env.vif.HCLK);  // ensure the last transfer done
         phase.drop_objection(this);
     endtask
 
