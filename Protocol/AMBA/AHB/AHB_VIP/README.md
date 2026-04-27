@@ -82,8 +82,7 @@ AHB_VIP/
 │   └── ahb_slave_bfm.sv
 │
 ├── seq/
-│   ├── ahb_master_seq.sv
-│   └── ahb_slave_seq.sv
+│   └── ahb_master_seq.sv
 │
 ├── test/
 │   └── ahb_basic_rw_test.sv
@@ -126,6 +125,5 @@ AHB_VIP/
 │
 └── README.md
 ```
-
 
 xrun -f ahb_vip.f -access +r +UVM_TESTNAME=ahb_basic_rw_test
