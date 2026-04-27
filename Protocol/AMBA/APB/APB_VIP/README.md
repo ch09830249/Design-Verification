@@ -23,17 +23,18 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 
 ## 🔧 I/O Signals
 
-| Signal     | Direction | Width        | Description                           |
-|------------|-----------|--------------|---------------------------------------|
-| `PCLK`     | Input     | 1            | APB clock                             |
-| `PRESETn`  | Input     | 1            | Active-low reset                      |
-| `PSEL`     | Input     | 1            | Peripheral select                     |
-| `PENABLE`  | Input     | 1            | Enable for access phase               |
-| `PADDR`    | Input     | Configurable | Address bus                           |
-| `PWRITE`   | Input     | 1            | Write enable                          |
-| `PWDATA`   | Input     | Configurable | Write data bus                        |
-| `PRDATA`   | Output    | Configurable | Read data bus                         |
-| `PREADY`   | Output    | 1            | Ready signal                          |
+| Signal     | Direction (Master) | Width            | Description                        |
+|------------|--------------------|------------------|------------------------------------|
+| `PCLK`     | Input              | 1                | APB clock                          |
+| `PRESETn`  | Input              | 1                | Active-low reset                   |
+| `PADDR`    | Output             | `D_ADDR_WIDTH    | Address bus                        |
+| `PWRITE`   | Output             | 1                | Write enable (1=write, 0=read)     |
+| `PSEL`     | Output             | `D_SLV_COUNT     | Slave select (one-hot, multi-slave)|
+| `PENABLE`  | Output             | 1                | Enable for access phase            |
+| `PWDATA`   | Output             | `D_DATA_WIDTH    | Write data bus                     |
+| `PREADY`   | Input              | 1                | Slave ready signal                 |
+| `PRDATA`   | Input              | `D_DATA_WIDTH    | Read data bus                      |
+| `PSLVERR`  | Input              | 1                | Slave error response               |
 
 ---
 
@@ -49,6 +50,11 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 - **Timing Control**:
   - Single setup and access phase; no burst support.
   - Ready signal may insert wait states.
+ 
+- **Error Response**:
+  - Slave asserts `PSLVERR` high during the access phase to indicate a transfer error.
+  - `PSLVERR` is only valid when `PSEL`, `PENABLE`, and `PREADY` are all high.
+  - Not implememt yet
 
 ---
 
