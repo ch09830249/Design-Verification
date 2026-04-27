@@ -28,18 +28,18 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 |--------------|-----------|--------------|------------------------------------------|
 | `HCLK`       | Input     | 1            | AHB clock                                |
 | `HRESETn`    | Input     | 1            | Active-low reset                         |
-| `HSEL`       | Input     | D_SLV_COUNT  | Slave select                             |
-| `HADDR`      | Input     | Configurable | Address bus                              |
+| `HADDR`      | Input     | D_ADDR_WIDTH | Address bus                              |
 | `HTRANS`     | Input     | 2            | Transfer type (IDLE/BUSY/NONSEQ/SEQ)     |
 | `HWRITE`     | Input     | 1            | Write enable (1=write, 0=read)           |
 | `HSIZE`      | Input     | 3            | Transfer size (byte/halfword/word/...)   |
 | `HBURST`     | Input     | 3            | Burst type                               |
 | `HPROT`      | Input     | 4            | Protection control                       |
-| `HWDATA`     | Input     | Configurable | Write data bus                           |
-| `HRDATA`     | Output    | Configurable | Read data bus                            |
+| `HWDATA`     | Input     | D_DATA_WIDTH | Write data bus                           |
+| `HMASTLOCK`  | Input     | 1            | Locked transfer indicator                |
+| `HSEL`       | Output    | D_SLV_COUNT  | Slave select                             |
+| `HRDATA`     | Output    | D_DATA_WIDTH | Read data bus                            |
 | `HREADY`     | Output    | 1            | Transfer done (slave extends when 0)     |
 | `HRESP`      | Output    | 1            | Transfer response (OKAY/ERROR)           |
-| `HMASTLOCK`  | Input     | 1            | Locked transfer indicator                |
 
 PS: `HPROT` and `HMASTLOCK` are sampled but not used in current implementation.
 
