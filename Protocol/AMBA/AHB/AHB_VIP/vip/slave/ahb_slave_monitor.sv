@@ -9,7 +9,7 @@ class ahb_slave_monitor extends ahb_monitor_base;
     endfunction
 
     virtual task run_phase ( uvm_phase phase );
-        // 用來暫存 Address Phase 資訊
+        // Save the signals of address Phase
         logic        saved_hwrite;
         logic [63:0] saved_haddr;
         logic [2:0]  saved_hsize;
@@ -27,11 +27,11 @@ class ahb_slave_monitor extends ahb_monitor_base;
             @( posedge vif.HCLK );
 
             if ( !vif.HRESETn ) begin
-                addr_phase_valid = 0;  // Reset 時清除暫存
+                addr_phase_valid = 0;  // Reset the saved signals
             end
             else begin
                 // ────────────────────────────────────────
-                // Data Phase：上一拍儲存的 Address + 這拍的 HWDATA
+                // Data Phase：Create txn, sample HRESP and just print all the fields of txn
                 // ────────────────────────────────────────
                 if ( addr_phase_valid && vif.HREADY ) begin
                     txn = ahb_seq_item::type_id::create("txn");
@@ -41,15 +41,15 @@ class ahb_slave_monitor extends ahb_monitor_base;
                     txn.HBURST = saved_hburst;
                     txn.HTRANS = saved_htrans;
                     txn.HSEL   = saved_hsel;
-                    txn.HWDATA = (saved_hwrite)  ? vif.HWDATA : '0; // WRITE 才有 HWDATA
+                    txn.HWDATA = (saved_hwrite)  ? vif.HWDATA : '0;
                     txn.HRDATA = (!saved_hwrite) ? vif.HRDATA : '0;
                     txn.HRESP  = vif.HRESP;
-                    port.write(txn);        // Send to fifo
+                    // txn.print();
                     addr_phase_valid = 0;
                 end
 
                 // ────────────────────────────────────────
-                // Address Phase：只儲存，不送出
+                // Address Phase：Save the signals of address phase
                 // ────────────────────────────────────────
                 if ( vif.HREADY && vif.HSEL && ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
                     saved_haddr  = vif.HADDR;
@@ -63,7 +63,6 @@ class ahb_slave_monitor extends ahb_monitor_base;
             end
         end
     endtask
-
 endclass
 
 `endif
