@@ -61,6 +61,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 ## 📷 APB Block Diagram
 
 ### Loopback Test
+<img width="671" height="561" alt="testbench_diagram" src="https://github.com/user-attachments/assets/8a7cc0c8-c89a-4c20-aadd-8a910702b5e0" />
 
 
 ### Master VIP Test
