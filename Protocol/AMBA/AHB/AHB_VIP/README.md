@@ -34,7 +34,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 | `HWRITE`     | Input     | 1            | Write enable (1=write, 0=read)           |
 | `HSIZE`      | Input     | 3            | Transfer size (byte/halfword/word/...)   |
 | `HBURST`     | Input     | 3            | Burst type                               |
-| `HPROT`      | Input     | 4            | Protection control                       |
+| `HPROT`      | Input     | 4            | Protection control (PS: Sampled but not used in current implementation) |
 | `HWDATA`     | Input     | Configurable | Write data bus                           |
 | `HRDATA`     | Output    | Configurable | Read data bus                            |
 | `HREADY`     | Output    | 1            | Transfer done (slave extends when 0)     |
@@ -61,6 +61,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 
 - **Error Response**:
   - A two-cycle error response: first cycle `HRESP=ERROR, HREADY=0`; second cycle `HRESP=ERROR, HREADY=1`.
+    - Not yet implemented
 
 ---
 
