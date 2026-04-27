@@ -13,7 +13,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 - AHB-Lite master transactions: read/write stimulus generation with burst support
 - AHB-Lite slave response handling: data return and memory emulation
 - Configurable transfer types: IDLE, BUSY, NONSEQ, SEQ
-- Burst type support: SINGLE, INCR, WRAP4/8/16, INCR4/8/16
+- Burst type support: SINGLE, INCR (Currently not support WRAP4/8/16, INCR4/8/16)
 - Loopback test support between master and slave agents
 - Built-in SystemVerilog Assertions (SVA) for protocol timing checks
 - UVM scoreboard and passive agent monitoring support
