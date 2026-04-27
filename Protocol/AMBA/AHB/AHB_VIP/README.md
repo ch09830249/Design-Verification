@@ -28,17 +28,20 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 |--------------|-----------|--------------|------------------------------------------|
 | `HCLK`       | Input     | 1            | AHB clock                                |
 | `HRESETn`    | Input     | 1            | Active-low reset                         |
-| `HSEL`       | Input     | 1            | Slave select                             |
+| `HSEL`       | Input     | D_SLV_COUNT  | Slave select                             |
 | `HADDR`      | Input     | Configurable | Address bus                              |
 | `HTRANS`     | Input     | 2            | Transfer type (IDLE/BUSY/NONSEQ/SEQ)     |
 | `HWRITE`     | Input     | 1            | Write enable (1=write, 0=read)           |
 | `HSIZE`      | Input     | 3            | Transfer size (byte/halfword/word/...)   |
 | `HBURST`     | Input     | 3            | Burst type                               |
-| `HPROT`      | Input     | 4            | Protection control (PS: Sampled but not used in current implementation) |
+| `HPROT`      | Input     | 4            | Protection control                       |
 | `HWDATA`     | Input     | Configurable | Write data bus                           |
 | `HRDATA`     | Output    | Configurable | Read data bus                            |
 | `HREADY`     | Output    | 1            | Transfer done (slave extends when 0)     |
 | `HRESP`      | Output    | 1            | Transfer response (OKAY/ERROR)           |
+| `HMASTLOCK`  | Input     | 1            | Locked transfer indicator                |
+
+PS: `HPROT` and `HMASTLOCK` are sampled but not used in current implementation.
 
 ---
 
