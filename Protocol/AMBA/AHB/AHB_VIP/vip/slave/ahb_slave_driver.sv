@@ -41,7 +41,7 @@ class ahb_slave_driver extends ahb_driver_base;
                     vif.HRESP   <= `HRESP_OKAY;
                     // AHB write
                     if ( write_reg ) begin
-                        word_idx = addr_reg >> $clog2(`D_DATA_WIDTH/8);  // addr_reg 已是當拍鎖住的值
+                        word_idx = addr_reg >> $clog2(`D_DATA_WIDTH/8);  // addr_reg: addr of the previous txn
                         // $display("SLAVE WRITE: HADDR=%0h, index=%0d, HWDATA=%0h",
                         //             addr_reg,
                         //             addr_reg >> $clog2(`D_DATA_WIDTH/8),
@@ -64,7 +64,7 @@ class ahb_slave_driver extends ahb_driver_base;
                             end
                         endcase
                     end
-                    valid_reg = 0;  // 前一拍 txn 做完了
+                    valid_reg = 0;  // The previous txn finishes
                 end
 
                 // ----------------------------------------
@@ -75,11 +75,11 @@ class ahb_slave_driver extends ahb_driver_base;
                     write_reg   =   vif.HWRITE;
                     size_reg    =   vif.HSIZE;
                     valid_reg   =   1;
-                    // zero wait state：read 當拍就把資料 HRDATA 放上去
+                    // zero wait state: HRDATA in the same cycle as the address phase
                     vif.HREADY  <=  1;
                     // AHB read
                     if ( !vif.HWRITE ) begin
-                        word_idx = vif.HADDR >> $clog2(`D_DATA_WIDTH/8);  // 用 vif.HADDR 當拍的值
+                        word_idx = vif.HADDR >> $clog2(`D_DATA_WIDTH/8);
                         // $display("SLAVE READ: HADDR=%0h, mem[%0d]=%0h", 
                         //             vif.HADDR,
                         //             vif.HADDR >> $clog2(`D_DATA_WIDTH/8),
