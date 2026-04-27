@@ -13,7 +13,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 - AHB-Lite master transactions: read/write stimulus generation with burst support
 - AHB-Lite slave response handling: data return and memory emulation
 - Configurable transfer types: IDLE, BUSY, NONSEQ, SEQ
-- Burst type support: SINGLE, INCR (Currently not support WRAP4/8/16, INCR4/8/16)
+- Burst type support: SINGLE, INCR (undefined-length); fixed-length and wrapping bursts (INCR4/8/16, WRAP4/8/16) not yet implemented
 - Loopback test support between master and slave agents
 - Built-in SystemVerilog Assertions (SVA) for protocol timing checks
 - UVM scoreboard and passive agent monitoring support
@@ -51,12 +51,16 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 - **Data Phase**:
   - Follows the address phase by one clock cycle.
   - For writes, master drives `HWDATA`; for reads, slave returns `HRDATA`.
+    - The UVM slave driver provides HRDATA in the same cycle as the address phase (zero wait state); the BFM provides HRDATA one cycle later.
   - Slave may insert wait states by asserting `HREADY` low.
   - Slave signals completion with `HREADY` high and a valid `HRESP`.
 
 - **Burst Transfers**:
-  - Incrementing bursts (INCR) or wrapping bursts (WRAP) of 4, 8, or 16 beats are supported.
-  - Undefined-length incrementing bursts (INCR) are also supported.
+  - The master driver supports SINGLE and undefined-length INCR bursts. HBURST is driven correctly for these types.
+  - Fixed-length incrementing (INCR4/8/16) and wrapping bursts (WRAP4/8/16) are not yet implemented.
+  - The slave driver and BFM sample HBURST but do not use it; burst sequencing is handled entirely by the master side.
+  - The master may use BUSY transfers to insert idle cycles within a burst.
+  - Undefined-length incrementing bursts (INCR) are supported.
   - The master may use BUSY transfers to insert idle cycles within a burst.
 
 - **Error Response**:
