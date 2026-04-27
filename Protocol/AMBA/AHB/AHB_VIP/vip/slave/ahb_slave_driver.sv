@@ -10,6 +10,9 @@ class ahb_slave_driver extends ahb_driver_base;
     logic [2:0]                 size_reg;
     logic                       valid_reg;
 
+    int unsigned                word_idx;
+    int                         byte_offset;
+
     function new ( string name = "ahb_slave_driver", uvm_component parent );
         super.new(name, parent);
     endfunction
@@ -38,7 +41,6 @@ class ahb_slave_driver extends ahb_driver_base;
                     vif.HRESP   <= `HRESP_OKAY;
                     // AHB write
                     if ( write_reg ) begin
-                        int unsigned word_idx;
                         word_idx = addr_reg >> $clog2(`D_DATA_WIDTH/8);  // addr_reg 已是當拍鎖住的值
                         // $display("SLAVE WRITE: HADDR=%0h, index=%0d, HWDATA=%0h",
                         //             addr_reg,
@@ -47,11 +49,11 @@ class ahb_slave_driver extends ahb_driver_base;
                         // mask + OR
                         case ( size_reg )
                             `HSIZE_BYTE     : begin
-                                int byte_offset = addr_reg[1:0] * 8;
+                                byte_offset = addr_reg[1:0] * 8;
                                 mem[word_idx][byte_offset +: 8] = vif.HWDATA[byte_offset +: 8];
                             end
                             `HSIZE_HALFWORD : begin
-                                int byte_offset = addr_reg[1] * 16;
+                                byte_offset = addr_reg[1] * 16;
                                 mem[word_idx][byte_offset +: 16] = vif.HWDATA[byte_offset +: 16];
                             end
                             `HSIZE_WORD     : begin
@@ -62,6 +64,7 @@ class ahb_slave_driver extends ahb_driver_base;
                             end
                         endcase
                     end
+                    valid_reg = 0;  // 前一拍 txn 做完了
                 end
 
                 // ----------------------------------------
@@ -76,7 +79,6 @@ class ahb_slave_driver extends ahb_driver_base;
                     vif.HREADY  <=  1;
                     // AHB read
                     if ( !vif.HWRITE ) begin
-                        int unsigned word_idx;
                         word_idx = vif.HADDR >> $clog2(`D_DATA_WIDTH/8);  // 用 vif.HADDR 當拍的值
                         // $display("SLAVE READ: HADDR=%0h, mem[%0d]=%0h", 
                         //             vif.HADDR,
@@ -84,15 +86,15 @@ class ahb_slave_driver extends ahb_driver_base;
                         //             mem[word_idx]);
                         case ( vif.HSIZE )
                             `HSIZE_BYTE : begin
-                                int byte_offset = vif.HADDR[1:0] * 8;
-                                vif.HRDATA = { '0, mem[word_idx][byte_offset +: 8] };
+                                byte_offset = vif.HADDR[1:0] * 8;
+                                vif.HRDATA <= { '0, mem[word_idx][byte_offset +: 8] };
                             end
                             `HSIZE_HALFWORD : begin
-                                int byte_offset = vif.HADDR[1] * 16;
-                                vif.HRDATA = { '0, mem[word_idx][byte_offset +: 16] };
+                                byte_offset = vif.HADDR[1] * 16;
+                                vif.HRDATA <= { '0, mem[word_idx][byte_offset +: 16] };
                             end
                             `HSIZE_WORD : begin
-                                vif.HRDATA = mem[word_idx];
+                                vif.HRDATA <= mem[word_idx];
                             end
                             default : begin
                                 `uvm_error("SLVDRV", $sformatf("Unsupported HSIZE: %0h", vif.HSIZE))
