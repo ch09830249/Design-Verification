@@ -2,7 +2,7 @@
 
 ## 🧩 Module Overview
 
-This project implements a configurable and reusable AHB-Lite (Advanced High-performance Bus Lite) UVM Verification IP based on the AMBA® AHB Protocol Specification (IHI 0033B).  
+This project implements a configurable and reusable AHB-Lite (Advanced High-performance Bus Lite) UVM Verification IP based on the AMBA® AHB Protocol Specification (IHI 0033C).  
 It supports three modes of operation — **master VIP**, **slave VIP**, and **loopback testbench** — through flexible configuration.
 
 The VIP includes layered base components, driver/monitor/sequencer agents, protocol timing assertions (SystemVerilog Assertions), optional bus functional models (BFMs), and reference model support.  
