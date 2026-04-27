@@ -54,7 +54,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 - **Error Response**:
   - Slave asserts `PSLVERR` high during the access phase to indicate a transfer error.
   - `PSLVERR` is only valid when `PSEL`, `PENABLE`, and `PREADY` are all high.
-  - Not implememt yet
+  - ⚠️ Status: Planned — PSLVERR detection is defined but not yet implemented.
 
 ---
 
