@@ -60,8 +60,6 @@ It is designed to validate both master and slave DUTs by instantiating the corre
   - Fixed-length incrementing (INCR4/8/16) and wrapping bursts (WRAP4/8/16) are not yet implemented.
   - The slave driver and BFM sample HBURST but do not use it; burst sequencing is handled entirely by the master side.
   - The master may use BUSY transfers to insert idle cycles within a burst.
-  - Undefined-length incrementing bursts (INCR) are supported.
-  - The master may use BUSY transfers to insert idle cycles within a burst.
 
 - **Error Response**:
   - A two-cycle error response: first cycle `HRESP=ERROR, HREADY=0`; second cycle `HRESP=ERROR, HREADY=1`.
