@@ -11,11 +11,12 @@ module ahb_slave_bfm
 );
 
     logic [`D_DATA_WIDTH-1:0]   mem [`D_MEM_SIZE-1:0];
-
     logic [`D_ADDR_WIDTH-1:0]   addr_reg;
     logic                       write_reg;
     logic [2:0]                 size_reg;
     logic                       valid_reg;
+
+    localparam BYTE_OFFSET_BITS = $clog2(`D_DATA_WIDTH/8);
 
     wire valid = vif.HSEL && vif.HREADY &&
                ( vif.HTRANS == `HTRANS_NONSEQ ||
@@ -46,24 +47,22 @@ module ahb_slave_bfm
                 if ( write_reg ) begin
                     case ( size_reg )
                         `HSIZE_BYTE : begin
-                            mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <=
-                                { mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][`D_DATA_WIDTH-1:8],
-                                  vif.HWDATA[7:0] };
+                            mem[addr_reg >> BYTE_OFFSET_BITS]
+                                [addr_reg[1:0]*8 +: 8]        <= vif.HWDATA[addr_reg[1:0]*8 +: 8];
                         end
                         `HSIZE_HALFWORD : begin
-                            mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <=
-                                { mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][`D_DATA_WIDTH-1:16],
-                                  vif.HWDATA[15:0] };
+                            mem[addr_reg >> BYTE_OFFSET_BITS]
+                                [addr_reg[1]*16 +: 16]        <= vif.HWDATA[addr_reg[1]*16 +: 16];
                         end
                         default : begin  // HSIZE_WORD
-                            mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]] <= vif.HWDATA;
+                            mem[addr_reg >> BYTE_OFFSET_BITS] <= vif.HWDATA;
                         end
                     endcase
-                end else begin  // Read
+                end else begin  // Read => 這裡的 read data 是直到 data phase 才給, 和 slave driver 不一樣
                     case ( size_reg )
-                        `HSIZE_BYTE    : vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][7:0]  };
-                        `HSIZE_HALFWORD: vif.HRDATA <= { '0, mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]][15:0] };
-                        default        : vif.HRDATA <= mem[addr_reg[$clog2(`D_MEM_SIZE)-1:0]];
+                        `HSIZE_BYTE    : vif.HRDATA <= { '0, mem[addr_reg >> BYTE_OFFSET_BITS][addr_reg[1:0]*8 +: 8] };
+                        `HSIZE_HALFWORD: vif.HRDATA <= { '0, mem[addr_reg >> BYTE_OFFSET_BITS][addr_reg[1]*16 +: 16] };
+                        default        : vif.HRDATA <= mem[addr_reg >> BYTE_OFFSET_BITS];
                     endcase
                 end
             end
