@@ -63,9 +63,8 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 ### Loopback Test
 <img width="671" height="561" alt="testbench_diagram" src="https://github.com/user-attachments/assets/8a7cc0c8-c89a-4c20-aadd-8a910702b5e0" />
 
-
 ### Master VIP
-
+<img width="671" height="303" alt="testbench_diagram2" src="https://github.com/user-attachments/assets/7898e680-db44-4497-818b-23fa1b96da0c" />
 
 ### Slave VIP
 <img width="492" height="352" alt="testbench_diagram1" src="https://github.com/user-attachments/assets/aa01d6cc-7a1c-4520-8128-1d5d7763a6e2" />
