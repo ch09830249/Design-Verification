@@ -112,9 +112,7 @@ APB_VIP/
 │       ├── apb_protocol_sva.sv
 │       └── bind_apb_protocol_sva.sv
 │
-├── APB_Loopback.jpg
-├── APB_MasterVIP.jpg
-├── APB_SlaveVIP.jpg
+├── apb_vip.f
 │
 └── README.md
 ```
