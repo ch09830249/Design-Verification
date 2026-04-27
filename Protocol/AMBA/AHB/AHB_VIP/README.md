@@ -76,7 +76,7 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 
 ## 📁 Directory Structure
 ```
-PKHUANG_AHB_VIP/
+AHB_VIP/
 |
 ├── bfm/
 │   └── ahb_slave_bfm.sv
@@ -122,9 +122,7 @@ PKHUANG_AHB_VIP/
 │       ├── ahb_protocol_sva.sv
 │       └── bind_ahb_protocol_sva.sv
 │
-├── AHB_Loopback.jpg
-├── AHB_MasterVIP.jpg
-├── AHB_SlaveVIP.jpg
+├── ahb_vip.f
 │
 └── README.md
 ```
