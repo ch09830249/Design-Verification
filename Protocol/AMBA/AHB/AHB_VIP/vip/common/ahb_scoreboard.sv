@@ -63,13 +63,14 @@ class ahb_scoreboard extends uvm_scoreboard;
                         $sformatf("Read addr=0x%h size=%0h: got=0x%h exp=0x%h",
                                   txn.HADDR, txn.HSIZE, txn.HRDATA, exp_data)
                     )
-                end
+                end else begin
                     `uvm_info(
                         "DATA_MATCH",
                         $sformatf("Read addr=0x%h size=%0h: data=0x%h OK",
                                   txn.HADDR, txn.HSIZE, txn.HRDATA),
                         UVM_LOW
                     )
+                end
             end
         end
     endfunction
