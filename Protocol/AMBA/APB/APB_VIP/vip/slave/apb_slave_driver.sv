@@ -23,14 +23,17 @@ class apb_slave_driver extends apb_driver_base;
                 vif.PRDATA  <= 0;
                 vif.PSLVERR <= 0;
             end else begin
-                if ( vif.PSEL && vif.PENABLE ) begin  // Access Phase
+                if ( vif.PSEL && vif.PENABLE ) begin    // Access Phase
                     vif.PREADY  <= 1;
-                    vif.PSLVERR <= 0;  // this slave never generates error
+                    vif.PSLVERR <= 0;
                     if ( vif.PWRITE ) begin
                         mem[vif.PADDR[$clog2(`D_MEM_SIZE)-1:0]] <= vif.PWDATA;
-                    end else begin
-                        vif.PRDATA = mem[vif.PADDR[$clog2(`D_MEM_SIZE)-1:0]];
                     end
+                end
+
+                // PSEL 拉起來就準備 PRDATA，不需要等 PENABLE
+                if ( vif.PSEL && !vif.PWRITE ) begin
+                    vif.PRDATA = mem[vif.PADDR[$clog2(`D_MEM_SIZE)-1:0]];
                 end
             end
         end
