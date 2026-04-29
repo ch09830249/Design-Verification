@@ -22,7 +22,6 @@ package apb_package;
     `include "apb_env.sv"
 
     `include "apb_master_seq.sv"
-    `include "apb_slave_seq.sv"
     `include "apb_basic_rw_test.sv"
 
 endpackage
