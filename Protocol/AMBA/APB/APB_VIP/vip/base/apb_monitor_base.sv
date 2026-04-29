@@ -5,11 +5,8 @@ class apb_monitor_base extends uvm_monitor;
     `uvm_component_utils(apb_monitor_base)
 
     virtual apb_interface               vif;
-
     apb_seq_item                        txn;
-
     uvm_active_passive_enum             agt_mode;
-
     uvm_analysis_port #(apb_seq_item)   port;
 
     function new ( string name = "apb_monitor_base", uvm_component parent );
