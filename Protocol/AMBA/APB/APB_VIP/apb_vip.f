@@ -15,5 +15,4 @@
 ./vip/sva/bind_apb_protocol_sva.sv
 ./bfm/apb_slave_bfm.sv
 ./seq/apb_master_seq.sv
-./seq/apb_slave_seq.sv
 ./test/apb_basic_rw_test.sv
