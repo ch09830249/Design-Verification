@@ -55,26 +55,38 @@ class axi_master_monitor extends axi_monitor_base;
             end
 
             // ---- W handshake ----
-            if (vif.WVALID && vif.WREADY && aw_q.size() > 0) begin
-                cur_aw = aw_q[0];
-                cur_aw.wdata[w_beat] = vif.WDATA;
-                cur_aw.wstrb[w_beat] = vif.WSTRB;
-                aw_q[0] = cur_aw;
+            if (vif.WVALID && vif.WREADY) begin
+                // 等到 aw_q 有 descriptor 才處理
+                if (aw_q.size() > 0) begin
+                    // 防呆：beat 不能超過當前 descriptor 的 len
+                    if (w_beat <= aw_q[0].len) begin
+                        aw_q[0].wdata[w_beat] = vif.WDATA;
+                        aw_q[0].wstrb[w_beat] = vif.WSTRB;
+                    end else begin
+                        `uvm_error("MSTMON", $sformatf(
+                            "W beat %0d exceeds AWLEN=%0d, dropping beat", w_beat, aw_q[0].len))
+                    end
 
-                if (vif.WLAST) begin
-                    w_beat = 0;
-                    // don't pop yet — wait for B response
+                    if (vif.WLAST) begin
+                        w_beat = 0;
+                        // WLAST 到了才等 B response，不在這裡 pop
+                    end else begin
+                        w_beat++;
+                    end
                 end else begin
-                    w_beat++;
+                    `uvm_error("MSTMON", "W beat received but aw_q is empty")
                 end
             end
 
             // ---- B handshake ----
             if (vif.BVALID && vif.BREADY) begin
                 if (aw_q.size() > 0) begin
-                    cur_aw        = aw_q.pop_front();
-                    cur_aw.bresp  = vif.BRESP;
-                    port.write(cur_aw);     // send complete write txn to scb/cov
+                    axi_seq_item cur;
+                    cur       = aw_q.pop_front();   // ← B response 到才 pop，確保順序
+                    cur.bresp = vif.BRESP;
+                    port.write(cur);
+                end else begin
+                    `uvm_error("MSTMON", $sformatf("B response with no pending AW, BID=0x%h", vif.BID))
                 end
             end
         end
@@ -92,7 +104,7 @@ class axi_master_monitor extends axi_monitor_base;
                 continue;
             end
 
-            // ---- AR handshake ----
+            // ---- AR handshake（先處理，確保同拍的 R beat 能找到） ----
             if (vif.ARVALID && vif.ARREADY) begin
                 axi_seq_item t = axi_seq_item::type_id::create("ar_txn");
                 t.write = 0;
@@ -107,7 +119,7 @@ class axi_master_monitor extends axi_monitor_base;
                 ar_beat_cnt[vif.ARID]  = 0;
             end
 
-            // ---- R handshake ----
+            // ---- R handshake（AR 之後處理） ----
             if (vif.RVALID && vif.RREADY) begin
                 int unsigned rid;
                 rid = vif.RID;
@@ -115,11 +127,19 @@ class axi_master_monitor extends axi_monitor_base;
                 if (ar_pending_q.exists(rid)) begin
                     int beat;
                     beat = ar_beat_cnt[rid];
-                    ar_pending_q[rid].rdata[beat] = vif.RDATA;
-                    ar_pending_q[rid].rresp[beat] = vif.RRESP;
+
+                    // 防呆：beat 不能超過 rdata 陣列大小
+                    if (beat < ar_pending_q[rid].rdata.size()) begin
+                        ar_pending_q[rid].rdata[beat] = vif.RDATA;
+                        ar_pending_q[rid].rresp[beat] = vif.RRESP;
+                    end else begin
+                        `uvm_error("MSTMON", $sformatf(
+                            "R beat %0d exceeds ARLEN=%0d for RID=0x%h",
+                            beat, ar_pending_q[rid].len, rid))
+                    end
 
                     if (vif.RLAST) begin
-                        port.write(ar_pending_q[rid]);  // send complete read txn to scb/cov
+                        port.write(ar_pending_q[rid]);
                         ar_pending_q.delete(rid);
                         ar_beat_cnt.delete(rid);
                     end else begin
