@@ -4,9 +4,8 @@
 class axi_slave_monitor extends axi_monitor_base;
     `uvm_component_utils(axi_slave_monitor)
 
-    // Pending AR transactions waiting for R data (keyed by ARID)
-    axi_seq_item    ar_pending_q[*];    // associative array: id -> txn
-    int             ar_beat_cnt[*];     // beat counter per id
+    axi_seq_item    ar_pending_q[*];
+    int             ar_beat_cnt[*];
 
     function new(string name = "axi_slave_monitor", uvm_component parent);
         super.new(name, parent);
@@ -17,14 +16,11 @@ class axi_slave_monitor extends axi_monitor_base;
         wait ( vif.ARESETn);
 
         fork
-            monitor_aw_w_b();   // Write path: AW + W + B
-            monitor_ar_r();     // Read  path: AR + R
+            monitor_aw_w_b();
+            monitor_ar_r();
         join
     endtask
 
-    // ----------------------------------------------------------------
-    // Write path: collect AW info, W beats, then B response
-    // ----------------------------------------------------------------
     task monitor_aw_w_b();
         axi_seq_item    aw_q[$];
         axi_seq_item    cur_aw;
@@ -55,16 +51,20 @@ class axi_slave_monitor extends axi_monitor_base;
             end
 
             // ---- W handshake ----
-            if (vif.WVALID && vif.WREADY && aw_q.size() > 0) begin
-                cur_aw = aw_q[0];
-                cur_aw.wdata[w_beat] = vif.WDATA;
-                cur_aw.wstrb[w_beat] = vif.WSTRB;
-                aw_q[0] = cur_aw;
+            if (vif.WVALID && vif.WREADY) begin
+                if (aw_q.size() > 0) begin
+                    if (w_beat <= aw_q[0].len) begin
+                        aw_q[0].wdata[w_beat] = vif.WDATA;
+                        aw_q[0].wstrb[w_beat] = vif.WSTRB;
+                    end else begin
+                        `uvm_error("SLVMON", $sformatf(
+                            "W beat %0d exceeds AWLEN=%0d, dropping beat", w_beat, aw_q[0].len))
+                    end
 
-                if (vif.WLAST) begin
-                    w_beat = 0;
+                    if (vif.WLAST)  w_beat = 0;
+                    else            w_beat++;
                 end else begin
-                    w_beat++;
+                    `uvm_error("SLVMON", "W beat received but aw_q is empty")
                 end
             end
 
@@ -73,16 +73,14 @@ class axi_slave_monitor extends axi_monitor_base;
                 if (aw_q.size() > 0) begin
                     cur_aw       = aw_q.pop_front();
                     cur_aw.bresp = vif.BRESP;
-                    // txn.print();
                     port.write(cur_aw);
+                end else begin
+                    `uvm_error("SLVMON", $sformatf("B response with no pending AW, BID=0x%h", vif.BID))
                 end
             end
         end
     endtask
 
-    // ----------------------------------------------------------------
-    // Read path: collect AR info, then R beats until RLAST
-    // ----------------------------------------------------------------
     task monitor_ar_r();
         forever begin
             @(posedge vif.ACLK);
@@ -115,11 +113,17 @@ class axi_slave_monitor extends axi_monitor_base;
                 if (ar_pending_q.exists(rid)) begin
                     int beat;
                     beat = ar_beat_cnt[rid];
-                    ar_pending_q[rid].rdata[beat] = vif.RDATA;
-                    ar_pending_q[rid].rresp[beat] = vif.RRESP;
+
+                    if (beat < ar_pending_q[rid].rdata.size()) begin
+                        ar_pending_q[rid].rdata[beat] = vif.RDATA;
+                        ar_pending_q[rid].rresp[beat] = vif.RRESP;
+                    end else begin
+                        `uvm_error("SLVMON", $sformatf(
+                            "R beat %0d exceeds ARLEN=%0d for RID=0x%h",
+                            beat, ar_pending_q[rid].len, rid))
+                    end
 
                     if (vif.RLAST) begin
-                        // txn.print();
                         port.write(ar_pending_q[rid]);
                         ar_pending_q.delete(rid);
                         ar_beat_cnt.delete(rid);
