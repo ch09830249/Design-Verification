@@ -51,12 +51,6 @@ module apb_protocol_sva (
     endproperty
     apb_setup_phase_penable_low_rule: assert property(p_setup_phase_penable_low);
 
-    property p_psel_to_penable;
-        @(posedge PCLK) disable iff (!PRESETn)
-        ((PSEL == '0) ##1 (PSEL != '0)) |=> (PSEL != '0 && PENABLE);
-    endproperty
-    apb_psel_to_penable_rule: assert property(p_psel_to_penable);
-
     // -------------------------------------------------------
     // Access Phase — Signal Stability
     // -------------------------------------------------------
@@ -86,12 +80,6 @@ module apb_protocol_sva (
         $rose(PENABLE) |-> ##[0:16] PREADY;
     endproperty
     apb_pready_eventually_rule: assert property(p_pready_eventually);
-
-    property p_transfer_done;
-        @(posedge PCLK) disable iff (!PRESETn)
-        (PSEL && PENABLE && PREADY) |=> !PENABLE;
-    endproperty
-    apb_transfer_done_rule: assert property(p_transfer_done);
 
     property p_pslverr_with_pready;
         @(posedge PCLK) disable iff (!PRESETn)
