@@ -9,11 +9,10 @@
 -incdir ./seq
 -incdir ./test
 ./top/sim_top.sv
-./vip/common/apb_package.svh
-./vip/interface/apb_interface.sv
-./vip/sva/apb_protocol_sva.sv
-./vip/sva/bind_apb_protocol_sva.sv
-./bfm/apb_slave_bfm.sv
-./seq/apb_master_seq.sv
-./seq/apb_slave_seq.sv
-./test/apb_basic_rw_test.sv
+./vip/common/axi_package.svh
+./vip/interface/axi_interface.sv
+./vip/sva/axi_protocol_sva.sv
+./vip/sva/bind_axi_protocol_sva.sv
+./bfm/axi_slave_bfm.sv
+./seq/axi_master_seq.sv
+./test/axi_basic_rw_test.sv
