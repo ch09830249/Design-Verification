@@ -166,6 +166,7 @@ AXI_VIP/
 └── README.md
 ```
 
+## Simulation
 ```
 xrun -f axi_vip.f -access +r +UVM_TESTNAME=axi_basic_rw_test
 ```
