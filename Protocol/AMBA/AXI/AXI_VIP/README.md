@@ -1,127 +1,171 @@
-# 📘 APB UVM VIP Description
+# 📘 AXI UVM VIP Description
 
 ## 🧩 Module Overview
 
-This project implements a configurable and reusable APB (Advanced Peripheral Bus) UVM Verification IP based on the AMBA® APB protocol specification (IHI 0024E).  
+This project implements a configurable and reusable AXI4 (Advanced eXtensible Interface) UVM Verification IP based on the AMBA® AXI4 protocol specification (IHI 0022H).
 It supports three modes of operation — **master VIP**, **slave VIP**, and **loopback testbench** — through flexible configuration.
 
-The VIP includes layered base components, driver/monitor/sequencer agents, protocol timing assertions (SystemVerilog Assertions), optional bus functional models (BFMs), and reference model support.  
+The VIP includes layered base components, driver/monitor/sequencer agents, protocol timing assertions (SystemVerilog Assertions), optional bus functional models (BFMs), and reference model support.
 It is designed to validate both master and slave DUTs by instantiating the corresponding passive or active agent, and can be used for directed or random stimulus generation.
 
 ### Supported Features
 
-- APB master transactions: read/write stimulus generation
-- APB slave response handling: data return and memory emulation
-- Configurable setup and access phase timing
+- AXI4 master transactions: read/write burst stimulus generation with configurable `AWLEN`/`ARLEN`, `AWSIZE`/`ARSIZE`, `AWBURST`/`ARBURST`
+- AXI4 slave response handling: data return, WSTRB byte-enable, and memory emulation
+- Five independent channel handshaking: AW, W, B, AR, R — write and read paths fully decoupled
+- Burst type support: FIXED, INCR, WRAP
+- Out-of-order read response support via transaction ID (`ARID`/`RID`)
 - Loopback test support between master and slave agents
-- Built-in SystemVerilog Assertions (SVA) for protocol timing checks
+- Built-in SystemVerilog Assertions (SVA) for protocol handshake and timing checks
 - UVM scoreboard and passive agent monitoring support
-- Functional coverage for read/write address, data, and control signals
+- Functional coverage for address, burst, size, length, ID, and response signals
 - Optional BFMs for standalone integration without UVM
 
 ---
 
 ## 🔧 I/O Signals
 
-| Signal     | Direction (Master) | Width            | Description                        |
-|------------|--------------------|------------------|------------------------------------|
-| `PCLK`     | Input              | 1                | APB clock                          |
-| `PRESETn`  | Input              | 1                | Active-low reset                   |
-| `PADDR`    | Output             | `D_ADDR_WIDTH    | Address bus                        |
-| `PWRITE`   | Output             | 1                | Write enable (1=write, 0=read)     |
-| `PSEL`     | Output             | `D_SLV_COUNT     | Slave select (one-hot, multi-slave)|
-| `PENABLE`  | Output             | 1                | Enable for access phase            |
-| `PWDATA`   | Output             | `D_DATA_WIDTH    | Write data bus                     |
-| `PREADY`   | Input              | 1                | Slave ready signal                 |
-| `PRDATA`   | Input              | `D_DATA_WIDTH    | Read data bus                      |
-| `PSLVERR`  | Input              | 1                | Slave error response               |
+### AW Channel (Write Address)
+
+| Signal     | Direction (Master) | Width           | Description              |
+|------------|--------------------|-----------------|--------------------------|
+| `ACLK`     | Input              | 1               | AXI clock                |
+| `ARESETn`  | Input              | 1               | Active-low reset         |
+| `AWID`     | Output             | `D_ID_WIDTH     | Write address ID         |
+| `AWADDR`   | Output             | `D_ADDR_WIDTH   | Write address            |
+| `AWLEN`    | Output             | 8               | Burst length (beats - 1) |
+| `AWSIZE`   | Output             | 3               | Burst size               |
+| `AWBURST`  | Output             | 2               | Burst type               |
+| `AWVALID`  | Output             | 1               | Write address valid      |
+| `AWREADY`  | Input              | 1               | Write address ready      |
+
+### W Channel (Write Data)
+
+| Signal    | Direction (Master) | Width             | Description         |
+|-----------|--------------------|-------------------|---------------------|
+| `WDATA`   | Output             | `D_DATA_WIDTH     | Write data          |
+| `WSTRB`   | Output             | `D_DATA_WIDTH/8   | Write byte strobe   |
+| `WLAST`   | Output             | 1                 | Last beat indicator |
+| `WVALID`  | Output             | 1                 | Write data valid    |
+| `WREADY`  | Input              | 1                 | Write data ready    |
+
+### B Channel (Write Response)
+
+| Signal    | Direction (Master) | Width         | Description            |
+|-----------|--------------------|---------------|------------------------|
+| `BID`     | Input              | `D_ID_WIDTH   | Write response ID      |
+| `BRESP`   | Input              | 2             | Write response         |
+| `BVALID`  | Input              | 1             | Write response valid   |
+| `BREADY`  | Output             | 1             | Write response ready   |
+
+### AR Channel (Read Address)
+
+| Signal     | Direction (Master) | Width          | Description             |
+|------------|--------------------|----------------|-------------------------|
+| `ARID`     | Output             | `D_ID_WIDTH    | Read address ID         |
+| `ARADDR`   | Output             | `D_ADDR_WIDTH  | Read address            |
+| `ARLEN`    | Output             | 8              | Burst length (beats -1) |
+| `ARSIZE`   | Output             | 3              | Burst size              |
+| `ARBURST`  | Output             | 2              | Burst type              |
+| `ARVALID`  | Output             | 1              | Read address valid      |
+| `ARREADY`  | Input              | 1              | Read address ready      |
+
+### R Channel (Read Data)
+
+| Signal    | Direction (Master) | Width          | Description          |
+|-----------|--------------------|----------------|----------------------|
+| `RID`     | Input              | `D_ID_WIDTH    | Read data ID         |
+| `RDATA`   | Input              | `D_DATA_WIDTH  | Read data            |
+| `RRESP`   | Input              | 2              | Read response        |
+| `RLAST`   | Input              | 1              | Last beat indicator  |
+| `RVALID`  | Input              | 1              | Read data valid      |
+| `RREADY`  | Output             | 1              | Read data ready      |
 
 ---
 
-## 🔁 APB Protocol Behavior
+## 🔁 AXI4 Protocol Behavior
 
-- **Setup Phase**:
-  - Master asserts `PSEL` with valid `PADDR`, `PWRITE`, `PWDATA` (for write) on the rising edge of `PCLK`.
+- **Write path (AW → W → B)**:
+  - Master asserts `AWVALID` with valid `AWADDR`, `AWID`, `AWLEN`, `AWSIZE`, `AWBURST`.
+  - Slave responds with `AWREADY` to complete the AW handshake.
+  - Master drives `WDATA`/`WSTRB` beat by beat, asserting `WLAST` on the final beat.
+  - Slave responds with `WREADY` each beat; after `WLAST`, slave asserts `BVALID` with `BRESP`.
+  - Master asserts `BREADY` to complete the B handshake and finish the write transaction.
 
-- **Access Phase**:
-  - Master asserts `PENABLE` while keeping `PSEL` high.
-  - Slave responds with `PREADY` and provides `PRDATA` for read operations.
+- **Read path (AR → R)**:
+  - Master asserts `ARVALID` with valid `ARADDR`, `ARID`, `ARLEN`, `ARSIZE`, `ARBURST`.
+  - Slave responds with `ARREADY` to complete the AR handshake.
+  - Slave returns `RDATA` beat by beat, asserting `RLAST` on the final beat; each beat carries `RRESP` and `RID`.
+  - Master asserts `RREADY` each beat to complete the R handshake.
 
-- **Timing Control**:
-  - Single setup and access phase; no burst support.
-  - Ready signal may insert wait states.
- 
+- **Channel independence**:
+  - AW and AR channels are fully decoupled — write and read transactions may be in-flight simultaneously.
+  - W channel may be accepted before or after AW channel depending on slave implementation.
+
+- **Burst types**:
+  - `FIXED` (2'b00): address does not increment, used for FIFOs.
+  - `INCR`  (2'b01): address increments each beat, most common.
+  - `WRAP`  (2'b10): address wraps at a boundary, used for cache line fills.
+
 - **Error Response**:
-  - Slave asserts `PSLVERR` high during the access phase to indicate a transfer error.
-  - `PSLVERR` is only valid when `PSEL`, `PENABLE`, and `PREADY` are all high.
-  - ⚠️ Status: Planned — PSLVERR detection is defined but not yet implemented.
-
----
-
-## 📷 APB Block Diagram
-
-### Loopback Test
-<img width="671" height="561" alt="testbench_diagram" src="https://github.com/user-attachments/assets/8a7cc0c8-c89a-4c20-aadd-8a910702b5e0" />
-
-### Master VIP
-<img width="671" height="303" alt="testbench_diagram2" src="https://github.com/user-attachments/assets/7898e680-db44-4497-818b-23fa1b96da0c" />
-
-### Slave VIP
-<img width="492" height="352" alt="testbench_diagram1" src="https://github.com/user-attachments/assets/aa01d6cc-7a1c-4520-8128-1d5d7763a6e2" />
+  - Slave returns `BRESP`/`RRESP` = `2'b10` (SLVERR) to indicate a transfer error.
+  - Response is valid only when the corresponding `BVALID`/`RVALID` and `BREADY`/`RREADY` are both high.
 
 ---
 
 ## 📁 Directory Structure
+
 ```
-APB_VIP/
+AXI_VIP/
 |
 ├── bfm/
-│   └── apb_slave_bfm.sv
+│   └── axi_slave_bfm.sv
 │
 ├── seq/
-│   ├── apb_master_seq.sv
-│   └── apb_slave_seq.sv
+│   └── axi_master_seq.sv
 │
 ├── test/
-│   └── apb_basic_rw_test.sv
+│   └── axi_basic_rw_test.sv
 │
 ├── top/
 │   └── sim_top.sv
 │
 ├── vip/
 │   ├── base/
-│   │   ├── apb_agent_base.sv
-│   │   ├── apb_driver_base.sv
-│   │   └── apb_monitor_base.sv
+│   │   ├── axi_agent_base.sv
+│   │   ├── axi_driver_base.sv
+│   │   └── axi_monitor_base.sv
 │   │
 │   ├── common/
-│   │   ├── apb_coverage.sv
-│   │   ├── apb_define.svh
-│   │   ├── apb_env.sv
-│   │   ├── apb_package.svh
-│   │   ├── apb_scoreboard.sv
-│   │   └── apb_seq_item.sv
+│   │   ├── axi_coverage.sv
+│   │   ├── axi_define.svh
+│   │   ├── axi_env.sv
+│   │   ├── axi_package.svh
+│   │   ├── axi_scoreboard.sv
+│   │   └── axi_seq_item.sv
 │   │
 │   ├── interface/
-│   │   └── apb_interface.sv
+│   │   └── axi_interface.sv
 │   │
 │   ├── master/
-│   │   ├── apb_master_agent.sv
-│   │   ├── apb_master_driver.sv
-│   │   └── apb_master_monitor.sv
+│   │   ├── axi_master_agent.sv
+│   │   ├── axi_master_driver.sv
+│   │   └── axi_master_monitor.sv
 │   │
 │   ├── slave/
-│   │   ├── apb_slave_agent.sv
-│   │   ├── apb_slave_driver.sv
-│   │   └── apb_slave_monitor.sv
+│   │   ├── axi_slave_agent.sv
+│   │   ├── axi_slave_driver.sv
+│   │   └── axi_slave_monitor.sv
 │   │
 │   └── sva/
-│       ├── apb_protocol_sva.sv
-│       └── bind_apb_protocol_sva.sv
+│       ├── axi_protocol_sva.sv
+│       └── bind_axi_protocol_sva.sv
 │
-├── apb_vip.f
+├── axi_vip.f
 │
 └── README.md
 ```
 
-xrun -f apb_vip.f -access +r +UVM_TESTNAME=apb_basic_rw_test
+```
+xrun -f axi_vip.f -access +r +UVM_TESTNAME=axi_basic_rw_test
+```
