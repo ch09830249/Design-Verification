@@ -8,9 +8,7 @@ class apb_env extends uvm_env;
     apb_slave_agent         agt_slv;
     apb_scoreboard          scb;
     apb_coverage            cov;
-
     virtual apb_interface   vif;
-
     uvm_tlm_analysis_fifo #(apb_seq_item)   fifo;
 
     function new ( string name = "apb_env", uvm_component parent );
@@ -38,8 +36,6 @@ class apb_env extends uvm_env;
         uvm_config_db #(uvm_active_passive_enum) :: set (this, "agt_mst", "agt_mode", UVM_ACTIVE);
         uvm_config_db #(uvm_active_passive_enum) :: set (this, "agt_slv", "agt_mode", UVM_ACTIVE);
 
-        // Set fifo for apb_slave_seq
-        uvm_config_db #(uvm_tlm_analysis_fifo #(apb_seq_item)) :: set (this, "*", "fifo", fifo);
     endfunction
 
     function void connect_phase ( uvm_phase phase );
@@ -51,8 +47,6 @@ class apb_env extends uvm_env;
         // COV connection - slave mon connection is unnecessary
         agt_mst.mon.port.connect(cov.analysis_export);
 
-        // slave mon -> fifo -> slave seq -> slave driver -> vif
-        agt_slv.mon.port.connect(fifo.analysis_export);
     endfunction
 endclass
 
