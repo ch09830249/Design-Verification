@@ -7,7 +7,6 @@ class apb_agent_base extends uvm_agent;
     apb_driver_base                     drv;
     apb_monitor_base                    mon;
     uvm_sequencer #(apb_seq_item)       seqr;
-
     uvm_active_passive_enum             agt_mode;
 
     function new ( string name = "apb_agent_base", uvm_component parent );
