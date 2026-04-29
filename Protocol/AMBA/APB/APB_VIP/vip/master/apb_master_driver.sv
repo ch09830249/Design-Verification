@@ -27,9 +27,12 @@ class apb_master_driver extends apb_driver_base;
                 @ ( posedge vif.PCLK );
                 vif.PENABLE <= 1;
 
-                // Wait PREADY
-                @ ( posedge vif.PCLK );
-                wait ( vif.PREADY );
+                // Wait PREADY：必須在 PENABLE=1 之後的 posedge 才檢查
+                do begin
+                    @ ( posedge vif.PCLK );
+                end while ( !vif.PREADY );  // ← posedge 上檢查，不夠再等下一拍
+
+                // PREADY=1 的那個 posedge 結束後才 reset
                 reset_signal();
 
                 seq_item_port.item_done();
@@ -41,8 +44,8 @@ class apb_master_driver extends apb_driver_base;
         vif.PADDR   <= '0;
         vif.PWRITE  <= '0;
         vif.PSEL    <= '0;
-        vif.PENABLE <= '0;
         vif.PWDATA  <= '0;
+        vif.PENABLE <= '0;
     endtask
 endclass
 
