@@ -7,6 +7,4 @@
 
 `define     D_MEM_SIZE          256
 
-// typedef enum { MST, SLV }       apb_role_e;
-
 `endif
