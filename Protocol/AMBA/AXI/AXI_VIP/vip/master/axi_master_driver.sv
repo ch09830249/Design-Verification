@@ -15,7 +15,7 @@ class axi_master_driver extends axi_driver_base;
     virtual task run_phase(uvm_phase phase);
         reset_signal();
         @(posedge vif.ARESETn);    // 等 reset 結束
-        @(posedge vif.ACLK);    // wait one cycle after reset
+        @(vif.master_cb);    // wait one cycle after reset
         fork
             monitor_reset();
             insert_cmd_queue();
@@ -49,21 +49,21 @@ class axi_master_driver extends axi_driver_base;
     // ----------------------------------------------------------------
     task drive_aw_channel();
         forever begin
-            @(posedge vif.ACLK);
+            @(vif.master_cb);
             if (!vif.ARESETn) begin
-                vif.AWVALID <= 0;
+                vif.master_cb.AWVALID <= 0;
             end else begin
-                if (aw_queue.size() > 0 && !vif.AWVALID) begin
+                if (aw_queue.size() > 0 && !vif.master_cb.AWVALID) begin
                     axi_seq_item cur = aw_queue.pop_front();
-                    vif.AWID    <= cur.id;
-                    vif.AWADDR  <= cur.addr;
-                    vif.AWLEN   <= cur.len;
-                    vif.AWSIZE  <= cur.size;
-                    vif.AWBURST <= cur.burst;
-                    vif.AWVALID <= 1;
+                    vif.master_cb.AWID    <= cur.id;
+                    vif.master_cb.AWADDR  <= cur.addr;
+                    vif.master_cb.AWLEN   <= cur.len;
+                    vif.master_cb.AWSIZE  <= cur.size;
+                    vif.master_cb.AWBURST <= cur.burst;
+                    vif.master_cb.AWVALID <= 1;
                     w_queue.push_back(cur);    // mirror to W queue
-                end else if (vif.AWVALID && vif.AWREADY) begin
-                    vif.AWVALID <= 0;
+                end else if (vif.master_cb.AWVALID && vif.master_cb.AWREADY) begin
+                    vif.master_cb.AWVALID <= 0;
                 end
             end
         end
@@ -80,19 +80,19 @@ class axi_master_driver extends axi_driver_base;
             cur = w_queue.pop_front();
 
             for (int beat = 0; beat <= cur.len; beat++) begin
-                vif.WDATA  <= cur.wdata[beat];
-                vif.WSTRB  <= cur.wstrb[beat];
-                vif.WLAST  <= (beat == cur.len);
-                vif.WVALID <= 1;
+                vif.master_cb.WDATA  <= cur.wdata[beat];
+                vif.master_cb.WSTRB  <= cur.wstrb[beat];
+                vif.master_cb.WLAST  <= (beat == cur.len);
+                vif.master_cb.WVALID <= 1;
 
                 // `uvm_info("MSTDRV", $sformatf("beat=%0d cur.len=%0d WLAST=%0b", 
                 //             beat, cur.len, (beat == cur.len)), UVM_LOW)
 
-                @(posedge vif.ACLK);
+                @(vif.master_cb);
                 if (!vif.ARESETn) break;
 
-                while (!vif.WREADY) begin
-                    @(posedge vif.ACLK);
+                while (!vif.master_cb.WREADY) begin
+                    @(vif.master_cb);
                     if (!vif.ARESETn) break;
                 end
 
@@ -101,8 +101,8 @@ class axi_master_driver extends axi_driver_base;
             end
 
             // Clear WVALID and WLAST
-            vif.WVALID <= 0;
-            vif.WLAST  <= 0;
+            vif.master_cb.WVALID <= 0;
+            vif.master_cb.WLAST  <= 0;
         end
     endtask
 
@@ -111,14 +111,14 @@ class axi_master_driver extends axi_driver_base;
     // ----------------------------------------------------------------
     task drive_b_channel();
         forever begin
-            @(posedge vif.ACLK);
+            @(vif.master_cb);
             if (!vif.ARESETn) begin
-                vif.BREADY <= 0;
+                vif.master_cb.BREADY <= 0;
             end else begin
-                vif.BREADY <= 1;    // always ready to accept response
-                if (vif.BVALID) begin
-                    if (vif.BRESP !== `BRESP_OKAY)
-                        `uvm_error("MSTDRV", $sformatf("BRESP error: 0x%h", vif.BRESP))
+                vif.master_cb.BREADY <= 1;    // always ready to accept response
+                if (vif.master_cb.BVALID) begin
+                    if (vif.master_cb.BRESP !== `BRESP_OKAY)
+                        `uvm_error("MSTDRV", $sformatf("BRESP error: 0x%h", vif.master_cb.BRESP))
                 end
             end
         end
@@ -129,20 +129,20 @@ class axi_master_driver extends axi_driver_base;
     // ----------------------------------------------------------------
     task drive_ar_channel();
         forever begin
-            @(posedge vif.ACLK);
+            @(vif.master_cb);
             if (!vif.ARESETn) begin
-                vif.ARVALID <= 0;
+                vif.master_cb.ARVALID <= 0;
             end else begin
-                if (ar_queue.size() > 0 && !vif.ARVALID) begin
+                if (ar_queue.size() > 0 && !vif.master_cb.ARVALID) begin
                     axi_seq_item cur = ar_queue.pop_front();
-                    vif.ARID    <= cur.id;
-                    vif.ARADDR  <= cur.addr;
-                    vif.ARLEN   <= cur.len;
-                    vif.ARSIZE  <= cur.size;
-                    vif.ARBURST <= cur.burst;
-                    vif.ARVALID <= 1;
-                end else if (vif.ARVALID && vif.ARREADY) begin
-                    vif.ARVALID <= 0;
+                    vif.master_cb.ARID    <= cur.id;
+                    vif.master_cb.ARADDR  <= cur.addr;
+                    vif.master_cb.ARLEN   <= cur.len;
+                    vif.master_cb.ARSIZE  <= cur.size;
+                    vif.master_cb.ARBURST <= cur.burst;
+                    vif.master_cb.ARVALID <= 1;
+                end else if (vif.master_cb.ARVALID && vif.master_cb.ARREADY) begin
+                    vif.master_cb.ARVALID <= 0;
                 end
             end
         end
@@ -153,14 +153,14 @@ class axi_master_driver extends axi_driver_base;
     // ----------------------------------------------------------------
     task drive_r_channel();
         forever begin
-            @(posedge vif.ACLK);
+            @(vif.master_cb);
             if (!vif.ARESETn) begin
-                vif.RREADY <= 0;
+                vif.master_cb.RREADY <= 0;
             end else begin
-                vif.RREADY <= 1;    // always ready to accept data
-                if (vif.RVALID) begin
-                    if (vif.RRESP !== `RRESP_OKAY)
-                        `uvm_error("MSTDRV", $sformatf("RRESP error: beat RRESP=0x%h", vif.RRESP))
+                vif.master_cb.RREADY <= 1;    // always ready to accept data
+                if (vif.master_cb.RVALID) begin
+                    if (vif.master_cb.RRESP !== `RRESP_OKAY)
+                        `uvm_error("MSTDRV", $sformatf("RRESP error: beat RRESP=0x%h", vif.master_cb.RRESP))
                 end
             end
         end
@@ -201,7 +201,7 @@ class axi_master_driver extends axi_driver_base;
             `uvm_info("MSTDRV", "Reset asserted: queues flushed", UVM_MEDIUM)
 
             @(posedge vif.ARESETn);                          // reset 釋放
-            @(posedge vif.ACLK);                             // 再等一拍穩定
+            @(vif.master_cb);                        // 再等一拍穩定
             `uvm_info("MSTDRV", "Reset deasserted: driver resumed", UVM_MEDIUM)
         end
     endtask
