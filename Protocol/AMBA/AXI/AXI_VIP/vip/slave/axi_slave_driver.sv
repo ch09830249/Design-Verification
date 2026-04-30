@@ -137,7 +137,7 @@ class axi_slave_driver extends axi_driver_base;
 
             // ---- AR channel: always ready ----
             vif.ARREADY <= 1;
-            if (vif.ARVALID && vif.ARREADY) begin
+            if (vif.ARVALID) begin
                 ar_info_t info;
                 info.addr  = vif.ARADDR;
                 info.size  = vif.ARSIZE;
