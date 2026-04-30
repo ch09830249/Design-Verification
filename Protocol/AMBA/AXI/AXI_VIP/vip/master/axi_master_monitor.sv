@@ -64,7 +64,7 @@ class axi_master_monitor extends axi_monitor_base;
                         aw_q[0].wstrb[w_beat] = vif.WSTRB;
                     end else begin
                         `uvm_error("MSTMON", $sformatf(
-                            "W beat %0d exceeds AWLEN=%0d, dropping beat", w_beat, aw_q[0].len))
+                            "W beat %0d exceeds AWLEN=%0d, dropping beat (addr: %0d)", w_beat, aw_q[0].len, aw_q[0].addr))
                     end
 
                     if (vif.WLAST) begin
