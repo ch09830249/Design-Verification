@@ -14,6 +14,7 @@ class axi_master_driver extends axi_driver_base;
 
     virtual task run_phase(uvm_phase phase);
         reset_signal();
+        @(posedge vif.ARESETn);    // 等 reset 結束
         @(posedge vif.ACLK);    // wait one cycle after reset
         fork
             monitor_reset();
@@ -80,21 +81,23 @@ class axi_master_driver extends axi_driver_base;
 
             for (int beat = 0; beat <= cur.len; beat++) begin
                 @(posedge vif.ACLK);
-                if (!vif.ARESETn) begin
-                    vif.WVALID <= 0;
-                    vif.WLAST  <= 0;
-                    break;
-                end
+                if (!vif.ARESETn) break;
 
                 vif.WDATA  <= cur.wdata[beat];
                 vif.WSTRB  <= cur.wstrb[beat];
                 vif.WLAST  <= (beat == cur.len);
                 vif.WVALID <= 1;
 
-                while (!vif.WREADY)
+                while (!vif.WREADY) begin
                     @(posedge vif.ACLK);
+                    if (!vif.ARESETn) break;
+                end
+
+                // For previous while loop
+                if (!vif.ARESETn) break;
             end
 
+            // Clear WVALID and WLAST
             vif.WVALID <= 0;
             vif.WLAST  <= 0;
         end
@@ -110,7 +113,7 @@ class axi_master_driver extends axi_driver_base;
                 vif.BREADY <= 0;
             end else begin
                 vif.BREADY <= 1;    // always ready to accept response
-                if (vif.BVALID && vif.BREADY) begin
+                if (vif.BVALID) begin
                     if (vif.BRESP !== `BRESP_OKAY)
                         `uvm_error("MSTDRV", $sformatf("BRESP error: 0x%h", vif.BRESP))
                 end
@@ -152,7 +155,7 @@ class axi_master_driver extends axi_driver_base;
                 vif.RREADY <= 0;
             end else begin
                 vif.RREADY <= 1;    // always ready to accept data
-                if (vif.RVALID && vif.RREADY) begin
+                if (vif.RVALID) begin
                     if (vif.RRESP !== `RRESP_OKAY)
                         `uvm_error("MSTDRV", $sformatf("RRESP error: beat RRESP=0x%h", vif.RRESP))
                 end
