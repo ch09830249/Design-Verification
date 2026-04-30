@@ -16,6 +16,7 @@ class axi_master_driver extends axi_driver_base;
         reset_signal();
         @(posedge vif.ACLK);    // wait one cycle after reset
         fork
+            monitor_reset();
             insert_cmd_queue();
             drive_aw_channel();
             drive_w_channel();
@@ -31,6 +32,7 @@ class axi_master_driver extends axi_driver_base;
     task insert_cmd_queue();
         forever begin
             seq_item_port.get_next_item(txn);
+            txn.print();
 
             if (txn.write)
                 aw_queue.push_back(txn);
@@ -73,25 +75,24 @@ class axi_master_driver extends axi_driver_base;
         forever begin
             axi_seq_item cur;
 
-            // wait until W queue has a txn
             wait(w_queue.size() > 0);
             cur = w_queue.pop_front();
 
             for (int beat = 0; beat <= cur.len; beat++) begin
-                // assert WVALID and wait for WREADY
                 @(posedge vif.ACLK);
                 if (!vif.ARESETn) begin
                     vif.WVALID <= 0;
                     vif.WLAST  <= 0;
                     break;
                 end
+
                 vif.WDATA  <= cur.wdata[beat];
                 vif.WSTRB  <= cur.wstrb[beat];
                 vif.WLAST  <= (beat == cur.len);
                 vif.WVALID <= 1;
 
-                // wait for handshake
-                do @(posedge vif.ACLK); while (!vif.WREADY);
+                while (!vif.WREADY)
+                    @(posedge vif.ACLK);
             end
 
             vif.WVALID <= 0;
@@ -181,6 +182,31 @@ class axi_master_driver extends axi_driver_base;
         vif.ARBURST <= '0;
         vif.ARVALID <= '0;
         vif.RREADY  <= '0;
+    endtask
+
+    // ----------------------------------------------------------------
+    // Reset monitor — 偵測 reset 發生時清空 queues
+    // ----------------------------------------------------------------
+    task monitor_reset();
+        forever begin
+            @(negedge vif.ARESETn);                          // reset 拉低
+            flush_queues();
+            reset_signal();
+            `uvm_info("MSTDRV", "Reset asserted: queues flushed", UVM_MEDIUM)
+
+            @(posedge vif.ARESETn);                          // reset 釋放
+            @(posedge vif.ACLK);                             // 再等一拍穩定
+            `uvm_info("MSTDRV", "Reset deasserted: driver resumed", UVM_MEDIUM)
+        end
+    endtask
+
+    // ----------------------------------------------------------------
+    // Flush all pending queues
+    // ----------------------------------------------------------------
+    task flush_queues();
+        aw_queue.delete();
+        w_queue.delete();
+        ar_queue.delete();
     endtask
 
 endclass
