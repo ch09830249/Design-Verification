@@ -4,8 +4,8 @@
 class axi_slave_monitor extends axi_monitor_base;
     `uvm_component_utils(axi_slave_monitor)
 
-    axi_seq_item    ar_pending_q[*];
-    int             ar_beat_cnt[*];
+    axi_seq_item    ar_pending_q[int][$];  // associative array: id -> queue of txn
+    int             ar_beat_cnt[int];      // beat counter per id
 
     function new(string name = "axi_slave_monitor", uvm_component parent);
         super.new(name, parent);
@@ -101,8 +101,9 @@ class axi_slave_monitor extends axi_monitor_base;
                 t.burst = vif.ARBURST;
                 t.rdata = new[vif.ARLEN + 1];
                 t.rresp = new[vif.ARLEN + 1];
-                ar_pending_q[vif.ARID] = t;
-                ar_beat_cnt[vif.ARID]  = 0;
+                ar_pending_q[vif.ARID].push_back(t);
+                if (!ar_beat_cnt.exists(vif.ARID))
+                    ar_beat_cnt[vif.ARID] = 0;
             end
 
             // ---- R handshake ----
@@ -114,19 +115,21 @@ class axi_slave_monitor extends axi_monitor_base;
                     int beat;
                     beat = ar_beat_cnt[rid];
 
-                    if (beat < ar_pending_q[rid].rdata.size()) begin
-                        ar_pending_q[rid].rdata[beat] = vif.RDATA;
-                        ar_pending_q[rid].rresp[beat] = vif.RRESP;
+                    if (beat < ar_pending_q[rid][0].rdata.size()) begin
+                        ar_pending_q[rid][0].rdata[beat] = vif.RDATA;
+                        ar_pending_q[rid][0].rresp[beat] = vif.RRESP;
                     end else begin
                         `uvm_error("SLVMON", $sformatf(
                             "R beat %0d exceeds ARLEN=%0d for RID=0x%h",
-                            beat, ar_pending_q[rid].len, rid))
+                            beat, ar_pending_q[rid][0].len, rid))
                     end
 
                     if (vif.RLAST) begin
-                        port.write(ar_pending_q[rid]);
-                        ar_pending_q.delete(rid);
-                        ar_beat_cnt.delete(rid);
+                        port.write(ar_pending_q[rid][0]);
+                        ar_pending_q[rid].pop_front();
+                        if (ar_pending_q[rid].size() == 0)
+                            ar_pending_q.delete(rid);
+                        ar_beat_cnt[rid] = 0;
                     end else begin
                         ar_beat_cnt[rid]++;
                     end
