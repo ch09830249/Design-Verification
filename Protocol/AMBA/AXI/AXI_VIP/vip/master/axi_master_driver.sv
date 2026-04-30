@@ -80,13 +80,16 @@ class axi_master_driver extends axi_driver_base;
             cur = w_queue.pop_front();
 
             for (int beat = 0; beat <= cur.len; beat++) begin
-                @(posedge vif.ACLK);
-                if (!vif.ARESETn) break;
-
                 vif.WDATA  <= cur.wdata[beat];
                 vif.WSTRB  <= cur.wstrb[beat];
                 vif.WLAST  <= (beat == cur.len);
                 vif.WVALID <= 1;
+
+                // `uvm_info("MSTDRV", $sformatf("beat=%0d cur.len=%0d WLAST=%0b", 
+                //             beat, cur.len, (beat == cur.len)), UVM_LOW)
+
+                @(posedge vif.ACLK);
+                if (!vif.ARESETn) break;
 
                 while (!vif.WREADY) begin
                     @(posedge vif.ACLK);
