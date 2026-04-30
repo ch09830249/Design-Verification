@@ -47,40 +47,70 @@ interface axi_interface;
     logic                           RVALID;
     logic                           RREADY;
 
+    // ----------------------------------------------------------------
+    // Clocking blocks
+    // ----------------------------------------------------------------
+    clocking master_cb @(posedge ACLK);
+        default input #1step output #1;
+        output  AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID;
+        input   AWREADY;
+        output  WDATA, WSTRB, WLAST, WVALID;
+        input   WREADY;
+        input   BID, BRESP, BVALID;
+        output  BREADY;
+        output  ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARVALID;
+        input   ARREADY;
+        input   RID, RDATA, RRESP, RLAST, RVALID;
+        output  RREADY;
+    endclocking
+
+    clocking slave_cb @(posedge ACLK);
+        default input #1step output #1;
+        input   AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID;
+        output  AWREADY;
+        input   WDATA, WSTRB, WLAST, WVALID;
+        output  WREADY;
+        output  BID, BRESP, BVALID;
+        input   BREADY;
+        input   ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARVALID;
+        output  ARREADY;
+        output  RID, RDATA, RRESP, RLAST, RVALID;
+        input   RREADY;
+    endclocking
+
+    clocking monitor_cb @(posedge ACLK);
+        default input #1step;
+        input   AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID, AWREADY;
+        input   WDATA, WSTRB, WLAST, WVALID, WREADY;
+        input   BID, BRESP, BVALID, BREADY;
+        input   ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARVALID, ARREADY;
+        input   RID, RDATA, RRESP, RLAST, RVALID, RREADY;
+    endclocking
+
     modport master (
         input   ACLK, ARESETn,
-        // AW
         output  AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID,
         input   AWREADY,
-        // W
         output  WDATA, WSTRB, WLAST, WVALID,
         input   WREADY,
-        // B
         input   BID, BRESP, BVALID,
         output  BREADY,
-        // AR
         output  ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARVALID,
         input   ARREADY,
-        // R
         input   RID, RDATA, RRESP, RLAST, RVALID,
         output  RREADY
     );
 
     modport slave (
         input   ACLK, ARESETn,
-        // AW
         input   AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID,
         output  AWREADY,
-        // W
         input   WDATA, WSTRB, WLAST, WVALID,
         output  WREADY,
-        // B
         output  BID, BRESP, BVALID,
         input   BREADY,
-        // AR
         input   ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARVALID,
         output  ARREADY,
-        // R
         output  RID, RDATA, RRESP, RLAST, RVALID,
         input   RREADY
     );
