@@ -5,8 +5,8 @@ class axi_master_monitor extends axi_monitor_base;
     `uvm_component_utils(axi_master_monitor)
 
     // Pending AR transactions waiting for R data (keyed by ARID)
-    axi_seq_item    ar_pending_q[*];    // associative array: id -> txn
-    int             ar_beat_cnt[*];     // beat counter per id
+    axi_seq_item    ar_pending_q[int][$];  // associative array: id -> queue of txn
+    int             ar_beat_cnt[int];      // beat counter per id
 
     function new(string name = "axi_master_monitor", uvm_component parent);
         super.new(name, parent);
@@ -93,7 +93,7 @@ class axi_master_monitor extends axi_monitor_base;
     endtask
 
     // ----------------------------------------------------------------
-    // Read path: collect AR info, then R beats until RLAST
+    // Read path: collect AR info, then R beats until RLAST  (out-of-order R response)
     // ----------------------------------------------------------------
     task monitor_ar_r();
         forever begin
@@ -115,8 +115,9 @@ class axi_master_monitor extends axi_monitor_base;
                 t.burst = vif.ARBURST;
                 t.rdata = new[vif.ARLEN + 1];
                 t.rresp = new[vif.ARLEN + 1];
-                ar_pending_q[vif.ARID] = t;
-                ar_beat_cnt[vif.ARID]  = 0;
+                ar_pending_q[vif.ARID].push_back(t);  // ← push 進去，不覆蓋
+                if (!ar_beat_cnt.exists(vif.ARID))
+                    ar_beat_cnt[vif.ARID] = 0;        // ← 只有第一筆才初始化
             end
 
             // ---- R handshake（AR 之後處理） ----
@@ -129,19 +130,21 @@ class axi_master_monitor extends axi_monitor_base;
                     beat = ar_beat_cnt[rid];
 
                     // 防呆：beat 不能超過 rdata 陣列大小
-                    if (beat < ar_pending_q[rid].rdata.size()) begin
-                        ar_pending_q[rid].rdata[beat] = vif.RDATA;
-                        ar_pending_q[rid].rresp[beat] = vif.RRESP;
+                    if (beat < ar_pending_q[rid][0].rdata.size()) begin
+                        ar_pending_q[rid][0].rdata[beat] = vif.RDATA;
+                        ar_pending_q[rid][0].rresp[beat] = vif.RRESP;
                     end else begin
                         `uvm_error("MSTMON", $sformatf(
                             "R beat %0d exceeds ARLEN=%0d for RID=0x%h",
-                            beat, ar_pending_q[rid].len, rid))
+                            beat, ar_pending_q[rid][0].len, rid))
                     end
 
                     if (vif.RLAST) begin
-                        port.write(ar_pending_q[rid]);
-                        ar_pending_q.delete(rid);
-                        ar_beat_cnt.delete(rid);
+                        port.write(ar_pending_q[rid][0]);
+                        ar_pending_q[rid].pop_front();     // ← 這筆做完才 pop
+                        if (ar_pending_q[rid].size() == 0)
+                            ar_pending_q.delete(rid);      // ← 清乾淨
+                        ar_beat_cnt[rid] = 0;              // ← reset beat count 給下一筆用
                     end else begin
                         ar_beat_cnt[rid]++;
                     end
