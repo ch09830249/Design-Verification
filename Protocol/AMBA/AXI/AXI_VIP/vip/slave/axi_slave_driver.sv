@@ -58,7 +58,7 @@ class axi_slave_driver extends axi_driver_base;
 
             // ---- AW channel: always ready ----
             vif.AWREADY <= 1;
-            if (vif.AWVALID && vif.AWREADY) begin
+            if (vif.AWVALID) begin
                 aw_info_t info;
                 info.addr  = vif.AWADDR;
                 info.size  = vif.AWSIZE;
@@ -70,11 +70,11 @@ class axi_slave_driver extends axi_driver_base;
 
             // ---- W channel: ready when AW descriptor exists ----
             vif.WREADY <= (aw_q.size() > 0);
-            if (vif.WVALID && vif.WREADY && aw_q.size() > 0) begin
+            if (vif.WVALID && aw_q.size() > 0) begin
                 int unsigned word_idx;
 
                 if (w_beat == 0)
-                    cur_aw = aw_q[0];
+                    cur_aw = aw_q[0];       // 指向第一筆 write
 
                 word_idx = cur_aw.addr >> BYTE_OFFSET_BITS;
 
@@ -85,7 +85,7 @@ class axi_slave_driver extends axi_driver_base;
                 end
 
                 if (vif.WLAST) begin
-                    void'(aw_q.pop_front());
+                    void'(aw_q.pop_front());    // 代表該 transfer 做完了 => w_beat reset into 0
                     w_beat = 0;
                 end else begin
                     cur_aw.addr = cur_aw.addr + (1 << cur_aw.size);
@@ -96,10 +96,10 @@ class axi_slave_driver extends axi_driver_base;
 
             // ---- B channel: send response after WLAST ----
             if (!vif.BVALID) begin
-                if (vif.WVALID && vif.WREADY && vif.WLAST) begin
+                if (vif.WVALID && vif.WLAST) begin
                     vif.BVALID  <= 1;
                     vif.BRESP   <= `BRESP_OKAY;
-                    vif.BID     <= vif.AWID;
+                    vif.BID     <= cur_aw.id;
                 end
             end else begin
                 if (vif.BREADY)
@@ -148,7 +148,12 @@ class axi_slave_driver extends axi_driver_base;
             end
 
             // ---- R channel: serve head of AR queue ----
-            if (ar_q.size() > 0 && (!vif.RVALID || vif.RREADY)) begin
+
+            if (vif.RVALID && vif.RREADY && vif.RLAST) begin
+                // 本 burst 結束，先清 RVALID
+                vif.RVALID <= 0;
+                vif.RLAST  <= 0;
+            end else if (ar_q.size() > 0 && (!vif.RVALID || vif.RREADY)) begin
                 ar_info_t rd;
                 int unsigned word_idx;
 
@@ -161,14 +166,12 @@ class axi_slave_driver extends axi_driver_base;
                 vif.RLAST  <= (rd.len == 0);
                 vif.RVALID <= 1;
 
-                if (rd.len == 0) begin
+                if (rd.len == 0)
                     void'(ar_q.pop_front());
-                end else begin
+                else begin
                     ar_q[0].addr = rd.addr + (1 << rd.size);
                     ar_q[0].len  = rd.len - 1;
                 end
-            end else if (vif.RVALID && vif.RREADY && vif.RLAST) begin
-                vif.RVALID <= 0;
             end
         end
     endtask
