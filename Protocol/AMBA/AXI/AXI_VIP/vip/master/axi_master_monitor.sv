@@ -93,7 +93,7 @@ class axi_master_monitor extends axi_monitor_base;
     endtask
 
     // ----------------------------------------------------------------
-    // Read path: collect AR info, then R beats until RLAST  (out-of-order R response)
+    // Read path: collect AR info, then R beats until RLAST  (out-of-order R response: AXI spec 保證同一個 ID 的 R response 順序跟 AR 發出的順序一致, 不同 ID 可以亂序)
     // ----------------------------------------------------------------
     task monitor_ar_r();
         forever begin
