@@ -19,6 +19,8 @@ class axi_slave_driver extends axi_driver_base;
 
     virtual task run_phase(uvm_phase phase);
         reset_signal();
+        @(posedge vif.ARESETn);    // 等 reset 結束
+        @(posedge vif.ACLK);       // 再等一拍穩定
         fork
             drive_aw_w_b();     // Write path: AW + W + B
             drive_ar_r();       // Read  path: AR + R
