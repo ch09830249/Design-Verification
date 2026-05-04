@@ -51,7 +51,7 @@ interface axi_interface;
     // Clocking blocks
     // ----------------------------------------------------------------
     clocking master_cb @(posedge ACLK);
-        default input #1step output #1;
+        default input #1step output #1step;
         output  AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID;
         input   AWREADY;
         output  WDATA, WSTRB, WLAST, WVALID;
@@ -65,7 +65,7 @@ interface axi_interface;
     endclocking
 
     clocking slave_cb @(posedge ACLK);
-        default input #1step output #1;
+        default input #1step output #1step;
         input   AWID, AWADDR, AWLEN, AWSIZE, AWBURST, AWVALID;
         output  AWREADY;
         input   WDATA, WSTRB, WLAST, WVALID;
