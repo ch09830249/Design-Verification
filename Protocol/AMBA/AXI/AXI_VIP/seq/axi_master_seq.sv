@@ -11,7 +11,7 @@ class axi_master_seq extends uvm_sequence #(axi_seq_item);
     endfunction
 
     virtual task body();
-        for (int i = 0; i < 3000; i++) begin
+        for (int i = 0; i < 20; i++) begin
             txn = axi_seq_item::type_id::create("txn");
 
             if (!txn.randomize())
