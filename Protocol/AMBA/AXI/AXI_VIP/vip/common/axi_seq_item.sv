@@ -37,15 +37,19 @@ class axi_seq_item extends uvm_sequence_item;
     `uvm_object_utils_end
 
     constraint size_valid_c  { size  inside {`ASIZE_BYTE, `ASIZE_HALFWORD, `ASIZE_WORD}; }
-    constraint burst_valid_c { burst inside {`ABURST_FIXED, `ABURST_INCR, `ABURST_WRAP}; }
+    constraint burst_valid_c { burst inside {`ABURST_FIXED, `ABURST_INCR}; }  // Not support `ABURST_WRAP
     constraint len_valid_c   { len   inside {[0:15]}; }        // 1~16 beats
     constraint fixed_len_c   { (burst == `ABURST_FIXED) -> (len == 0); }
     constraint align_addr_c  { addr % (1 << size) == 0; }
-    constraint overflow_c    { addr + (len * (1 << size)) <= `D_MEM_SIZE; }
+    constraint overflow_c    { addr + ((len + 1) * (1 << size)) <= `D_MEM_SIZE; }
 
     // wdata / wstrb 陣列大小與 len 對齊
-    constraint wdata_size_c  { wdata.size() == len + 1;
-                                wstrb.size() == len + 1; }
+    constraint wdata_size_c {
+        write -> (wdata.size() == len + 1);
+        write -> (wstrb.size() == len + 1);
+        !write -> (wdata.size() == 0);
+        !write -> (wstrb.size() == 0);
+    }
 
     // 預設全 byte enable
     constraint wstrb_full_c  { foreach (wstrb[i]) wstrb[i] == '1; }
