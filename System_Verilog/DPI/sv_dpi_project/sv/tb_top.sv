@@ -24,7 +24,7 @@
 //    SV real    <-> C double
 //    SV string  <-> C const char*
 //    SV bit     <-> C svBit
-//    SV byte    <-> C svByte (= signed char)
+//    SV byte    <-> C signed char  (Xcelium svdpi.h 無 svByte)
 //    SV chandle <-> C void*
 // ------------------------------------------------------------
 import "DPI-C" function int    c_add           (input int a, input int b);
@@ -32,7 +32,7 @@ import "DPI-C" function real   c_multiply_real (input real x, input real y);
 import "DPI-C" function void   c_print_string  (input string msg);
 import "DPI-C" function int    c_string_length  (input string s);
 import "DPI-C" function bit    c_check_even     (input int n);
-import "DPI-C" function byte   c_to_upper       (input byte ch);
+import "DPI-C" function byte   c_to_upper       (input byte ch);  // C端: signed char
 
 // ------------------------------------------------------------
 //  [2] Open Array — 動態大小陣列
@@ -83,7 +83,7 @@ export "DPI-C" function sv_notify_done;
 
 // 讓 C 呼叫的 export 函式，在 SV 端呼叫 C 函式
 // (這個 C 函式會再回呼 sv_compute_crc，展示 cross-call)
-import "DPI-C" function void c_call_sv_export(input int input_data);
+import "DPI-C" context function void c_call_sv_export(input int input_data);
 
 // ------------------------------------------------------------
 //  [5] Blocking Task — C 端耗時任務
