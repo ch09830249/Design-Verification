@@ -217,130 +217,140 @@ find $CDSHOME -name "svdpi.h"
 ## xrun.log
 
 ```
+============================================================
+  SystemVerilog DPI 完整學習範例 — xrun
+  Project root : /home/users3/kenny780/kenny/DPI/sv_dpi_project
+============================================================
+
+TOOL:   xrun    23.03-s013: Started on May 08, 2026 at 04:30:55 CST
 xrun: 23.03-s013: (c) Copyright 1995-2024 Cadence Design Systems, Inc.
-TOOL:	xrun	23.03-s013: Started on May 08, 2026 at 04:01:37 CST
-/home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun
-	-licqueue
-	-sv
-	sv/tb_top.sv
-	c/dpi_functions.c
-	-dpiimpheader dpi_imports.h
-	-CFLAGS "-I/tools/include -g"
-	-timescale 1ns/1ps
-	-access +r
-	-log xrun.log
-	-mess
-	-top tb_top
+Recompiling... reason: file './sv/tb_top.sv' is newer than expected.
+        expected: Thu May  7 23:02:51 2026
+        actual:   Fri May  8 04:30:47 2026
 file: sv/tb_top.sv
-	module worklib.tb_top:sv
-		errors: 0, warnings: 0
-$CDSROOT = /home/project/eda/pkgs/cadence/xcelium/v23.03
-$TESTDIR = /home/users3/kenny780/kenny/DPI/sv_dpi_project
-
-TOOL:	xmsc	23.03-s013
-xmsc cc parameters: 
-	$CDSROOT/tools/cdsgcc/gcc/9.3/bin/gcc
-	-I/tools/include
-	-g
-	-I$CDSROOT/tools/include
-	-I$CDSROOT/tools/inca/include 
-	-DXMSC
-	-DNCSC
-	-D_GLIBCXX_USE_CXX11_ABI=1 -c
-	-x c -m32  -Wall 
-
-xmsc: compiling $TESTDIR/c/dpi_functions.c
-
-
-building library run.so
-
-	Elaborating the design hierarchy:
-	Top level design units:
-		$unit_0x4bff31f0
-		tb_top
-	Building instance overlay tables: .................... Done
-	Generating native compiled code:
-		worklib.tb_top:sv <0x6cbc1945>
-			streams:   1, words: 43789
-		worklib.\$unit_0x4bff31f0 :compilation_unit <0x1ac1e842>
-			streams:   3, words:  1840
-	Building instance specific data structures.
-	Loading native compiled code:     .................... Done
-	Design hierarchy summary:
-		                 Instances  Unique
-		Modules:                 1       1
-		Registers:              60      30
-		Initial blocks:          1       1
-		Compilation units:       1       1
-		Simulation timescale:  1ps
-	Writing initial simulation snapshot: worklib.tb_top:sv
+        module worklib.tb_top:sv
+                errors: 0, warnings: 0
+        Elaborating the design hierarchy:
+        Top level design units:
+                $unit_0x4bff31f0
+                tb_top
+        Building instance overlay tables: .................... Done
+        Generating native compiled code:
+                worklib.tb_top:sv <0x6cbc1945>
+                        streams:   1, words: 43789
+        Building instance specific data structures.
+        Loading native compiled code:     .................... Done
+        Design hierarchy summary:
+                                 Instances  Unique
+                Modules:                 1       1
+                Registers:              60      30
+                Initial blocks:          1       1
+                Compilation units:       1       1
+                Simulation timescale:  1ps
+        Writing initial simulation snapshot: worklib.tb_top:sv
 Loading snapshot worklib.tb_top:sv .................... Done
 xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/xcelium/files/xmsimrc
 xcelium> run
 
 
 ╔══════════════════════════════════════════════════════╗
-║      SystemVerilog DPI 完整學習範例  by xrun         ║
+║      SystemVerilog DPI 完整學習範例  by xrun          ║
 ╚══════════════════════════════════════════════════════╝
 
 ── [Test 1] 基本型別傳遞 ─────────────────────────────
+[C][c_add]  100 + 234 = 334
 [SV] c_add 回傳: 334
+[C][c_multiply_real]  3.1400 * 2.7100 = 8.5094
 [SV] c_multiply_real 回傳: 8.509400
+[C][c_print_string]  "Hello from SV!"  (len=14)
 [SV] c_string_length("systemverilog") = 13
+[C][c_check_even]  42 是偶數
 [SV] c_check_even(42) = 1  (應為 1)
+[C][c_check_even]  7 是奇數
 [SV] c_check_even( 7) = 0  (應為 0)
+[C][c_to_upper]  'a' -> 'A'
 [SV] c_to_upper('a') = 'A' (0x41)
 
 ── [Test 2] Open Array ───────────────────────────────
 [SV] 呼叫 c_fill_array(arr1[0:7])...
-[SV] arr1 = 0 1 4 9 16 25 36 49 
+[C][c_fill_array]  index [0:7], 共 8 個元素
+[C][c_fill_array]  填入 arr[i]=i^2 完成
+[SV] arr1 = 0 1 4 9 16 25 36 49
+[C][c_sum_array]   總和 = 140
 [SV] c_sum_array 回傳總和: 140
-[SV] arr2 反序前 = 3 6 9 12 15 18 21 24 
-[SV] arr2 反序後 = 24 21 18 15 12 9 6 3 
+[SV] arr2 反序前 = 3 6 9 12 15 18 21 24
+[C][c_reverse_array]  反序完成
+[SV] arr2 反序後 = 24 21 18 15 12 9 6 3
 [SV] 二維陣列初始值：
-  row[0]:   0   1   2   3 
-  row[1]:  10  11  12  13 
-  row[2]:  20  21  22  23 
-  row[3]:  30  31  32  33 
+  row[0]:   0   1   2   3
+  row[1]:  10  11  12  13
+  row[2]:  20  21  22  23
+  row[3]:  30  31  32  33
 [SV] 呼叫 c_print_2d_array...
+[C][c_print_2d_array]  row[0:3] col[0:3]
+  row[0]:    0    1    2    3
+  row[1]:   10   11   12   13
+  row[2]:   20   21   22   23
+  row[3]:   30   31   32   33
 
 ── [Test 3] Struct 傳遞 ──────────────────────────────
 [SV] 傳遞 struct 給 C：id=42 value=1000 score=98.750000
+[C][c_process_packet]  id=42 value=1000 score=98.75 name=""
+[C][c_fill_packet]  id=99 score=77.50
 [SV] C 填充後：id=99 value=990 score=77.500000
 
 ── [Test 4] Export Function (C 呼叫 SV) ─────────────
 [SV][sv_compute_crc]  data=0xdeadbeef  CRC=0x43
 [SV] sv_compute_crc(0xDEADBEEF) = 0x43
 [SV] 呼叫 c_call_sv_export → C 內部再呼叫 sv_compute_crc
+[C][c_call_sv_export]  呼叫 sv_compute_crc(0xCAFE1234)
 [SV][sv_compute_crc]  data=0xcafe1234  CRC=0xad
+[C][c_call_sv_export]  SV 回傳 CRC=0x000000AD
 
 ── [Test 5] Blocking Task ────────────────────────────
-[SV] 排序前: 5 3 8 1 9 2 7 4 6 0 
+[SV] 排序前: 5 3 8 1 9 2 7 4 6 0
 [SV] 呼叫 c_blocking_sort (task)...
-[SV] 排序後: 0 1 2 3 4 5 6 7 8 9 
+[C][c_blocking_sort]  排序 10 個元素...
+[C][c_blocking_sort]  排序完成
+[SV] 排序後: 0 1 2 3 4 5 6 7 8 9
 
 ── [Test 6] Chandle (C 物件指標) ────────────────────
-[SV] counter_handle = 230446368
+[C][c_create_counter]  "CTR_10" init=10 addr=0xccc6640
+[SV] counter_handle = 214722112
+[C][c_increment]  "CTR_10" count=11
+[C][c_increment]  "CTR_10" count=12
+[C][c_increment]  "CTR_10" count=13
+[C][c_increment]  "CTR_10" count=14
+[C][c_increment]  "CTR_10" count=15
 [SV] c_get_count 回傳: 15 (應為 15)
+[C][c_destroy_counter]  釋放 "CTR_10" addr=0xccc6640
 
 ── [Test 7] svdpi.h 進階 API ─────────────────────────
 [SV] 呼叫 c_use_scope_api...
+[C][c_use_scope_api]  目前 scope = "$unit_0x4bff31f0::"
 [SV] 呼叫 c_use_time_api (時間=20000)...
+[C][c_use_time_api]  時間 API 已呼叫
+[C]  推薦做法：從 SV 端把 $time 當參數傳進來
+[C]  例：import "DPI-C" function void c_log_time(input longint t);
 [SV] 呼叫 c_use_userdata 三次...
+[C][c_use_userdata]  第一次：建立 userdata=1000
+[C][c_use_userdata]  後續呼叫：userdata=1001
+[C][c_use_userdata]  後續呼叫：userdata=1002
 
 ── [Test 8] Pure Function ────────────────────────────
-fib(0)=0 fib(1)=1 fib(2)=1 fib(3)=2 fib(4)=3 fib(5)=5 fib(6)=8 fib(7)=13 fib(8)=21 fib(9)=34 fib(10)=55 
+fib(0)=0 fib(1)=1 fib(2)=1 fib(3)=2 fib(4)=3 fib(5)=5 fib(6)=8 fib(7)=13 fib(8)=21 fib(9)=34 fib(10)=55
 [SV] 2^10 = 1024.000000 (應為 1024)
 [SV] 3^ 5 = 243.000000 (應為  243)
 
 
 ╔══════════════════════════════════════════════════════╗
-║               所有 DPI 測試完成！                    ║
+║               所有 DPI 測試完成！                     ║
 ╚══════════════════════════════════════════════════════╝
 
 Simulation complete via $finish(1) at time 70 NS + 0
 ./sv/tb_top.sv:381         $finish;
 xcelium> exit
-TOOL:	xrun	23.03-s013: Exiting on May 08, 2026 at 04:01:38 CST  (total: 00:00:01)
+TOOL:   xrun    23.03-s013: Exiting on May 08, 2026 at 04:30:56 CST  (total: 00:00:01)
 
+==> 完成！Log 檔案：xrun.log
 ```
