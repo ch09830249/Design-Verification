@@ -213,3 +213,134 @@ find $CDSHOME -name "svdpi.h"
 ║               所有 DPI 測試完成！                    ║
 ╚══════════════════════════════════════════════════════╝
 ```
+
+## xrun.log
+
+```
+xrun: 23.03-s013: (c) Copyright 1995-2024 Cadence Design Systems, Inc.
+TOOL:	xrun	23.03-s013: Started on May 08, 2026 at 04:01:37 CST
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun
+	-licqueue
+	-sv
+	sv/tb_top.sv
+	c/dpi_functions.c
+	-dpiimpheader dpi_imports.h
+	-CFLAGS "-I/tools/include -g"
+	-timescale 1ns/1ps
+	-access +r
+	-log xrun.log
+	-mess
+	-top tb_top
+file: sv/tb_top.sv
+	module worklib.tb_top:sv
+		errors: 0, warnings: 0
+$CDSROOT = /home/project/eda/pkgs/cadence/xcelium/v23.03
+$TESTDIR = /home/users3/kenny780/kenny/DPI/sv_dpi_project
+
+TOOL:	xmsc	23.03-s013
+xmsc cc parameters: 
+	$CDSROOT/tools/cdsgcc/gcc/9.3/bin/gcc
+	-I/tools/include
+	-g
+	-I$CDSROOT/tools/include
+	-I$CDSROOT/tools/inca/include 
+	-DXMSC
+	-DNCSC
+	-D_GLIBCXX_USE_CXX11_ABI=1 -c
+	-x c -m32  -Wall 
+
+xmsc: compiling $TESTDIR/c/dpi_functions.c
+
+
+building library run.so
+
+	Elaborating the design hierarchy:
+	Top level design units:
+		$unit_0x4bff31f0
+		tb_top
+	Building instance overlay tables: .................... Done
+	Generating native compiled code:
+		worklib.tb_top:sv <0x6cbc1945>
+			streams:   1, words: 43789
+		worklib.\$unit_0x4bff31f0 :compilation_unit <0x1ac1e842>
+			streams:   3, words:  1840
+	Building instance specific data structures.
+	Loading native compiled code:     .................... Done
+	Design hierarchy summary:
+		                 Instances  Unique
+		Modules:                 1       1
+		Registers:              60      30
+		Initial blocks:          1       1
+		Compilation units:       1       1
+		Simulation timescale:  1ps
+	Writing initial simulation snapshot: worklib.tb_top:sv
+Loading snapshot worklib.tb_top:sv .................... Done
+xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/xcelium/files/xmsimrc
+xcelium> run
+
+
+╔══════════════════════════════════════════════════════╗
+║      SystemVerilog DPI 完整學習範例  by xrun         ║
+╚══════════════════════════════════════════════════════╝
+
+── [Test 1] 基本型別傳遞 ─────────────────────────────
+[SV] c_add 回傳: 334
+[SV] c_multiply_real 回傳: 8.509400
+[SV] c_string_length("systemverilog") = 13
+[SV] c_check_even(42) = 1  (應為 1)
+[SV] c_check_even( 7) = 0  (應為 0)
+[SV] c_to_upper('a') = 'A' (0x41)
+
+── [Test 2] Open Array ───────────────────────────────
+[SV] 呼叫 c_fill_array(arr1[0:7])...
+[SV] arr1 = 0 1 4 9 16 25 36 49 
+[SV] c_sum_array 回傳總和: 140
+[SV] arr2 反序前 = 3 6 9 12 15 18 21 24 
+[SV] arr2 反序後 = 24 21 18 15 12 9 6 3 
+[SV] 二維陣列初始值：
+  row[0]:   0   1   2   3 
+  row[1]:  10  11  12  13 
+  row[2]:  20  21  22  23 
+  row[3]:  30  31  32  33 
+[SV] 呼叫 c_print_2d_array...
+
+── [Test 3] Struct 傳遞 ──────────────────────────────
+[SV] 傳遞 struct 給 C：id=42 value=1000 score=98.750000
+[SV] C 填充後：id=99 value=990 score=77.500000
+
+── [Test 4] Export Function (C 呼叫 SV) ─────────────
+[SV][sv_compute_crc]  data=0xdeadbeef  CRC=0x43
+[SV] sv_compute_crc(0xDEADBEEF) = 0x43
+[SV] 呼叫 c_call_sv_export → C 內部再呼叫 sv_compute_crc
+[SV][sv_compute_crc]  data=0xcafe1234  CRC=0xad
+
+── [Test 5] Blocking Task ────────────────────────────
+[SV] 排序前: 5 3 8 1 9 2 7 4 6 0 
+[SV] 呼叫 c_blocking_sort (task)...
+[SV] 排序後: 0 1 2 3 4 5 6 7 8 9 
+
+── [Test 6] Chandle (C 物件指標) ────────────────────
+[SV] counter_handle = 230446368
+[SV] c_get_count 回傳: 15 (應為 15)
+
+── [Test 7] svdpi.h 進階 API ─────────────────────────
+[SV] 呼叫 c_use_scope_api...
+[SV] 呼叫 c_use_time_api (時間=20000)...
+[SV] 呼叫 c_use_userdata 三次...
+
+── [Test 8] Pure Function ────────────────────────────
+fib(0)=0 fib(1)=1 fib(2)=1 fib(3)=2 fib(4)=3 fib(5)=5 fib(6)=8 fib(7)=13 fib(8)=21 fib(9)=34 fib(10)=55 
+[SV] 2^10 = 1024.000000 (應為 1024)
+[SV] 3^ 5 = 243.000000 (應為  243)
+
+
+╔══════════════════════════════════════════════════════╗
+║               所有 DPI 測試完成！                    ║
+╚══════════════════════════════════════════════════════╝
+
+Simulation complete via $finish(1) at time 70 NS + 0
+./sv/tb_top.sv:381         $finish;
+xcelium> exit
+TOOL:	xrun	23.03-s013: Exiting on May 08, 2026 at 04:01:38 CST  (total: 00:00:01)
+
+```
