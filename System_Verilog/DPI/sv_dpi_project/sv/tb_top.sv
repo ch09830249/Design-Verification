@@ -71,18 +71,68 @@ import "DPI-C" function void c_fill_packet   (inout  SVPacket pkt,
                                                input  real    score);
 
 // ------------------------------------------------------------
+//  【context 關鍵字說明】
+//
+//  格式：import "DPI-C" context function/task ...
+//
+//  ── context 是什麼？ ────────────────────────────────────────
+//  模擬器在執行 SV 時，會維護一個「目前在哪個 module/scope 裡」
+//  的執行環境（context）。
+//
+//  加了 context 的 C 函式，模擬器會在呼叫它之前先設好這個環境，
+//  讓 C 端可以透過 svdpi.h API 查詢或操作這個執行環境。
+//
+//  ── 沒有 context 的一般 function ───────────────────────────
+//  模擬器為了效能，不會設定執行環境。
+//  在一般 function 裡呼叫 svGetScope() 會回傳 NULL。
+//  在一般 function 裡呼叫 SV export function 會報錯：
+//    xmsim: *E,NONCONI: The C identifier "..." cannot be executed
+//                       from a non-context import task/function
+//
+//  ── 什麼時候必須加 context？ ────────────────────────────────
+//  以下任何一個條件成立就必須加：
+//
+//  1. C 函式內部呼叫了 svGetScope()
+//     → 取得目前執行的 SV scope
+//
+//  2. C 函式內部呼叫了 svSetScope()
+//     → 切換到指定 scope
+//
+//  3. C 函式內部呼叫了 svGetUserData() / svPutUserData()
+//     → 這些 API 都需要 scope，而 scope 需要 context
+//
+//  4. C 函式內部回呼了 SV 的 export function
+//     → SV export 在執行時需要知道自己在哪個 scope 裡
+//     → 呼叫鏈：SV → C (context) → SV export ← 這樣才合法
+//     → 呼叫鏈：SV → C (非context) → SV export ← NONCONI 錯誤！
+//
+//  5. import task（不論有沒有用到上面的 API）
+//     → task 本身就需要 context 才能正確消耗模擬時間
+//
+//  ── 什麼時候不需要加 context？ ──────────────────────────────
+//  C 函式只是做純計算（加減乘除、字串處理、排序等），
+//  完全不呼叫任何 svdpi.h API，也不回呼 SV export → 不需要加
+//  → 沒有 context 的呼叫效能略好（模擬器少做一些準備工作）
+//
+//  ── 三種屬性比較 ────────────────────────────────────────────
+//  屬性       可用 svdpi API  可回呼 export  效能
+//  (無)       ✗              ✗             最快
+//  context    ✓              ✓             稍慢（需設定環境）
+//  pure       ✗              ✗             最快（還可快取）
+// ------------------------------------------------------------
+
+// ------------------------------------------------------------
 //  [4] Export Function — SV 定義，C 端呼叫
 //
 //  格式：export "DPI-C" function <function_name>;
 //  函式本體在 SV 裡定義 (用 function / task 關鍵字)
 //  C 端透過函式指標或直接呼叫（需要模擬器生成的 header）
 // ------------------------------------------------------------
-// SV 端的 export function 宣告
 export "DPI-C" function sv_compute_crc;
 export "DPI-C" function sv_notify_done;
 
-// 讓 C 呼叫的 export 函式，在 SV 端呼叫 C 函式
-// (這個 C 函式會再回呼 sv_compute_crc，展示 cross-call)
+// c_call_sv_export 內部會回呼 sv_compute_crc（SV export）
+// → 所以這裡必須加 context，否則報 NONCONI 錯誤
 import "DPI-C" context function void c_call_sv_export(input int input_data);
 
 // ------------------------------------------------------------
@@ -91,8 +141,7 @@ import "DPI-C" context function void c_call_sv_export(input int input_data);
 //  SV task 可以消耗模擬時間
 //  import task 讓 C 端也能有類似的行為
 //
-//  重要：blocking task 需要 "context" 屬性
-//  context = 可以呼叫 svGetScope() 等需要 SV context 的 API
+//  → task 必須加 context（規定）
 // ------------------------------------------------------------
 import "DPI-C" context task c_blocking_sort(inout int arr[]);
 
@@ -102,6 +151,9 @@ import "DPI-C" context task c_blocking_sort(inout int arr[]);
 //  chandle 是 SV 的不透明指標型別
 //  SV 不知道它指向什麼，只能存放並傳回 C 端
 //  用來實作 C 端的物件導向模式
+//
+//  → 這幾個函式只做 malloc/free/計數，不呼叫任何 svdpi API
+//  → 不需要 context
 // ------------------------------------------------------------
 import "DPI-C" function chandle c_create_counter (input int init_val);
 import "DPI-C" function void    c_increment      (input chandle handle);
@@ -111,8 +163,8 @@ import "DPI-C" function void    c_destroy_counter(input chandle handle);
 // ------------------------------------------------------------
 //  [7] svdpi.h 進階 API
 //
-//  context function = 可以使用 svGetScope() / svGetTime() 等 API
-//  一般 function 不能使用這些 API
+//  → 這三個函式內部都呼叫了 svGetScope() / svGetUserData()
+//  → 必須加 context，否則 svGetScope() 回傳 NULL
 // ------------------------------------------------------------
 import "DPI-C" context function void c_use_scope_api();
 import "DPI-C" context function void c_use_time_api ();
@@ -184,7 +236,7 @@ module tb_top;
 
         $display("\n");
         $display("╔══════════════════════════════════════════════════════╗");
-        $display("║      SystemVerilog DPI 完整學習範例  by xrun          ║");
+        $display("║      SystemVerilog DPI 完整學習範例  by xrun         ║");
         $display("╚══════════════════════════════════════════════════════╝");
 
 
@@ -374,7 +426,7 @@ module tb_top;
         // ======================================================
         $display("\n");
         $display("╔══════════════════════════════════════════════════════╗");
-        $display("║               所有 DPI 測試完成！                     ║");
+        $display("║               所有 DPI 測試完成！                    ║");
         $display("╚══════════════════════════════════════════════════════╝");
         $display("");
 
