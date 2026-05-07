@@ -27,7 +27,73 @@
  * ============================================================
  */
 
-#include "svdpi.h"   /* Xcelium DPI 標準 header，定義 svBit 等型別 */
+/*
+ * ============================================================
+ *  svdpi.h — 這些 API 從哪裡來？
+ *
+ *  svdpi.h 是 IEEE 1800 SystemVerilog 標準的一部分
+ *  （IEEE Std 1800-2012 / 2017，Annex H）
+ *  所有符合標準的模擬器都必須提供這個 header：
+ *
+ *    Xcelium  → $CDSHOME/tools/include/svdpi.h
+ *    VCS      → $VCS_HOME/include/svdpi.h
+ *    Questa   → $MTI_HOME/include/svdpi.h
+ *
+ *  只要編譯時加 -CFLAGS "-I${CDSHOME}/tools/include"
+ *  就能 #include "svdpi.h" 使用以下所有 API。
+ *
+ *  想看完整定義，直接開來看：
+ *    less $CDSHOME/tools/include/svdpi.h
+ *  或搜尋特定函式：
+ *    grep -n "svLeft\|svGetArrElemPtr" $CDSHOME/tools/include/svdpi.h
+ *
+ * ──────────────────────────────────────────────────────────
+ *  svdpi.h 主要提供的 API（依功能分類）
+ * ──────────────────────────────────────────────────────────
+ *
+ *  [型別]
+ *    svBit             = unsigned char，對應 SV bit（值只有 0/1）
+ *    svLogic           = unsigned char，對應 SV logic（含 X/Z）
+ *    svBitVecVal       packed bit vector 的元素型別
+ *    svLogicVecVal     packed logic vector 的元素型別（含 X/Z）
+ *    svOpenArrayHandle 動態陣列 handle（open array 傳遞用）
+ *    svScope           SV scope 物件（module / instance）
+ *
+ *  [Open Array API]                       對應用途
+ *    svLeft (h, dim)                    → 陣列第 dim 維的左邊界 index
+ *    svRight(h, dim)                    → 陣列第 dim 維的右邊界 index
+ *    svSize (h, dim)                    → 第 dim 維的元素個數
+ *    svDimensions(h)                    → 幾維陣列
+ *    svGetArrElemPtr1(h, i)             → 一維陣列第 i 個元素的 void*
+ *    svGetArrElemPtr2(h, i, j)          → 二維陣列第 [i][j] 元素的 void*
+ *    svGetArrElemPtr3(h, i, j, k)       → 三維陣列
+ *    ※ dim 從 1 開始（不是 0）
+ *    ※ index 用 svLeft..svRight，不能假設從 0 開始
+ *
+ *  [Scope API]（需要 context function/task）
+ *    svGetScope()                       → 取得目前執行的 SV scope
+ *    svSetScope(s)                      → 切換到指定 scope，回傳舊 scope
+ *    svGetNameFromScope(s)              → scope 轉名稱字串
+ *    svGetScopeFromName(name)           → 名稱字串轉 scope
+ *
+ *  [UserData API]（需要 context function/task）
+ *    svPutUserData(scope, key, data)    → 把 C 資料綁定到 SV scope
+ *    svGetUserData(scope, key)          → 取回綁定的資料（找不到回傳 NULL）
+ *
+ *  [Packed Vector API]
+ *    svGetBits (h, val)                 → 讀取 packed bit vector
+ *    svPutBits (h, val)                 → 寫入 packed bit vector
+ *    svGetLogic(h, val)                 → 讀取 packed logic vector（含 X/Z）
+ *    svPutLogic(h, val)                 → 寫入 packed logic vector
+ *
+ *  [Xcelium 23.x 不存在的 API（常見陷阱）]
+ *    svByte      → 不存在，改用 signed char
+ *    svTimeVal   → 不存在，改用「SV 端把 $time 當參數傳入」
+ *    svGetTime() → 不存在，同上
+ * ============================================================
+ */
+
+#include "svdpi.h"   /* IEEE 1800 標準 DPI header，路徑見上方說明 */
 #include <stdint.h>
 
 /* ----------------------------------------------------------
