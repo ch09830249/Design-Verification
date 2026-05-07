@@ -24,7 +24,7 @@ c/dpi_functions.c
 # ---- 編譯旗標 -----------------------------------------------
 # 注意：${CDSHOME} 需要在 shell 環境中設定好
 -CFLAGS "-g -I${CDSHOME}/tools/include -Iwork"
--LDFLAGS "-lm"
+-ldargs "-lm"
 
 # ---- Work library -------------------------------------------
 -work work/worklib
