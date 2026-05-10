@@ -40,11 +40,20 @@ sim:
 	    +UVM_VERBOSITY=UVM_MEDIUM
 
 # Run all four tests sequentially
+# Usage:
+#   make regress                        -> seeds 1/2/3/4 per test (default)
+#   make regress REGRESS_SEED=42        -> all four tests use seed 42
+#   make regress SEED_BASIC=10 SEED_REV=20 SEED_CFG=30 SEED_STRESS=40
+SEED_BASIC  ?= 1
+SEED_REV    ?= 2
+SEED_CFG    ?= 3
+SEED_STRESS ?= 4
+
 regress:
-	$(MAKE) sim TEST=test_basic_count   SEED=1
-	$(MAKE) sim TEST=test_reverse       SEED=2
-	$(MAKE) sim TEST=test_range_change  SEED=3
-	$(MAKE) sim TEST=test_stress        SEED=4
+	$(MAKE) sim TEST=test_basic_count   SEED=$(if $(REGRESS_SEED),$(REGRESS_SEED),$(SEED_BASIC))
+	$(MAKE) sim TEST=test_reverse       SEED=$(if $(REGRESS_SEED),$(REGRESS_SEED),$(SEED_REV))
+	$(MAKE) sim TEST=test_range_change  SEED=$(if $(REGRESS_SEED),$(REGRESS_SEED),$(SEED_CFG))
+	$(MAKE) sim TEST=test_stress        SEED=$(if $(REGRESS_SEED),$(REGRESS_SEED),$(SEED_STRESS))
 
 # Open last waveform in SimVision
 waves:
@@ -60,6 +69,9 @@ help:
 	@echo "Targets:"
 	@echo "  sim      - compile + run  (TEST=<name> SEED=<n>)"
 	@echo "  regress  - run all 4 tests"
+	@echo "             default seeds:   1/2/3/4 per test"
+	@echo "             same seed all:   make regress REGRESS_SEED=42"
+	@echo "             per-test seeds:  make regress SEED_BASIC=10 SEED_REV=20 SEED_CFG=30 SEED_STRESS=40"
 	@echo "  compile  - compile only"
 	@echo "  waves    - open waveform in SimVision"
 	@echo "  clean    - remove generated files"
