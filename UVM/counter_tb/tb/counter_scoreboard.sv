@@ -17,8 +17,8 @@ class counter_scoreboard extends uvm_scoreboard;
     logic [31:0] prev_min;
     logic [31:0] prev_max;
     logic        prev_reverse;
-    logic        first_valid;
-    logic        in_reset;
+    logic        first_valid;       // 是否已有第一筆有效的 seed 資料
+    logic        in_reset;          // 是否剛經歷過 reset
 
     int pass_cnt, fail_cnt;
 
@@ -55,7 +55,7 @@ class counter_scoreboard extends uvm_scoreboard;
             prev_reverse = item.reverse;
             first_valid  = 1;
             in_reset     = 0;
-            return;
+            return;                     // 都還是 reset 前的殘留值，不能用來預測
         end
 
         // ----------------------------------------------------------------
@@ -99,6 +99,7 @@ class counter_scoreboard extends uvm_scoreboard;
             end
         end
 
+        // Reset 後第二個 cycle 開始才做預測和比對
         // ---- Compare ----
         if (item.count !== exp_count || item.direction !== exp_dir) begin
             `uvm_error("SCOREBOARD",
@@ -113,7 +114,7 @@ class counter_scoreboard extends uvm_scoreboard;
                 $sformatf("PASS: count=%0d dir=%0b (min=%0d max=%0d)",
                     item.count, item.direction,
                     prev_min, prev_max),
-                UVM_HIGH)
+                UVM_LOW)
             pass_cnt++;
         end
 
