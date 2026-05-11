@@ -88,8 +88,9 @@ class counter_scoreboard extends uvm_scoreboard;
                 exp_dir = prev_dir;
             end
 
-            // Step 3: count (uses prev_dir, the direction BEFORE the flip)
-            if (!prev_dir) begin
+            // Step 3: count uses exp_dir (next_direction after flip),
+            // matching the fixed RTL which also uses next_direction
+            if (!exp_dir) begin
                 exp_count = (prev_count == prev_max) ? prev_min
                                                      : prev_count + 1;
             end else begin
