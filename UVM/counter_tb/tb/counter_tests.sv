@@ -9,7 +9,7 @@
 class counter_base_test extends uvm_test;
     `uvm_component_utils(counter_base_test)
 
-    counter_env               env;
+    counter_env              env;
     counter_virtual_sequencer vseqr;
 
     function new(string name, uvm_component parent);
@@ -18,7 +18,7 @@ class counter_base_test extends uvm_test;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        env   = counter_env              ::type_id::create("env"  , this);
+        env   = counter_env             ::type_id::create("env",   this);
         vseqr = counter_virtual_sequencer::type_id::create("vseqr", this);
     endfunction
 
@@ -44,11 +44,9 @@ endclass : counter_base_test
 // ---------------------------------------------------------------------------
 class test_basic_count extends counter_base_test;
     `uvm_component_utils(test_basic_count)
-
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
-
     task run_vseq(uvm_phase phase);
         vseq_basic_count vseq;
         vseq = vseq_basic_count::type_id::create("vseq");
@@ -61,11 +59,9 @@ endclass : test_basic_count
 // ---------------------------------------------------------------------------
 class test_reverse extends counter_base_test;
     `uvm_component_utils(test_reverse)
-
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
-
     task run_vseq(uvm_phase phase);
         vseq_reverse vseq;
         vseq = vseq_reverse::type_id::create("vseq");
@@ -78,11 +74,9 @@ endclass : test_reverse
 // ---------------------------------------------------------------------------
 class test_range_change extends counter_base_test;
     `uvm_component_utils(test_range_change)
-
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
-
     task run_vseq(uvm_phase phase);
         vseq_range_change vseq;
         vseq = vseq_range_change::type_id::create("vseq");
@@ -95,11 +89,9 @@ endclass : test_range_change
 // ---------------------------------------------------------------------------
 class test_stress extends counter_base_test;
     `uvm_component_utils(test_stress)
-
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
-    
     task run_vseq(uvm_phase phase);
         vseq_stress vseq;
         vseq = vseq_stress::type_id::create("vseq");
