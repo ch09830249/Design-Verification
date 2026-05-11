@@ -28,7 +28,7 @@ module counter (
     // so count and direction always agree on the same edge
     // -------------------------------------------------------------------------
     reg next_direction;
-    always @(*) begin
+    always @(*) begin                               // combinational => Update next_direction immediately
         if (reverse) begin
             next_direction = ~direction;
         end else if (!direction && at_max) begin
@@ -36,7 +36,7 @@ module counter (
         end else if (direction && at_min) begin
             next_direction = 1'b0;
         end else begin
-            next_direction = direction;
+            next_direction = direction;             // Keep original direction
         end
     end
 
