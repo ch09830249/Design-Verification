@@ -39,11 +39,12 @@ class counter_driver extends uvm_driver #(counter_seq_item);
             @(posedge vif.clk);
             vif.rst_n <= 1'b1;
             @(posedge vif.clk);
+        end else begin
+            vif.min_val <= item.min_val;
+            vif.max_val <= item.max_val;
+            vif.reverse <= item.reverse;
+            @(posedge vif.clk);
+            vif.reverse <= 1'b0;
         end
-        vif.min_val <= item.min_val;
-        vif.max_val <= item.max_val;
-        vif.reverse <= item.reverse;
-        @(posedge vif.clk);
-        vif.reverse <= 1'b0;
     endtask
 endclass : counter_driver
