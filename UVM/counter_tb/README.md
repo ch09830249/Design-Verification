@@ -5,7 +5,7 @@
 - [DUT 功能說明](#dut-功能說明)
 - [專案結構](#專案結構)
 - [UVM 架構說明](#uvm-架構說明)
-  - [整體層次](#整體層次)
+  - [整體層次圖](#整體層次圖)
   - [Virtual Sequencer 與 Virtual Sequence](#virtual-sequencer-與-virtual-sequence)
   - [p_sequencer 使用方式](#p_sequencer-使用方式)
   - [Scoreboard 參考模型](#scoreboard-參考模型)
@@ -38,10 +38,10 @@
 
 計數行為：
 
-- **向上計數**：`min_val → min_val+1 → ... → max_val`，到達 `max_val` 後自動反轉往下
-- **向下計數**：`max_val → max_val-1 → ... → min_val`，到達 `min_val` 後自動反轉往上
-- `reverse == 1`（單 cycle pulse）：立即反轉方向，與邊界反轉互不干擾
-- `min_val` / `max_val` 可在執行期間動態更改
+- **向上計數**：`min_val -> min_val+1 -> ... -> max_val`，到達 `max_val` 後自動反轉往下
+- **向下計數**：`max_val -> max_val-1 -> ... -> min_val`，到達 `min_val` 後自動反轉往上
+- `reverse == 1`（單 cycle pulse）：立即反轉方向，與邊界反轉獨立運作
+- `min_val` / `max_val` 可在執行期間動態更改；count 超出新範圍時自動 clamp
 
 ---
 
@@ -54,17 +54,17 @@ counter_tb/
 │   └── counter.v               DUT：32-bit up/down counter
 └── tb/
     ├── Makefile                 xrun 建置腳本
-    ├── counter_tb_top.sv        Top-level：時脈產生、DUT 例化、UVM 啟動
+    ├── counter_tb_top.sv        Top-level：時脈、DUT 例化、UVM 啟動、shm wave dump
     ├── counter_if.sv            Interface：DUT 與 TB 之間的訊號通道
     ├── counter_seq_item.sv      Sequence item：封裝一筆交易的資料
-    ├── counter_sequencer.sv     Sequencer：含 p_sequencer 共用欄位
+    ├── counter_sequencer.sv     Sequencer：含 p_sequencer 共用欄位 (cfg_min/max/reverse_cnt)
     ├── counter_driver.sv        Driver：將 item 驅動到 interface
     ├── counter_monitor.sv       Monitor：取樣 DUT 輸出並送往 scoreboard
-    ├── counter_scoreboard.sv    Scoreboard：參考模型 + 比對邏輯
+    ├── counter_scoreboard.sv    Scoreboard：prev-cycle 參考模型 + 比對邏輯
     ├── counter_agent.sv         Agent：整合 driver / monitor / sequencer
     ├── counter_env.sv           Environment：整合 agent + scoreboard
-    ├── counter_sequences.sv     Sub-sequences：各種驅動場景
-    ├── counter_vseq.sv          Virtual sequencer + Virtual sequences
+    ├── counter_sequences.sv     Sub-sequences：reset / count / reverse / cfg / boundary
+    ├── counter_vseq.sv          Virtual sequencer + virtual sequences
     └── counter_tests.sv         四個 UVM test
 ```
 
@@ -72,27 +72,51 @@ counter_tb/
 
 ## UVM 架構說明
 
-### 整體層次
+### 整體層次圖
 
 ```
-uvm_test  (test_basic_count / test_reverse / test_range_change / test_stress)
-    |
-    +-- counter_virtual_sequencer   <-- uvm_declare_p_sequencer 掛載點
-    |       |
-    |       +-- vseq_basic_count / vseq_reverse / vseq_range_change / vseq_stress
-    |               (virtual sequences，透過 p_sequencer.counter_seqr 委派)
-    |
-    +-- counter_env
-            |
-            +-- counter_agent  (UVM_ACTIVE)
-            |       |
-            |       +-- counter_sequencer   <-- 真正的 sequencer，含 cfg_min/cfg_max
-            |       +-- counter_driver      --> virtual counter_if --> DUT
-            |       +-- counter_monitor     <-- virtual counter_if <-- DUT
-            |
-            +-- counter_scoreboard
-                    ^
-                    | analysis_port (monitor -> scoreboard)
+UVM Test
+  test_basic_count | test_reverse | test_range_change | test_stress
+        |
+        | starts vseq on
+        v
+Virtual Sequencer (counter_virtual_sequencer)
+  uvm_declare_p_sequencer -> p_sequencer (vseq layer)
+        |
+        | runs
+        v
+Virtual Sequences (counter_base_vseq)
+  vseq_basic_count | vseq_reverse | vseq_range_change | vseq_stress
+        |
+        | delegates to
+        v
++-----------------------------------------------------------------------+
+| counter_env                                                           |
+|  +----------------------------------------------------------+         |
+|  | counter_agent (UVM_ACTIVE)                               |         |
+|  |                                                          |         |
+|  |  [Sequencer] <--TLM--> [Driver]                          |         |
+|  |  counter_sequencer          drives vif signals           |         |
+|  |  p_sequencer (sub-seq)                                   |         |
+|  |       |                                                  |         |
+|  |       v                                                  |         |
+|  |  [Sub-Sequences]  (counter_base_seq)                     |         |
+|  |  reset | count | reverse | cfg | boundary                |         |
+|  |                                                          |         |
+|  |  [Monitor] ----analysis_port----> [Scoreboard]           |         |
+|  |  samples every cycle            prev-cycle ref model     |         |
+|  |                                 clamp + bounce check     |         |
+|  +----------------------------------------------------------+         |
++-----------------------------------------------------------------------+
+        |                        ^
+        | drives                 | samples
+        v                        |
+  [Interface: counter_if]
+  clk  rst_n  reverse  min_val  max_val  count  direction
+        |
+        v
+  [DUT: counter.v]
+  32-bit | min/max | reverse pulse | out-of-range clamp
 ```
 
 ### Virtual Sequencer 與 Virtual Sequence
@@ -133,39 +157,43 @@ endfunction
 
 **層次 1：Sub-sequence 讀取共用設定**
 
-`counter_base_seq` 宣告 `p_sequencer` 指向真實的 `counter_sequencer`，讓所有 sub-sequence 都能存取共用的 `cfg_min`、`cfg_max`、`reverse_cnt`：
-
 ```systemverilog
 class counter_base_seq extends uvm_sequence #(counter_seq_item);
     `uvm_declare_p_sequencer(counter_sequencer)
-    // 在 body() 中可直接使用：
-    //   p_sequencer.cfg_min
-    //   p_sequencer.cfg_max
-    //   p_sequencer.reverse_cnt
+    // body() 中可直接使用：
+    //   p_sequencer.cfg_min      目前設定的下限
+    //   p_sequencer.cfg_max      目前設定的上限
+    //   p_sequencer.reverse_cnt  已發出的 reverse pulse 計數
 endclass
 ```
 
 **層次 2：Virtual sequence 存取真實 sequencer**
 
-`counter_base_vseq` 宣告 `p_sequencer` 指向 virtual sequencer，透過它拿到真實 sequencer 的 handle：
-
 ```systemverilog
 class counter_base_vseq extends uvm_sequence;
     `uvm_declare_p_sequencer(counter_virtual_sequencer)
-    // 在 body() 中可直接使用：
-    //   p_sequencer.counter_seqr  -> 真實 sequencer
+    // body() 中可直接使用：
+    //   p_sequencer.counter_seqr  -> 真實 sequencer handle
 endclass
 ```
 
 ### Scoreboard 參考模型
 
-`counter_scoreboard` 實作一個 cycle-accurate 的參考模型，完整複製 RTL 的方向切換邏輯：
+`counter_scoreboard` 使用 **output-based / prev-cycle** 策略，避免 driver 與 monitor 之間的 1-cycle timing offset：
 
 ```
 每個 cycle 做：
-  1. 根據 reverse pulse 或邊界條件更新 exp_dir
-  2. 根據 exp_dir 計算 exp_count（含 wrap-around）
-  3. 比對 DUT 輸出的 count / direction
+  用 prev_count + prev_dir + prev_reverse + prev_min + prev_max
+    -> 計算本 cycle 應看到的 exp_count / exp_dir
+    -> 與 item.count / item.direction 比對
+
+  clamp 優先：
+    if (prev_count < prev_min) exp_count = prev_min
+    if (prev_count > prev_max) exp_count = prev_max
+
+  正常計數：
+    direction flip <- prev_reverse or boundary hit
+    count += 1 or -= 1 with wrap-around
 ```
 
 ---
@@ -176,8 +204,17 @@ endclass
 |-----------|-----------------|----------|
 | `test_basic_count` | `vseq_basic_count` | 基本上下計數、邊界自動 bounce，min=0 max=7，跑 32 cycles |
 | `test_reverse` | `vseq_reverse` | 單 cycle `reverse` pulse 反轉方向，連續兩次 reverse |
-| `test_range_change` | `vseq_range_change` | 執行期間動態修改 min/max（[0..5] → [3..15] → [10..12]） |
+| `test_range_change` | `vseq_range_change` | 執行期間動態修改 min/max（[0..5] -> [3..15] -> [10..12]），含 clamp 驗證 |
 | `test_stress` | `vseq_stress` | 邊界壓力測試：反覆跨越 min/max + 隨機 reverse pulse |
+
+Regression 結果（全部通過）：
+
+```
+test_basic_count    PASS:43   FAIL:0   ERROR:0
+test_reverse        PASS:52   FAIL:0   ERROR:0
+test_range_change   PASS:67   FAIL:0   ERROR:0
+test_stress         PASS:157  FAIL:0   ERROR:0
+```
 
 ---
 
@@ -202,44 +239,36 @@ make sim TEST=test_range_change  SEED=100
 make sim TEST=test_stress        SEED=7
 ```
 
-可用的 TEST 名稱：
-
-```
-test_basic_count
-test_reverse
-test_range_change
-test_stress
-```
-
 ### 執行完整 Regression
 
 ```bash
+# 預設：每個 test 用不同固定 seed（1/2/3/4）
 make regress
+
+# 四個 test 全部用同一個 seed
+make regress REGRESS_SEED=42
+
+# 每個 test 各自指定 seed
+make regress SEED_BASIC=10 SEED_REV=20 SEED_CFG=30 SEED_STRESS=40
 ```
 
-依序執行四個測試，各自使用不同固定 seed（1/2/3/4），每個測試獨立產生 log。
+注意：`make regress REGRESS_SEED=42` 中 `regress` 與 `REGRESS_SEED` 之間需要有空格，否則 make 會把整個字串當成 target 名稱。
 
 ### 查看波形
 
-Simulation 結束後波形自動寫入 `counter_waves.shm/` 目錄（由 TB 內的 `$shm_open` / `$shm_probe` 控制）。
+Simulation 結束後波形自動寫入 `counter_waves.shm/`（由 TB 內的 `$shm_open` / `$shm_probe("ASC")` 控制，涵蓋所有訊號與子模組）。
 
 ```bash
-# 用 SimVision 開啟
-make waves
-
-# 或直接呼叫
+make waves          # 用 SimVision 開啟
+# 或
 simvision counter_waves.shm &
 ```
-
-`$shm_probe` 設定為 `"ASC"`（所有訊號 + 遞迴子模組 + array），因此 DUT 內部所有訊號均可在波形中看到。
 
 ### 清除產生的檔案
 
 ```bash
 make clean
 ```
-
-會刪除：`xrun.log`、`xcelium.d/`、`INCA_libs/`、`counter_waves.shm/`、`.trn`、`.dsn`
 
 ---
 
@@ -251,15 +280,18 @@ make sim TEST=<test_name> SEED=<integer>
 
 | 參數 | 預設值 | 說明 |
 |------|--------|------|
-| `TEST` | `test_basic_count` | 要執行的 UVM test class 名稱 |
-| `SEED` | `1` | Random seed，傳入 `+ntb_random_seed` |
-
-其他 make targets：
+| `TEST` | `test_basic_count` | UVM test class 名稱 |
+| `SEED` | `1` | `make sim` 用的 random seed，傳入 `+ntb_random_seed` |
+| `REGRESS_SEED` | 未設定 | `make regress` 時讓四個 test 使用同一個 seed |
+| `SEED_BASIC` | `1` | `make regress` 時 test_basic_count 的 seed |
+| `SEED_REV` | `2` | `make regress` 時 test_reverse 的 seed |
+| `SEED_CFG` | `3` | `make regress` 時 test_range_change 的 seed |
+| `SEED_STRESS` | `4` | `make regress` 時 test_stress 的 seed |
 
 | Target | 說明 |
 |--------|------|
-| `sim` | 編譯 + 執行（預設 target） |
-| `compile` | 僅編譯，不執行 |
+| `sim` | 編譯 + 執行（預設） |
+| `compile` | 僅編譯 |
 | `regress` | 依序執行全部 4 個測試 |
 | `waves` | 用 SimVision 開啟波形 |
 | `clean` | 刪除所有產生的檔案 |
