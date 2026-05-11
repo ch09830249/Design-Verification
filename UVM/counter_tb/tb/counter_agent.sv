@@ -27,6 +27,6 @@ class counter_agent extends uvm_agent;
     function void connect_phase(uvm_phase phase);
         if (get_is_active() == UVM_ACTIVE)
             driver.seq_item_port.connect(sequencer.seq_item_export);
-        monitor.ap.connect(ap);
+        monitor.ap.connect(ap);         // monitor => agent, and then agent would send item to scb
     endfunction
 endclass : counter_agent
