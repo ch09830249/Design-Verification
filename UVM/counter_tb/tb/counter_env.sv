@@ -18,6 +18,6 @@ class counter_env extends uvm_env;
     endfunction
 
     function void connect_phase(uvm_phase phase);
-        agent.ap.connect(scoreboard.analysis_export);
+        agent.ap.connect(scoreboard.analysis_export);       // Get the txn from monitor in the agent
     endfunction
 endclass : counter_env
