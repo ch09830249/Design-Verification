@@ -1,0 +1,10 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-licqueue
+-f
+ahb_vip.f
+-access
++r
++UVM_TESTNAME=ahb_basic_rw_test

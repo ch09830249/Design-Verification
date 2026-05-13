@@ -37,9 +37,7 @@ module ahb_slave_bfm
             size_reg    <= 0;
         end else begin
 
-            // ----------------------------------------
             // Data Phase
-            // ----------------------------------------
             if ( valid_reg ) begin
                 vif.HREADY <= 1;
                 vif.HRESP  <= `HRESP_OKAY;
@@ -66,10 +64,8 @@ module ahb_slave_bfm
                     endcase
                 end
             end
-
-            // ----------------------------------------
+            
             // Address Phase
-            // ----------------------------------------
             addr_reg  <= vif.HADDR;
             write_reg <= vif.HWRITE;
             size_reg  <= vif.HSIZE;

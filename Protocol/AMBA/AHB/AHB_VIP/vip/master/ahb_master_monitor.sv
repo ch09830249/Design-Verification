@@ -21,9 +21,8 @@ class ahb_master_monitor extends ahb_monitor_base;
                 // Clear previous pending txn
                 addr_phase_txn = null;
             end else if ( vif.HREADY ) begin
-                // ----------------------------------------
+
                 // Data Phase — handle the previous pending txn
-                // ----------------------------------------
                 if ( addr_phase_txn != null ) begin
                     txn = ahb_seq_item :: type_id :: create ("txn");
 
@@ -50,13 +49,11 @@ class ahb_master_monitor extends ahb_monitor_base;
                     addr_phase_txn = null;
                 end
 
-                // ----------------------------------------
                 // Address Phase — Sample signals of address phase
-                // ----------------------------------------
                 if ( vif.HTRANS == `HTRANS_IDLE ) begin
                     addr_phase_txn = null;
                 end else if ( vif.HSEL && ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
-                    addr_phase_txn = ahb_seq_item :: type_id :: create ("addr_phase_txn");
+                    addr_phase_txn              = ahb_seq_item :: type_id :: create ("addr_phase_txn");
                     addr_phase_txn.HADDR        = vif.HADDR;
                     addr_phase_txn.HBURST       = vif.HBURST;
                     addr_phase_txn.HMASTLOCK    = vif.HMASTLOCK;

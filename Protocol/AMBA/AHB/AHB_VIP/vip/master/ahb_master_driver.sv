@@ -43,7 +43,7 @@ class ahb_master_driver extends ahb_driver_base;
                         addr_txn_queue.push_back(new_txn);
                     end
                 end
-                default: begin
+                default:        begin
                     `uvm_error("MSTDRV", $sformatf("Unsupported HBURST: %0h", txn.HBURST))
                 end
             endcase

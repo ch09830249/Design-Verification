@@ -30,9 +30,8 @@ class ahb_slave_monitor extends ahb_monitor_base;
                 addr_phase_valid = 0;  // Reset the saved signals
             end
             else begin
-                // ────────────────────────────────────────
+
                 // Data Phase：Create txn, sample HRESP and just print all the fields of txn
-                // ────────────────────────────────────────
                 if ( addr_phase_valid && vif.HREADY ) begin
                     txn = ahb_seq_item::type_id::create("txn");
                     txn.HADDR  = saved_haddr;
@@ -48,9 +47,7 @@ class ahb_slave_monitor extends ahb_monitor_base;
                     addr_phase_valid = 0;
                 end
 
-                // ────────────────────────────────────────
                 // Address Phase：Save the signals of address phase
-                // ────────────────────────────────────────
                 if ( vif.HREADY && vif.HSEL && ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
                     saved_haddr  = vif.HADDR;
                     saved_hwrite = vif.HWRITE;

@@ -24,7 +24,6 @@ module sim_top;
     //     .vif    (vif)
     // );
 
-
     always #5 clk = ~clk;
 
     initial begin

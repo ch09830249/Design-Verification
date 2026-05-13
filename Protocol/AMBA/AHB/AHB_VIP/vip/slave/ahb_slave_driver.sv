@@ -32,9 +32,8 @@ class ahb_slave_driver extends ahb_driver_base;
                 vif.HREADY  <= 1;
                 valid_reg    = 0;
             end else begin
-                // ----------------------------------------
+
                 // Data Phase
-                // ----------------------------------------
                 if ( valid_reg && vif.HREADY ) begin
                     // AHB write always HRESP_OKAY
                     vif.HREADY  <= 1;
@@ -42,10 +41,6 @@ class ahb_slave_driver extends ahb_driver_base;
                     // AHB write
                     if ( write_reg ) begin
                         word_idx = addr_reg >> $clog2(`D_DATA_WIDTH/8);  // addr_reg: addr of the previous txn
-                        // $display("SLAVE WRITE: HADDR=%0h, index=%0d, HWDATA=%0h",
-                        //             addr_reg,
-                        //             addr_reg >> $clog2(`D_DATA_WIDTH/8),
-                        //             vif.HWDATA);
                         // mask + OR
                         case ( size_reg )
                             `HSIZE_BYTE     : begin
@@ -67,9 +62,7 @@ class ahb_slave_driver extends ahb_driver_base;
                     valid_reg = 0;  // The previous txn finishes
                 end
 
-                // ----------------------------------------
                 // Address Phase
-                // ----------------------------------------
                 if ( vif.HREADY && vif.HSEL && ( vif.HTRANS == `HTRANS_NONSEQ || vif.HTRANS == `HTRANS_SEQ )) begin
                     addr_reg    =   vif.HADDR;
                     write_reg   =   vif.HWRITE;
@@ -80,10 +73,6 @@ class ahb_slave_driver extends ahb_driver_base;
                     // AHB read
                     if ( !vif.HWRITE ) begin
                         word_idx = vif.HADDR >> $clog2(`D_DATA_WIDTH/8);
-                        // $display("SLAVE READ: HADDR=%0h, mem[%0d]=%0h", 
-                        //             vif.HADDR,
-                        //             vif.HADDR >> $clog2(`D_DATA_WIDTH/8),
-                        //             mem[word_idx]);
                         case ( vif.HSIZE )
                             `HSIZE_BYTE : begin
                                 byte_offset = vif.HADDR[1:0] * 8;
