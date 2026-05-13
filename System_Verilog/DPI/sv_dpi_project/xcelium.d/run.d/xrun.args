@@ -1,0 +1,21 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-licqueue
+-sv
+sv/tb_top.sv
+c/dpi_functions.c
+-dpiimpheader
+dpi_imports.h
+-CFLAGS
+"-I/tools/include -g"
+-timescale
+1ns/1ps
+-access
++r
+-log
+xrun.log
+-mess
+-top
+tb_top

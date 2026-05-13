@@ -1,0 +1,9 @@
+//
+// File created by:  xrun
+// Do not modify this file
+
+s1::(08May2026:04:01:37):( /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun -licqueue -sv sv/tb_top.sv c/dpi_functions.c -dpiimpheader dpi_imports.h -CFLAGS "-I/tools/include -g" -timescale 1ns/1ps -access +r -log xrun.log -mess -top tb_top )
+s2::(08May2026:04:30:56):( /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun -licqueue -sv sv/tb_top.sv c/dpi_functions.c -dpiimpheader dpi_imports.h -CFLAGS "-I/tools/include -g" -timescale 1ns/1ps -access +r -log xrun.log -mess -top tb_top )
+s3::(10May2026:09:54:36):( /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun -licqueue -sv sv/tb_top.sv c/dpi_functions.c -dpiimpheader dpi_imports.h -CFLAGS "-I/tools/include -g" -timescale 1ns/1ps -access +r -log xrun.log -mess -top tb_top )
+s4::(12May2026:08:17:29):( /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun -licqueue -sv sv/tb_top.sv c/dpi_functions.c -dpiimpheader dpi_imports.h -CFLAGS "-I/tools/include -g" -timescale 1ns/1ps -access +r -log xrun.log -mess -top tb_top )
+s5::(12May2026:08:19:47):( /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun -licqueue -sv sv/tb_top.sv c/dpi_functions.c -dpiimpheader dpi_imports.h -CFLAGS "-I/tools/include -g" -timescale 1ns/1ps -access +r -log xrun.log -mess -top tb_top )

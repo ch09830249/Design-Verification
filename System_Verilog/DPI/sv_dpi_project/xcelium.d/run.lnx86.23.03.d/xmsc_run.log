@@ -1,0 +1,19 @@
+$CDSROOT = /home/project/eda/pkgs/cadence/xcelium/v23.03
+$TESTDIR = /home/users3/kenny780/kenny/DPI/sv_dpi_project
+
+TOOL:	xmsc	23.03-s013
+xmsc cc parameters: 
+	$CDSROOT/tools/cdsgcc/gcc/9.3/bin/gcc
+	-I/tools/include
+	-g
+	-I$CDSROOT/tools/include
+	-I$CDSROOT/tools/inca/include 
+	-DXMSC
+	-DNCSC
+	-D_GLIBCXX_USE_CXX11_ABI=1 -c
+	-x c -m32  -Wall 
+
+xmsc: compiling $TESTDIR/c/dpi_functions.c
+
+
+building library run.so

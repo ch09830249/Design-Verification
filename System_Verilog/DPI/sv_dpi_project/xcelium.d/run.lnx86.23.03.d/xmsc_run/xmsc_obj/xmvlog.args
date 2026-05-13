@@ -1,0 +1,4 @@
+-nocopyright
+-cdslib /home/users3/kenny780/kenny/DPI/sv_dpi_project/./xcelium.d/run.lnx86.23.03.d/cdsrun.lib
+-hdlvar /home/users3/kenny780/kenny/DPI/sv_dpi_project/./xcelium.d/run.lnx86.23.03.d/hdlrun.var
+-work worklib

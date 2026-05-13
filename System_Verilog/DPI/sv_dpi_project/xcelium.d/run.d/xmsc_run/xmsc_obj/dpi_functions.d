@@ -1,0 +1,4 @@
+dpi_functions.o: \
+ /home/users3/kenny780/kenny/DPI/sv_dpi_project/c/dpi_functions.c  /home/users3/kenny780/kenny/DPI/sv_dpi_project/c/dpi_functions.h \
+ /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/include/svdpi.h  /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/cdsgcc/gcc/9.3/install/lib/gcc/x86_64-redhat-linux/9.3.0/include/stdint.h  /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/include/svdpi_compatibility.h  /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/cdsgcc/gcc/9.3/install/lib/gcc/x86_64-redhat-linux/9.3.0/include/stddef.h \
+ /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/cdsgcc/gcc/9.3/install/lib/gcc/x86_64-redhat-linux/9.3.0/include/stdarg.h  /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/cdsgcc/gcc/9.3/install/include/c++/9.3.0/stdlib.h  /home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/cdsgcc/gcc/9.3/install/include/c++/9.3.0/math.h 

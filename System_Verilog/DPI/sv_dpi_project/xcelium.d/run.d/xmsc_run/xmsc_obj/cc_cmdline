@@ -1,0 +1,9 @@
+ 
+-DNCSC
+-DXMSC
+-D_GLIBCXX_USE_CXX11_ABI=1 -c
+-I/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/inca/include
+-I/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/include
+-I/tools/include
+-g
+-x c -m32  -Wall 
