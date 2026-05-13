@@ -1,0 +1,32 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-INPUT
+"@source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/additions/sv/files/tcl/uvm_sim.tcl"
+-uvmhome
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d
+-sv_lib
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/additions/sv/lib/libuvmpli.so
+-LICQUEUE
++UVM_TESTNAME=apb_basic_rw_test
+-MESSAGES
+-RUN
+-SV_LIB
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/additions/sv/lib/libuvmdpi.so
++EMGRLOG
+xrun.log
+-XLSTIME
+1778547031
+-XLKEEP
+-XLMODE
+./xcelium.d/run.lnx86.23.03.d
+-RUNMODE
+-CDSLIB
+./xcelium.d/run.lnx86.23.03.d/cds.lib
+-HDLVAR
+./xcelium.d/run.lnx86.23.03.d/hdl.var
+-XLNAME
+xrun
+-XLVERSION
+"TOOL:	xrun	23.03-s013"

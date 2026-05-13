@@ -1,0 +1,682 @@
+xrun: 23.03-s013: (c) Copyright 1995-2024 Cadence Design Systems, Inc.
+TOOL:	xrun	23.03-s013: Started on May 12, 2026 at 08:50:31 CST
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun
+	-licqueue
+	-f apb_vip.f
+		-uvm
+		-incdir ./vip/common
+		-incdir ./vip/interface
+		-incdir ./vip/sva
+		-incdir ./vip/base
+		-incdir ./vip/master
+		-incdir ./vip/slave
+		-incdir ./bfm
+		-incdir ./seq
+		-incdir ./test
+		./top/sim_top.sv
+		./vip/common/apb_package.svh
+		./vip/interface/apb_interface.sv
+		./vip/sva/apb_protocol_sva.sv
+		./vip/sva/bind_apb_protocol_sva.sv
+		./bfm/apb_slave_bfm.sv
+		./seq/apb_master_seq.sv
+		./test/apb_basic_rw_test.sv
+	-access +r
+	+UVM_TESTNAME=apb_basic_rw_test
+Loading snapshot worklib.sim_top:sv .................... Done
+SVSEED default: 1
+xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/xcelium/files/xmsimrc
+xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/additions/sv/files/tcl/uvm_sim.tcl
+xcelium> run
+----------------------------------------------------------------
+CDNS-UVM-1.1d (23.03-s013)
+(C) 2007-2013 Mentor Graphics Corporation
+(C) 2007-2013 Cadence Design Systems, Inc.
+(C) 2006-2013 Synopsys, Inc.
+(C) 2011-2013 Cypress Semiconductor Corp.
+----------------------------------------------------------------
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+  See http://www.eda.org/svdb/view.php?id=3313 for more details.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+  See http://www.eda.org/svdb/view.php?id=3770 for more details.
+
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+
+UVM_INFO @ 0: reporter [RNTST] Running test apb_basic_rw_test...
+UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+------------------------------------------------------------------
+Name                       Type                        Size  Value
+------------------------------------------------------------------
+uvm_test_top               apb_basic_rw_test           -     @2686
+  env                      apb_env                     -     @2746
+    agt_mst                apb_master_agent            -     @3055
+      drv                  apb_master_driver           -     @3368
+        rsp_port           uvm_analysis_port           -     @3467
+        seq_item_port      uvm_seq_item_pull_port      -     @3416
+      mon                  apb_master_monitor          -     @3286
+        port               uvm_analysis_port           -     @3336
+      seqr                 uvm_sequencer               -     @3498
+        rsp_export         uvm_analysis_export         -     @3557
+        seq_item_export    uvm_seq_item_pull_imp       -     @4101
+        arbitration_queue  array                       0     -    
+        lock_queue         array                       0     -    
+        num_last_reqs      integral                    32    'd1  
+        num_last_rsps      integral                    32    'd1  
+    agt_slv                apb_slave_agent             -     @3085
+      drv                  apb_slave_driver            -     @4196
+        rsp_port           uvm_analysis_port           -     @4340
+        seq_item_port      uvm_seq_item_pull_port      -     @4292
+      mon                  apb_slave_monitor           -     @3316
+        port               uvm_analysis_port           -     @4215
+      seqr                 uvm_sequencer               -     @4321
+        rsp_export         uvm_analysis_export         -     @4426
+        seq_item_export    uvm_seq_item_pull_imp       -     @4966
+        arbitration_queue  array                       0     -    
+        lock_queue         array                       0     -    
+        num_last_reqs      integral                    32    'd1  
+        num_last_rsps      integral                    32    'd1  
+    cov                    apb_coverage                -     @3145
+      analysis_imp         uvm_analysis_imp            -     @3194
+    fifo                   uvm_tlm_analysis_fifo #(T)  -     @2775
+      analysis_export      uvm_analysis_imp            -     @3024
+      get_ap               uvm_analysis_port           -     @2974
+      get_peek_export      uvm_get_peek_imp            -     @2876
+      put_ap               uvm_analysis_port           -     @2925
+      put_export           uvm_put_imp                 -     @2825
+    scb                    apb_scoreboard              -     @3115
+      imp                  uvm_analysis_imp            -     @5042
+------------------------------------------------------------------
+
+
+#### Factory Configuration (*)
+
+Instance Overrides:
+
+  Requested Type    Override Path  Override Type     
+  ----------------  -------------  ------------------
+  apb_driver_base   *agt_mst.*     apb_master_driver
+  apb_driver_base   *agt_slv.*     apb_slave_driver
+  apb_monitor_base  *agt_mst.*     apb_master_monitor
+  apb_monitor_base  *agt_slv.*     apb_slave_monitor
+
+No type overrides are registered with this factory
+
+All types registered with the factory: 52 total
+(types without type names will not be printed)
+
+  Type Name
+  ---------
+  apb_agent_base
+  apb_basic_rw_test
+  apb_coverage
+  apb_driver_base
+  apb_env
+  apb_master_agent
+  apb_master_driver
+  apb_master_monitor
+  apb_master_seq
+  apb_monitor_base
+  apb_scoreboard
+  apb_seq_item
+  apb_slave_agent
+  apb_slave_driver
+  apb_slave_monitor
+(*) Types with no associated type name will be printed as <unknown>
+
+####
+
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 65: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 95: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 125: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 335: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0xf852d7d1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 545: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b8 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 725: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xb43bd6bd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 815: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x70c286cd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x70c286cd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 875: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x7fb8590d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 965: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1025: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1115: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x238830a3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1145: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1205: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0xfb3e95e0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x70c286cd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x70c286cd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0xc398889d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1655: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1685: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x8ff7f55f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1805: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x8ff7f55f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 1955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x19938c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x8ff7f55f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0xe47b97c6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2195: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000068 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2225: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2255: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2315: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2435: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x8afbea9e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x66febebb OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x0ec32797 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2705: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 2855: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x19938c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3095: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x19938c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3125: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3215: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3275: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000084 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0xd36682c5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3545: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x97765852 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3605: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xa991237f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0x7e1e772e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x0b7dab90 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0xa9515c51 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3815: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d8 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3875: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b8 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3965: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 3995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0xf8b34068 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0xa9515c51 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x3238fd84 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4325: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4385: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4415: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0xcdadfc9c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0xb6a46762 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4595: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x70f8e4bd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0xd64e60ec OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4685: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0xe4bda41d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0xe4bda41d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x3238fd84 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0x837dca9b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x19938c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 4985: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xadec8202 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xa991237f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0xe605b8f1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0xbf7a2154 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xc0ffac00 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5345: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0xd31e4baf OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x97765852 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x538ead6d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5435: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xa991237f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x1b320376 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5555: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x0ec32797 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5825: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x70f8e4bd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 5915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6005: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a0 data=0x629509a1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6155: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6185: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x3a3f84ab OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6215: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0xe47b97c6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6305: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0xbe712029 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0xa8e1aa0b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x1b320376 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6635: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x45403725 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6725: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0xbf7a2154 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0x63a10a7e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0xe4bda41d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6875: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x0ec32797 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0xcac8bd3b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 6965: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xe6bda624 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000080 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0x837dca9b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0xcac8bd3b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7385: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0x6475317d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x538ead6d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0xe83f2fa4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0x63a10a7e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7745: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0xebbadabc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0x1e3a9e20 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 7955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x8459ea1f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8195: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0xebbadabc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8255: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xe82bc259 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8315: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xe6bda624 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000080 data=0xaca1e381 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0xfdbaf25e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8555: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0xec40728f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x64a2d589 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xe85c7445 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8825: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x0054cac7 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8855: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8885: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 8945: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x1b320376 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9035: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xa991237f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9215: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0x728b06f3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0x63a10a7e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9305: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000018 data=0xa8571125 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9335: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x79c12bad OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xbc809f38 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0x1e3a9e20 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9605: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9635: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x6e069f2e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a0 data=0x629509a1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9725: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x0054cac7 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x9bda3f32 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9815: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 9965: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b8 data=0xb0fc7580 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xe85c7445 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10145: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x4f358f2b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10385: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xbc809f38 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0xd387d3b9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10505: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xe85c7445 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10535: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000018 data=0xa8571125 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x4f358f2b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0x69058782 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10655: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10745: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0x5c78fe61 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0xccb17013 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x1b320376 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 10985: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x63d1967f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x63d1967f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0x173c27cf OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xe6bda624 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xe6bda624 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11195: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11315: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x64a2d589 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11555: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000068 data=0x03f329ca OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11585: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0x5917fae2 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x1a4f1338 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11645: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0x65b47ec0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11705: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xa991237f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x97765852 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11795: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x68449044 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11825: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11885: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f4 data=0xf0efd609 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 11915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x871323fe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0x5c78fe61 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12095: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0xe96e7d80 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12155: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x9bda3f32 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12185: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x6ac1dabd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x871323fe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0x4cec7be7 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12515: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12635: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0xd387d3b9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0xd96d3acc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12815: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000cc data=0x90e6387a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x6e069f2e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12875: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0xe96e7d80 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12905: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000084 data=0xa6bfe945 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x8565bdf4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 12995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x68449044 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13025: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x6a250948 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13085: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x00000000 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13205: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000030 data=0x763e712d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0xcea9ebf1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13355: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x8565bdf4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0x12bd2bb0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13505: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x84c8afa5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x6a250948 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0x77246332 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13655: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0xb4816c9f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13805: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x89a790f4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 13895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000cc data=0x90e6387a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x8565bdf4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x513943e8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x513943e8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14195: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0x511747c4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d4 data=0x53a50a7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14315: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x100711d9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0xea0721bc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x63d1967f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x68449044 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14585: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0x0e49e0ac OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xca1047b6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14645: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x63d1967f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0x5917fae2 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14705: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000074 data=0x608bbed0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14735: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x2a5b6d7f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x46cc6df8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14825: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000018 data=0x62153a57 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 14885: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x4f358f2b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15005: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15035: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x871323fe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x513943e8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15185: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000058 data=0x540bd2ff OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15335: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000084 data=0xa6bfe945 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x9977974c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0x5c78fe61 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0xb575a4ac OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15635: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xe85c7445 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0xc265e3e9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15725: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x2a5b6d7f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x2a5b6d7f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0x845a0728 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0x24d0cce4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15905: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0xe85c7445 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000030 data=0x3af7d5a0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 15995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000068 data=0x03f329ca OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000074 data=0x608bbed0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000080 data=0x2da5fdb8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16205: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x52b60f37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f4 data=0x79d1131b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16325: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0xe5a547d8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16385: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0xaca0f898 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16415: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xed482058 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x79439e74 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xca1047b6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xf54f6e37 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16685: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000074 data=0x608bbed0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0x4fa3a850 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a0 data=0x2ea22113 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16805: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0xe5a547d8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0xaca0f898 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x0fef0dc6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xca1047b6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 16955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f4 data=0x79d1131b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x7426bb2b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000020 data=0x88903f7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0x173c27cf OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x584d23cb OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17255: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0x12bd2bb0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0xee4f0c99 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17315: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x79439e74 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17345: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a0 data=0x2ea22113 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0x28db1a75 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x84c8afa5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xed482058 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0x64fd7597 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17795: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0xc4c68092 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17855: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x61cdf53e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17885: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0xe5752928 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 17945: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0xb923182f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0xa0199672 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18215: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000080 data=0x2da5fdb8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xfba11c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18305: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xdcfdbe8e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0x28db1a75 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x1cc41c6f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18515: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000004 data=0x845a0728 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18605: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xdcfdbe8e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000090 data=0xb923182f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x79439e74 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a0 data=0x2ea22113 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18875: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0x85c08543 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 18935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0x24d0cce4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19115: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x84c8afa5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xed482058 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x4785ac2c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19355: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xfba11c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19415: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x00932d17 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x2d277ff9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xaa069e2a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19505: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0xc4c68092 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19535: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0xf08ea811 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x89a790f4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19595: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0x41213680 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x100711d9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000020 data=0x88903f7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19745: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0x2f2689d8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x844d0031 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 19925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x6cc0a5b8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x6cc0a5b8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x30b74d87 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x4ec35538 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0xb17b90b3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20435: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0xe59e6c7b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xd22de592 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20555: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000058 data=0x8f881637 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000074 data=0x7d70ba22 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20735: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x89a790f4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 20855: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0xc4c68092 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21005: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0x4b8429d3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x89a790f4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21155: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xdb648e09 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x7461d8c9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21305: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x84c8afa5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21335: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x6cc0a5b8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x98dc64ee OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00bff563 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe34d97cc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xd485ce00 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21605: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0x01953176 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x7461d8c9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0x0ecfc0b5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0x89a790f4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21905: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x2d277ff9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 21995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000020 data=0xc67ebb1c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22085: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000058 data=0xde26df2c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22115: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d0 data=0x6cc0a5b8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22145: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x6ba84fa0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x3625b075 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22205: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0x404d002a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000cc data=0x9d6254b3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22325: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0xbdc783af OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22415: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000018 data=0xc582fcf7 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0xdb648e09 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x7461d8c9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xfba11c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22595: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000048 data=0xd485ce00 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22655: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0xe09f6923 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x5beb1274 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22805: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0x3ded6285 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xd22de592 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d4 data=0x7851958e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 22955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xd22de592 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0xf08ea811 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x7461d8c9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x22b148c5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x7461d8c9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0xe09f6923 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000054 data=0x0ecfc0b5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23225: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0x01953176 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23375: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000058 data=0xde26df2c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23435: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x6ba84fa0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23495: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000038 data=0xe09f6923 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23585: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x51a6cdb0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0x22b148c5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23645: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0x4a488387 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00bff563 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23735: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x3625b075 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ec data=0x67ebdec8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23795: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x97028592 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0x6ba84fa0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 23945: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000006c data=0xd22de592 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24035: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000020 data=0xc67ebb1c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24065: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0x3ded6285 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24125: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x3625b075 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24215: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x690b3a7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24245: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0xcefba6b8 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24275: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f4 data=0x6b2ba431 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24365: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0x994dc515 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0x4a488387 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00bff563 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0x0c867ff1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24545: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000084 data=0x7b6aff94 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xfba11c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000d8 data=0xb8f435a4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000068 data=0x03f329ca OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24725: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0x7f9dddfc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24755: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x57c60a8a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x369e8366 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24905: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x690b3a7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 24935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x5beb1274 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25025: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x4339d913 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0xb17b90b3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25145: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0x690b3a7d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0xdf6d5fbe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x2d277ff9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0xdf6d5fbe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25385: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25415: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0xdf6d5fbe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x51a6cdb0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25535: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000030 data=0x08f4bb83 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x00bff563 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x4ec35538 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0x7f9dddfc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25745: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f4 data=0x6b2ba431 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x51a6cdb0 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25805: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000030 data=0x08f4bb83 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0xa0dd42d4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000084 data=0x7b6aff94 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 25925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0xc792dbe9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b8 data=0x713e05d4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26135: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0x66bd5668 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000ac data=0xbdd19fee OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26225: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xdcfdbe8e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26255: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000004c data=0x369e8366 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0x7f9dddfc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26345: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe0f903fa OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0xb3cde4e2 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26435: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000009c data=0xae680df4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000cc data=0x975e2ab5 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26555: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0x4a488387 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26585: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x27356efe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26615: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x4339d913 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26645: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000000c data=0x7f9dddfc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26675: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e4 data=0x3625b075 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26825: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x75b628de OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 26915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x7e550b08 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27035: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000001c data=0x75b628de OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27155: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000094 data=0xa0dd42d4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27335: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000028 data=0xe60ca816 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27395: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e0 data=0xb17b90b3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27425: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000080 data=0x533affc3 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27455: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0x80c6527b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27485: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0xe2a575dc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27575: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0xfba11c5a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27665: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x27356efe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27695: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c8 data=0xef24b9b4 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27785: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000060 data=0x4339d913 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27815: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0xb85e6701 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27845: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000014 data=0xd1e89a20 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27935: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000088 data=0x2d277ff9 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27965: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0x66bd5668 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 27995: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x9d92a9e6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28025: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000034 data=0xc160b42f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28055: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a8 data=0xdcfdbe8e OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28085: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000040 data=0xb5bb17cd OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28115: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0xb300e62c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28145: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000bc data=0x9fb2690d OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28175: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0xa0199672 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28205: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x08550cf1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28235: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0xb300e62c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28265: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000fc data=0x00516d7a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28295: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b4 data=0xe0f903fa OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28445: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0xb85e6701 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28475: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28565: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28595: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000098 data=0x290a796f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28625: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000030 data=0x08f4bb83 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28655: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b0 data=0x27356efe OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28685: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000070 data=0x9d92a9e6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28715: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28745: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000a4 data=0x1ea7cd8f OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28775: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000002c data=0x6b286e31 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28835: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0xa0199672 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28865: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x9b0bb38a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28895: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f0 data=0x561ddf53 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28925: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000e8 data=0xcdaf3244 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28955: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000f8 data=0x5c0eff09 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 28985: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0xe2a575dc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29015: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000008c data=0x7e550b08 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29045: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000b8 data=0x7f751091 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29075: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000000 data=0x89596d60 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29105: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29165: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0xf7eae65b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29255: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000050 data=0xa0199672 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29285: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000024 data=0x4f573267 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29345: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000064 data=0xbd760dee OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29405: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c4 data=0xb300e62c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29465: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000010 data=0xe2a575dc OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29495: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000044 data=0x7d0d5dc7 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29525: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000dc data=0x1abc9d19 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29585: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000020 data=0xc67ebb1c OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29705: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x00000000000000c0 data=0xf7eae65b OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29735: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000005c data=0x9b0bb38a OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29765: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000003c data=0x6f9762a6 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29915: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000078 data=0xc3591363 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 29945: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x0000000000000008 data=0x08550cf1 OK
+UVM_INFO ./vip/common/apb_scoreboard.sv(42) @ 30005: uvm_test_top.env.scb [DATA_MATCH] Read addr=0x000000000000007c data=0x7c31746f OK
+UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/sv/src/base/uvm_objection.svh(1268) @ 30105: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+
+--- UVM Report catcher Summary ---
+
+
+Number of demoted UVM_FATAL reports  :    0
+Number of demoted UVM_ERROR reports  :    0
+Number of demoted UVM_WARNING reports:    0
+Number of caught UVM_FATAL reports   :    0
+Number of caught UVM_ERROR reports   :    0
+Number of caught UVM_WARNING reports :    0
+
+--- UVM Report Summary ---
+
+** Report counts by severity
+UVM_INFO :  524
+UVM_WARNING :    0
+UVM_ERROR :    0
+UVM_FATAL :    0
+** Report counts by id
+[DATA_MATCH]   521
+[RNTST]     1
+[TEST_DONE]     1
+[UVMTOP]     1
+Simulation complete via $finish(1) at time 30105 PS + 45
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.1d/sv/src/base/uvm_root.svh:457     $finish;
+xcelium> exit
+TOOL:	xrun	23.03-s013: Exiting on May 12, 2026 at 08:50:32 CST  (total: 00:00:01)
