@@ -1,5 +1,4 @@
 // =============================================================================
-// File    : counter.v
 // Desc    : 32-bit up/down counter with min/max boundary and reverse control
 //           - Counts up:   min, min+1, ..., max, then reverses
 //           - Counts down: max, max-1, ..., min, then reverses

@@ -1,10 +1,7 @@
-// =============================================================================
-// File : counter_driver.sv
-// =============================================================================
 class counter_driver extends uvm_driver #(counter_seq_item);
     `uvm_component_utils(counter_driver)
 
-    virtual counter_if vif;   // plain virtual interface, no modport
+    virtual counter_if vif;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);

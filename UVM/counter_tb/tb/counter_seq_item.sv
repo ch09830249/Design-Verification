@@ -1,9 +1,5 @@
-// =============================================================================
-// File : counter_seq_item.sv
-// =============================================================================
 class counter_seq_item extends uvm_sequence_item;
 
-    // Fields declared BEFORE uvm_object_utils_begin so macros can see them
     rand logic        reverse;
     rand logic [31:0] min_val;
     rand logic [31:0] max_val;

@@ -1,6 +1,3 @@
-// =============================================================================
-// File : counter_agent.sv
-// =============================================================================
 class counter_agent extends uvm_agent;
     `uvm_component_utils(counter_agent)
 
@@ -17,7 +14,7 @@ class counter_agent extends uvm_agent;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         ap        = new("ap", this);
-        monitor   = counter_monitor  ::type_id::create("monitor",   this);
+        monitor   = counter_monitor       ::type_id::create("monitor",   this);
         if (get_is_active() == UVM_ACTIVE) begin
             driver    = counter_driver    ::type_id::create("driver",    this);
             sequencer = counter_sequencer ::type_id::create("sequencer", this);

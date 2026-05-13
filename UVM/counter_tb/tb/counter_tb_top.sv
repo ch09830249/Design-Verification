@@ -1,5 +1,4 @@
 // =============================================================================
-// File : counter_tb_top.sv
 // Desc : Top-level testbench - instantiates DUT + interface, starts UVM
 // =============================================================================
 `timescale 1ns/1ps

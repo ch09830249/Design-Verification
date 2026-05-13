@@ -1,5 +1,4 @@
 // =============================================================================
-// File : counter_scoreboard.sv
 // Desc : Output-based checker using previous-cycle state.
 //        Uses prev_min/prev_max (not item.min_val/max_val) so that boundary
 //        and clamp calculations match the RTL which registers min/max.
@@ -29,10 +28,10 @@ class counter_scoreboard extends uvm_scoreboard;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         analysis_export = new("analysis_export", this);
-        first_valid = 0;
-        in_reset    = 1;
-        pass_cnt    = 0;
-        fail_cnt    = 0;
+        first_valid     = 0;
+        in_reset        = 1;
+        pass_cnt        = 0;
+        fail_cnt        = 0;
     endfunction
 
     function void write(counter_seq_item item);
@@ -55,7 +54,7 @@ class counter_scoreboard extends uvm_scoreboard;
             prev_reverse = item.reverse;
             first_valid  = 1;
             in_reset     = 0;
-            return;                     // 都還是 reset 前的殘留值，不能用來預測
+            return;                     // 都還是 reset 前的殘留值，不能用來預測，只記錄起來
         end
 
         // ----------------------------------------------------------------
@@ -91,11 +90,9 @@ class counter_scoreboard extends uvm_scoreboard;
             // Step 3: count uses exp_dir (next_direction after flip),
             // matching the fixed RTL which also uses next_direction
             if (!exp_dir) begin
-                exp_count = (prev_count == prev_max) ? prev_min
-                                                     : prev_count + 1;
+                exp_count = (prev_count == prev_max) ? prev_min : prev_count + 1;
             end else begin
-                exp_count = (prev_count == prev_min) ? prev_max
-                                                     : prev_count - 1;
+                exp_count = (prev_count == prev_min) ? prev_max : prev_count - 1;
             end
         end
 

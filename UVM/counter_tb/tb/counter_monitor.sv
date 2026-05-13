@@ -1,6 +1,3 @@
-// =============================================================================
-// File : counter_monitor.sv
-// =============================================================================
 class counter_monitor extends uvm_monitor;
     `uvm_component_utils(counter_monitor)
 

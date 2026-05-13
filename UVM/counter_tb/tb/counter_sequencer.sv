@@ -1,6 +1,3 @@
-// =============================================================================
-// File : counter_sequencer.sv
-// =============================================================================
 class counter_sequencer extends uvm_sequencer #(counter_seq_item);
     `uvm_component_utils(counter_sequencer)
 

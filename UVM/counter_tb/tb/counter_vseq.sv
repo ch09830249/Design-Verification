@@ -1,5 +1,4 @@
 // =============================================================================
-// File : counter_vseq.sv
 // Desc : Virtual sequences orchestrate sub-sequences across the environment
 //        Uses `uvm_declare_p_sequencer on virtual_sequencer.
 // =============================================================================

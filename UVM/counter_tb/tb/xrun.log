@@ -1,0 +1,285 @@
+xrun: 23.03-s013: (c) Copyright 1995-2024 Cadence Design Systems, Inc.
+TOOL:	xrun	23.03-s013: Started on May 12, 2026 at 08:05:56 CST
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools.lnx86/bin/xrun
+	-licqueue
+	-sv
+	-uvm
+	-uvmhome CDNS-1.2
+	-timescale 1ns/1ps
+	-access +rwc
+	-l xrun.log
+	../rtl/counter.v
+	./counter_tb_top.sv
+	+UVM_TESTNAME=test_stress
+	+ntb_random_seed=4
+	+UVM_VERBOSITY=UVM_MEDIUM
+
+   User defined plus("+") options:
+	+ntb_random_seed=4
+	+UVM_VERBOSITY=UVM_MEDIUM
+
+Recompiling... reason: unable to stat '/./home/users3/kenny780/kenny/aa/rtl/counter.v'.
+Compiling UVM packages (uvm_pkg.sv cdns_uvm_pkg.sv) using uvmhome location /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2
+		Caching library 'worklib' ....... Done
+	Elaborating the design hierarchy:
+	Top level design units:
+		uvm_pkg
+		cdns_uvmapi
+		cdns_assert2uvm_pkg
+		cdns_uvm_pkg
+		$unit_0x35741ab6
+		counter_tb_top
+	Building instance overlay tables: .................... Done
+	Building instance specific data structures.
+	Loading native compiled code:     .................... Done
+	Design hierarchy summary:
+		                       Instances  Unique
+		Modules:                       2       2
+		Interfaces:                    1       1
+		Verilog packages:              4       4
+		Registers:                 17104   11938
+		Scalar wires:                  8       -
+		Vectored wires:                4       -
+		Named events:                  4      12
+		Always blocks:                 4       4
+		Initial blocks:              374     182
+		Parallel blocks:              27      28
+		Cont. assignments:             2       2
+		Pseudo assignments:            7       -
+		Assertions:                    3       3
+		Compilation units:             1       1
+		SV Class declarations:       247     363
+		SV Class specializations:    471     471
+		Simulation timescale:        1ps
+	Writing initial simulation snapshot: worklib.counter_tb_top:sv
+Loading snapshot worklib.counter_tb_top:sv .................... Done
+SVSEED default: 1
+xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/xcelium/files/xmsimrc
+xcelium> source /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/additions/sv/files/tcl/uvm_sim.tcl
+xcelium> run
+UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_root.svh(412) @ 0: reporter [UVM/RELNOTES] 
+----------------------------------------------------------------
+CDNS-UVM-1.2 (23.03-s013)
+(C) 2007-2014 Mentor Graphics Corporation
+(C) 2007-2014 Cadence Design Systems, Inc.
+(C) 2006-2014 Synopsys, Inc.
+(C) 2011-2013 Cypress Semiconductor Corp.
+(C) 2013-2014 NVIDIA Corporation
+----------------------------------------------------------------
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+  See http://www.eda.org/svdb/view.php?id=3313 for more details.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.
+  See http://www.eda.org/svdb/view.php?id=3770 for more details.
+
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+
+UVM_INFO @ 0: reporter [RNTST] Running test test_stress...
+SDI/Verilog Transaction Recording Facility Version 23.03-s013
+UVM_INFO counter_vseq.sv(173) @ 0: uvm_test_top.vseqr@@vseq [VSEQ_STRESS] === Boundary Stress Test ===
+UVM_INFO counter_sequences.sv(35) @ 55000: uvm_test_top.env.agent.sequencer@@rst_seq [RESET_SEQ] Reset applied
+UVM_INFO counter_scoreboard.sv(114) @ 56000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=1 dir=0 (min=0 max=7)
+UVM_INFO counter_scoreboard.sv(114) @ 66000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 76000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 86000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 96000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 106000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 116000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 126000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 136000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 146000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 156000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 166000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 176000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 186000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 196000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 206000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 216000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 226000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 236000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 246000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 256000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 266000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 276000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 286000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 296000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 306000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 316000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 326000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 336000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 346000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 356000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 366000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(162) @ 375000: uvm_test_top.env.agent.sequencer@@bnd [BOUNDARY_SEQ] Boundary stress done (32 cycles)
+UVM_INFO counter_scoreboard.sv(114) @ 376000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(92) @ 385000: uvm_test_top.env.agent.sequencer@@rev [REVERSE_SEQ] Reverse #1 issued
+UVM_INFO counter_scoreboard.sv(114) @ 386000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 396000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 406000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 416000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 426000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 436000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 446000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 456000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 466000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 476000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 486000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 496000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 506000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 516000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 526000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 536000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 546000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 556000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 566000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 576000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 586000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 596000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 606000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 616000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 626000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 636000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 646000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 656000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 666000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 676000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 686000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 696000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 706000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 716000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(162) @ 725000: uvm_test_top.env.agent.sequencer@@bnd [BOUNDARY_SEQ] Boundary stress done (32 cycles)
+UVM_INFO counter_scoreboard.sv(114) @ 726000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(92) @ 735000: uvm_test_top.env.agent.sequencer@@rev [REVERSE_SEQ] Reverse #2 issued
+UVM_INFO counter_scoreboard.sv(114) @ 736000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 746000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 756000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 766000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 776000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 786000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 796000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 806000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 816000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 826000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 836000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 846000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 856000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 866000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 876000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 886000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 896000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 906000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 916000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 926000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 936000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 946000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 956000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 966000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 976000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 986000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 996000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1006000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1016000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1026000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1036000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1046000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1056000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1066000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1076000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(162) @ 1085000: uvm_test_top.env.agent.sequencer@@bnd [BOUNDARY_SEQ] Boundary stress done (32 cycles)
+UVM_INFO counter_scoreboard.sv(114) @ 1086000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(92) @ 1095000: uvm_test_top.env.agent.sequencer@@rev [REVERSE_SEQ] Reverse #3 issued
+UVM_INFO counter_scoreboard.sv(114) @ 1096000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1106000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1116000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1126000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1136000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1146000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1156000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1166000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1176000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1186000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1196000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1206000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1216000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1226000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1236000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1246000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1256000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1266000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1276000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1286000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1296000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1306000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1316000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1326000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1336000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1346000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1356000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1366000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1376000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1386000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1396000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1406000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1416000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1426000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1436000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1446000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1456000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(162) @ 1465000: uvm_test_top.env.agent.sequencer@@bnd [BOUNDARY_SEQ] Boundary stress done (32 cycles)
+UVM_INFO counter_scoreboard.sv(114) @ 1466000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_sequences.sv(92) @ 1475000: uvm_test_top.env.agent.sequencer@@rev [REVERSE_SEQ] Reverse #4 issued
+UVM_INFO counter_scoreboard.sv(114) @ 1476000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1486000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1496000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1506000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1516000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1526000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=5 dir=1 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1536000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=6 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1546000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=7 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1556000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=8 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1566000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=9 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1576000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=10 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1586000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1596000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=12 dir=0 (min=5 max=12)
+UVM_INFO counter_scoreboard.sv(114) @ 1606000: uvm_test_top.env.scoreboard [SCOREBOARD] PASS: count=11 dir=1 (min=5 max=12)
+UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_objection.svh(1271) @ 1615000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+UVM_INFO counter_scoreboard.sv(129) @ 1615000: uvm_test_top.env.scoreboard [SCOREBOARD] === RESULTS  PASS:156  FAIL:0 ===
+UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_catcher.svh(705) @ 1615000: reporter [UVM/REPORT/CATCHER] 
+--- UVM Report catcher Summary ---
+
+
+Number of demoted UVM_FATAL reports  :    0
+Number of demoted UVM_ERROR reports  :    0
+Number of demoted UVM_WARNING reports:    0
+Number of caught UVM_FATAL reports   :    0
+Number of caught UVM_ERROR reports   :    0
+Number of caught UVM_WARNING reports :    0
+
+UVM_INFO /home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_server.svh(847) @ 1615000: reporter [UVM/REPORT/SERVER] 
+--- UVM Report Summary ---
+
+** Report counts by severity
+UVM_INFO :  171
+UVM_WARNING :    0
+UVM_ERROR :    0
+UVM_FATAL :    0
+** Report counts by id
+[BOUNDARY_SEQ]     4
+[RESET_SEQ]     1
+[REVERSE_SEQ]     4
+[RNTST]     1
+[SCOREBOARD]   157
+[TEST_DONE]     1
+[UVM/RELNOTES]     1
+[UVM/REPORT/CATCHER]     1
+[VSEQ_STRESS]     1
+
+Simulation complete via $finish(1) at time 1615 NS + 60
+/home/project/eda/pkgs/cadence/xcelium/v23.03/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_root.svh:543     $finish;
+xcelium> exit
+TOOL:	xrun	23.03-s013: Exiting on May 12, 2026 at 08:05:58 CST  (total: 00:00:02)
