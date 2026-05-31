@@ -64,10 +64,10 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 <img width="1024" height="856" alt="image" src="https://github.com/user-attachments/assets/493c6eba-68ce-45ef-be45-55a1424429fe" />
 
 ### Master VIP
-<img width="671" height="303" alt="testbench_diagram2" src="https://github.com/user-attachments/assets/7898e680-db44-4497-818b-23fa1b96da0c" />
+<img width="1024" height="462" alt="image" src="https://github.com/user-attachments/assets/d82e89e1-ff18-47b5-bfcf-3700b9ba0149" />
 
 ### Slave VIP
-<img width="492" height="352" alt="testbench_diagram1" src="https://github.com/user-attachments/assets/aa01d6cc-7a1c-4520-8128-1d5d7763a6e2" />
+<img width="1024" height="732" alt="image" src="https://github.com/user-attachments/assets/c941199e-e65e-4cfc-b1c9-8bea527a68a5" />
 
 ---
 
