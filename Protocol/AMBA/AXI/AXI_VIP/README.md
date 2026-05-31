@@ -113,6 +113,19 @@ It is designed to validate both master and slave DUTs by instantiating the corre
 
 ---
 
+## 📷 AXI Block Diagram
+
+### Loopback Test
+<img width="1024" height="856" alt="image" src="https://github.com/user-attachments/assets/0911c572-b418-4e5e-b085-5a074c2d4c30" />
+
+### Master VIP
+<img width="1024" height="462" alt="image" src="https://github.com/user-attachments/assets/1d099cd7-d309-471c-b30f-e88a9a7e83d7" />
+
+### Slave VIP
+<img width="1024" height="732" alt="image" src="https://github.com/user-attachments/assets/229e4e3c-e4da-47a2-b656-80488b9f0473" />
+
+---
+
 ## 📁 Directory Structure
 
 ```
