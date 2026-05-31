@@ -73,7 +73,7 @@ PS: `HPROT` and `HMASTLOCK` are sampled but not used in current implementation.
 ## 📷 AHB-Lite Block Diagram
 
 ### Loopback Test
-<img width="671" height="561" alt="testbench_diagram" src="https://github.com/user-attachments/assets/c9eddedc-5650-4f83-bd85-9f72c31c4e74" />
+<img width="1024" height="856" alt="image" src="https://github.com/user-attachments/assets/0911c572-b418-4e5e-b085-5a074c2d4c30" />
 
 ### Master VIP
 <img width="671" height="303" alt="testbench_diagram2" src="https://github.com/user-attachments/assets/1ca266a8-fdd4-4fd0-bbc9-7654db022fcd" />
