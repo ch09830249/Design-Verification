@@ -79,8 +79,7 @@ APB_VIP/
 │   └── apb_slave_bfm.sv
 │
 ├── seq/
-│   ├── apb_master_seq.sv
-│   └── apb_slave_seq.sv
+│   └── apb_master_seq.sv
 │
 ├── test/
 │   └── apb_basic_rw_test.sv
