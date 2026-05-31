@@ -76,10 +76,10 @@ PS: `HPROT` and `HMASTLOCK` are sampled but not used in current implementation.
 <img width="1024" height="856" alt="image" src="https://github.com/user-attachments/assets/0911c572-b418-4e5e-b085-5a074c2d4c30" />
 
 ### Master VIP
-<img width="671" height="303" alt="testbench_diagram2" src="https://github.com/user-attachments/assets/1ca266a8-fdd4-4fd0-bbc9-7654db022fcd" />
+<img width="1024" height="462" alt="image" src="https://github.com/user-attachments/assets/1d099cd7-d309-471c-b30f-e88a9a7e83d7" />
 
 ### Slave VIP
-<img width="492" height="352" alt="testbench_diagram1" src="https://github.com/user-attachments/assets/0400d0b2-e05a-4a50-9e8f-36fec99cb057" />
+<img width="1024" height="732" alt="image" src="https://github.com/user-attachments/assets/229e4e3c-e4da-47a2-b656-80488b9f0473" />
 
 ---
 
