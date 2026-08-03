@@ -47,9 +47,11 @@ foreach(array[i])
 * **get_first_child 和 get_next_child 函數**
   * 除了一次得到所有的 child 外，還可以使用 get_first_child 和 get_next_child 的組合依序得到所有的 child
 ```
-# extern function int get_first_child (ref string name);
-# extern function int get_next_child (ref string name);
-
+extern function int get_first_child (ref string name);
+extern function int get_next_child (ref string name);
+```
+這兩個函數的使用依賴於一個 string 類型的 name。在這兩個函數的原型中，name 是作為 ref 類型傳遞的：
+```
 string name;
 uvm_component child;
 if (comp.get_first_child(name))
@@ -58,5 +60,9 @@ if (comp.get_first_child(name))
       child.print();
    end while (comp.get_next_child(name));
 ```
+name 只是用來 get_first_child 和 get_next_child 之間及不同次呼叫 get_next_child 時互相之間傳遞訊息。讀者無需為 name 賦任何初始值，也沒有必要在使用這兩個函數過程中對其做任何賦值操作。
 * **get_num_children 函數**
   * 用於傳回目前 component 所擁有的child的數量
+```
+extern function int get_num_children ();
+```
