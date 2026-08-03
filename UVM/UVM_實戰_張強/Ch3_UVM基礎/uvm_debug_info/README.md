@@ -255,7 +255,14 @@ virtual function void final_phase(uvm_phase phase);
   $fclose(drv_log);
 endfunction
 ```
-## set_report_id_action_hier 函式 (不贅述)
+## set_report_id_action_hier 函式
+```
+env.i_agt.set_report_id_file_hier("my_driver", driver_log);
+env.i_agt.set_report_id_file_hier("my_drv", drv_log);
+env.i_agt.set_report_id_action_hier("my_driver", UVM_DISPLAY| UVM_LOG);
+env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_LOG);
+```
+上述程式碼將 env.i_agt 及其下所有結點的輸出訊息中 ID 為 my_driver 的輸出到 driver.log 中，把 ID 為 my_drv 的輸出到 drv.log中。
 ## set_report_severity_id_file 函式
 ```
 UVM_FILE driver_log;
@@ -272,7 +279,13 @@ virtual function void connect_phase(uvm_phase phase);
   env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY | UVM_LOG);
 endfunction
 ```
-## set_report_severity_id_file_hier 函式 (不贅述)
+## set_report_severity_id_file_hier 函式
+```
+env.i_agt.set_report_severity_id_file_hier(UVM_WARNING, "my_driver", driver_log);
+env.i_agt.set_report_severity_id_file_hier(UVM_INFO, "my_drv", drv_log);
+env.i_agt.set_report_id_action_hier("my_driver", UVM_DISPLAY| UVM_LOG);
+env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_LOG);
+```
 # 控制列印訊息的行為
 控制列印資訊行為系列函數 set_*_action 的典型應用。無論是 UVM_DISPLAY，還是 UVM_COUNT 或者是 UVM_LOG，都是 UVM 內部定義的一種行為
 ```
