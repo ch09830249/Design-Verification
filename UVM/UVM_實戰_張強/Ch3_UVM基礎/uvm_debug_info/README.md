@@ -1,5 +1,5 @@
 # UVM 中列印資訊的控制
-## 設定列印資訊的冗餘度閾值
+## 設定列印資訊的詳細程度（Verbosity）(冗餘度)閾值
 ```
 typedef enum
 {
@@ -11,36 +11,36 @@ typedef enum
   UVM_DEBUG = 500
 } uvm_verbosity;
 ```
-* UVM 透過冗餘度等級的設定提高了模擬日誌的可讀性 **(數字越大代表越冗, 也意味著越不重要, 可以不印)**
-* 在列印資訊之前，UVM 會比較要顯示資訊的冗餘度等級與預設的冗餘餘度閾值
+* UVM 透過詳細程度等級的設定提高了模擬日誌的可讀性 **(數字越大代表越詳細也越冗, 也意味著越不重要, 可以不印)**
+* 在列印資訊之前，UVM 會比較要顯示資訊的詳細程度等級與預設的詳細程度閾值
   * **如果小於等於閾值，就會顯示，否則不會顯示**
-* **預設的冗餘度閾值是 UVM_MEDIUM**，所有低於等於 UVM_MEDIUM（如 UVM_LOW）的資訊都會被印出來
+* **預設的詳細程度閾值是 UVM_MEDIUM**，所有低於等於 UVM_MEDIUM（如 UVM_LOW）的資訊都會被印出來
 ## get_report_verbosity_level 函式
-* **得到某個 component 的冗餘度閾值**如下
+* **得到某個 component 的詳細程度閾值**如下
 ```
 virtual function void connect_phase(uvm_phase phase);
     $display("env.i_agt.drv's verbosity level is %0d", env.i_agt.drv.get_report_verbosity_level());
 endfunction
 ```
 ## set_report_verbosity_level 函數
-* **設定某個特定 component 的預設冗餘度閾值**
-  * 在 base_test 中將 driver 的冗餘度閾值設定為 UVM_HIGH（UVM_LOW、UVM_MEDIUM、UVM_HIGH 的資訊都會被印出）代碼為：
+* **設定某個特定 component 的預設詳細程度閾值**
+  * 在 base_test 中將 driver 的詳細程度閾值設定為 UVM_HIGH（UVM_LOW、UVM_MEDIUM、UVM_HIGH 的資訊都會被印出）代碼為：
 ```
 virtual function void connect_phase(uvm_phase phase);
         env.i_agt.drv.set_report_verbosity_level(UVM_HIGH);
 …
 endfunction
 ```
-* 由於需要牽扯到**層次引用 (就是上面例子的路徑)**，所以**需要在 connect_phase 及以後的 phase 才能呼叫這個函數 (這樣各個 component 才都已經實例化)**  
-* 如果不牽扯到任何層次引用，如設置目前 component 的冗餘度閾值，那麼可以在 connect_phase 之前呼叫
+* 由於需要牽扯到**階層參照（Hierarchical Reference） (就是上面例子的路徑)**，所以**需要在 connect_phase 及以後的 phase 才能呼叫這個函數 (這樣各個 component 才都已經實例化)**  
+* 如果不牽扯到任何階層參照，如設置目前 component 的詳細程度閾值，那麼可以在 connect_phase 之前呼叫
 * 只對某個特定的 component 運作
 ## set_report_verbosity_level_hier 函數
-* UVM 同樣提供遞歸的設定函數 set_report_verbosity_level_hier ，**如把 env.i_agt 及其下所有的 component 的冗餘度閾值設定為 UVM_HIGH 的代碼為**：
+* UVM 同樣提供遞迴的設定函數 set_report_verbosity_level_hier ，**如把 env.i_agt 及其下所有的 component 的詳細程度閾值設定為 UVM_HIGH 的代碼為**：
 ```
 env.i_agt.set_report_verbosity_level_hier(UVM_HIGH);
 ```
 ## set_report_id_verbosity 函數
-* set_report_id_verbosity 函數可以透過 ID 的設定冗餘度閾值
+* set_report_id_verbosity 函數可以透過 ID 的設定詳細程度閾值
 ```
 env.i_agt.drv.set_report_id_verbosity("ID1", UVM_HIGH);
 ```
@@ -51,23 +51,23 @@ env.i_agt.drv.set_report_id_verbosity("ID1", UVM_HIGH);
 `uvm_info("ID2", "ID2 INFO", UVM_HIGH)
 ```
 ## set_report_id_verbosity_hier 函數
-* 這個函數同樣有其對應的遞歸呼叫函數
+* 這個函數同樣有其對應的遞迴呼叫函數
 ```
 env.i_agt.set_report_id_verbosity_hier("ID1", UVM_HIGH);
 ```
-## UVM 支援在命令列中設定冗餘度閾值
+## UVM 支援在命令列中設定詳細程度閾值
 ```
 <sim command> +UVM_VERBOSITY=UVM_HIGH
 或者：
 <sim command> +UVM_VERBOSITY=HIGH
 ```
-* 上述的命令列參數會把整個驗證平台的冗餘度閾值設定為 UVM_HIGH。相當於在 base_test 中調用 set_report_verbosity_level_hier 函數，把 base_test 及以下所有 component 的冗餘度等級設定為 UVM_HIGH
+* 上述的命令列參數會把整個驗證平台的詳細程度閾值設定為 UVM_HIGH。相當於在 base_test 中呼叫 set_report_verbosity_level_hier 函數，把 base_test 及以下所有 component 的詳細程度等級設定為 UVM_HIGH
 # 重載列印資訊的嚴重性
 ## set_report_severity_override 和 set_report_severity_id_override 函數
 ```
 virtual function void connect_phase(uvm_phase phase);
         env.i_agt.drv.set_report_severity_override(UVM_WARNING, UVM_ERROR);
-        // 重載嚴重性可以只針對某個 component 內的某個特定的 ID 來運作, 這裡是 my_driver
+        // 覆寫嚴重性等級可以只針對某個 component 內的某個特定的 ID 來運作, 這裡是 my_driver
         //env.i_agt.drv.set_report_severity_id_override(UVM_WARNING, "my_driver", UVM_ERROR);
 endfunction
 ```
@@ -83,7 +83,7 @@ UVM_WARNING my_driver.sv(29) @ 1100000: uvm_test_top.env.i_agt.drv [my_driver]th
 ```
 UVM_ERROR my_driver.sv(29) @ 1100000: uvm_test_top.env.i_agt.drv [my_driver] this information is warning, but prints as UVM_ERROR
 ```
-## 重載嚴重性在命令列中實現
+## 覆寫嚴重性等級在命令列中實現
 ```
 <sim command> +uvm_set_severity=<comp>,<id>,<current severity>,<new severity>
 ```
@@ -95,10 +95,10 @@ UVM_ERROR my_driver.sv(29) @ 1100000: uvm_test_top.env.i_agt.drv [my_driver] thi
 ```
 <sim command> +uvm_set_severity="uvm_test_top.env.i_agt.drv,_ALL_,UVM_WARNING,UVM_ERROR"
 ```
-# UVM_ERROR 到達一定數量結束仿真
+# UVM_ERROR 到達一定數量結束模擬
 * 當 uvm_fatal 出現時，表示出現了致命錯誤，模擬會馬上停止
-* UVM 同樣支援 UVM_ERROR 達到一定數量時結束仿真
-* 對於某個測試案例，如果出現了大量的 UVM_ERROR，根據這些錯誤已經可以確定 bug 所在了，再繼續模擬下去意義已經不大，此時就可以結束仿真，而不必等到所有的 objection 被撤銷
+* UVM 同樣支援 UVM_ERROR 達到一定數量時結束模擬
+* 對於某個測試案例，如果出現了大量的 UVM_ERROR，根據這些錯誤已經可以確定 bug 所在了，再繼續模擬下去意義已經不大，此時就可以結束模擬，而不必等到所有的 objection 被撤銷
 ## set_report_max_quit_count 函數
 ```
 function void base_test::build_phase(uvm_phase phase);
@@ -117,7 +117,7 @@ Quit count reached!
 * 除了在 build_phase 之外，在其他 phase 設定也是可以的
 ## get_max_quit_count 函數
 * 與 set_max_quit_count 相對應的是 get_max_quit_count，可以用來查詢目前的退出閾值
-* 如果傳回值為 0 則表示無論出現多少個 UVM_ERROR 都不會退出仿真
+* 如果傳回值為 0 則表示無論出現多少個 UVM_ERROR 都不會退出模擬
 ## 命令列中設定退出閾值
 ```
 <sim command> +UVM_MAX_QUIT_COUNT=6,NO
@@ -135,7 +135,7 @@ endfunction
 ```
 ## set_report_severity_action_hier 函式
 ```
-env.i_agt.set_report_severity_action_hier(UVM_WARNING, UVM_DISPLAY| UVM_COUNT);    // env.i_agt 及其下所有結點的 UVM_WARNING 加入計數目標中
+env.i_agt.set_report_severity_action_hier(UVM_WARNING, UVM_DISPLAY| UVM_COUNT);    // env.i_agt 及其下所有節點的 UVM_WARNING 加入計數目標中
 ```
 在預設情況下，UVM_ERROR 已經加入了統計計數。如果要把其從統計計數目標中移除
 ```
@@ -148,7 +148,7 @@ env.i_agt.drv.set_report_id_action("my_drv", UVM_DISPLAY| UVM_COUNT);
 上述程式碼將 ID 為 my_drv 的所有資訊加入計數中，無論是 UVM_INFO，或是 UVM_WARNING 或是 UVM_ERROR、UVM_FATAL
 ## set_report_id_action_hier 函式
 ```
-env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_COUNT);    // set_report_id_action 同樣有其遞歸呼叫方式
+env.i_agt.set_report_id_action_hier("my_drv", UVM_DISPLAY| UVM_COUNT);    // set_report_id_action 同樣有其遞迴呼叫方式
 ```
 ## set_report_severity_id_action 函式
 UVM 還支援將它們聯合起來 (嚴重性和 ID) 進行設置
@@ -172,8 +172,8 @@ env.i_agt.set_report_severity_id_action_hier(UVM_WARNING, "my_driver", UVM_DISPL
 <sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv, _ALL_, UVM_WARNING, UVM_DISPLAY|UVM_COUNT"
 ```
 # UVM 的斷點功能
-* 在程式運作時，預先在某語句處設定一斷點。當程式執行到此處時，停止仿真，進入交互模式，從而進行調試
-* 斷點功能需要從模擬器的角度進行設置，不同模擬器的設置方式不同。為了消除這些設定方式的不同，UVM 支援內建的斷點功能，執行到斷點時，自動停止仿真，進入互動模式
+* 在程式運作時，預先在某語句處設定一斷點。當程式執行到此處時，停止模擬，進入互動模式，從而進行除錯
+* 斷點功能需要從模擬器的角度進行設置，不同模擬器的設置方式不同。為了消除這些設定方式的不同，UVM 支援內建斷點功能，執行到斷點時，自動停止模擬，進入互動模式
 ## UVM_STOP
 ```
 virtual function void connect_phase(uvm_phase phase);
@@ -181,14 +181,14 @@ virtual function void connect_phase(uvm_phase phase);
 …
 endfunction
 ```
-當 env.i_agt.drv 中出現 UVM_WARNING 時，立即停止仿真，進入交互模式。這裡用到了 set_report_severity_action 函數
+當 env.i_agt.drv 中出現 UVM_WARNING 時，立即停止模擬，進入互動模式。這裡用到了 set_report_severity_action 函數
 只要將其中的 UVM_COUNT 替換為 UVM_STOP，就可以實現對應的斷點功能
 ## 命令列中設定 UVM 斷點
 ```
 <sim command> +uvm_set_action="uvm_test_top.env.i_agt.drv,my_driver,UVM_WARNING,UVM_DISPLAY|UVM_STOP"
 ```
 # 將輸出資訊導入文件中
-* 預設情況下，UVM 會將 UVM_INFO 等資訊顯示在標準輸出（終端螢幕）上。各個仿真器提供將顯示在標準輸出的資訊同時輸出到一個日誌檔 (log) 中的功能。但是這個日誌檔混雜了所有的 UVM_INFO、UVM_WARNING、UVM_ERROR及UVM_FATAL。
+* 預設情況下，UVM 會將 UVM_INFO 等資訊顯示在標準輸出（終端螢幕）上。各個模擬器提供將顯示在標準輸出的資訊同時輸出到一個日誌檔 (log) 中的功能。但是這個日誌檔混雜了所有的 UVM_INFO、UVM_WARNING、UVM_ERROR及UVM_FATAL。
 * UVM 提供將特定資訊輸出到特定日誌檔案的功能
 ## set_report_severity_file 函式
 ```
@@ -221,7 +221,7 @@ endfunction
 將 env.i_agt.drv 的 UVM_INFO 輸出到 info.log，UVM_WARNING 輸出到 warning.log，UVM_ERROR 輸出到 error.log，UVM_FATAL 輸出到 fatal.log
 ## set_report_severity_action_hier 函式
 ```
-// 將 env.i_agt 及其下所有結點的輸出資訊分類輸出到不同的日誌檔案中
+// 將 env.i_agt 及其下所有節點的輸出資訊分類輸出到不同的日誌檔案中
 env.i_agt.set_report_severity_file_hier(UVM_INFO, info_log);
 env.i_agt.set_report_severity_file_hier(UVM_WARNING, warning_log);
 env.i_agt.set_report_severity_file_hier(UVM_ERROR, error_log);
@@ -286,7 +286,7 @@ typedef enum
   UVM_STOP = 'b100000
 } uvm_action_type;
 ```
-不同的行為有不同的位偏移，所以不同的行為可以用「或」的方式組合在一起
+不同的行為有不同的位元遮罩(bit mask)，所以不同的行為可以用「或」的方式組合在一起
 ```
 UVM_DISPLAY| UVM_COUNT | UVM_LOG
 ```
@@ -296,7 +296,7 @@ UVM_DISPLAY| UVM_COUNT | UVM_LOG
 * UVM_COUNT 是作為計數目標
 * UVM_EXIT 是直接退出模擬
 * UVM_CALL_HOOK 是呼叫一個回調函數
-* UVM_STOP 是停止仿真，進入命令列交互模式
+* UVM_STOP 是停止模擬，進入命令列互動模式
 在預設的情況下，UVM 設定瞭如下的行為：
 ```
 set_severity_action(UVM_INFO, UVM_DISPLAY);
@@ -313,4 +313,4 @@ virtual function void connect_phase(uvm_phase phase);
       env.i_agt.drv.set_report_severity_action(UVM_INFO, UVM_NO_ACTION);
 endfunction
 ```
-無論原本的冗餘度是什麼，經過上述設定後，env.i_agt.drv 的所有的 uvm_info 資訊都不會輸出
+無論原本的詳細程度是什麼，經過上述設定後，env.i_agt.drv 的所有的 uvm_info 資訊都不會輸出
