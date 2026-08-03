@@ -88,10 +88,10 @@ PS: get_config_int 是 uvm_config_db#(int)::get 的另一種寫法，這種寫�
 * **uvm_object_utils_begin**
     * 當需要使用 field_automation 機制時，就需要使用此巨集
 * **uvm_object_param_utils_begin**
-    * 與 uvm_object_utils_begin 宏一樣，只是它適用於參數化的且其中某些成員變數要使用 field_automation 機制實作的類別
+    * 與 uvm_object_utils_begin 巨集一樣，只是它適用於參數化的且其中某些成員變數要使用 field_automation 機制實作的類別
 * **uvm_object_utils_end**
     * 它總是與 uvm_object_*_begin 成對出現，作為 factory 註冊的結束標誌
-# 與 uvm_component 相關的宏
+# 與 uvm_component 相關的巨集
 * **uvm_component_utils**
     * 用來把一個直接或間接繼承自 uvm_component 的類別註冊到 factory 中
 * **uvm_component_param_utils**
@@ -102,7 +102,7 @@ PS: get_config_int 是 uvm_config_db#(int)::get 的另一種寫法，這種寫�
         * uvm_component 繼承自 uvm_object，所以對於 object 擁有的如 compare、print 函數都可以直接使用  
           但是 field_automation 機制對於 uvm_component 來說最大的意義不在於此，而是可以自動地使用 config_db 來得到某些變數的值 (後續介紹)
 * **uvm_component_param_utils_begin**
-    * 與 uvm_component_utils_begin 宏一樣，只是它適用於參數化的，且其中某些成員變數要使用 field_automation 機制實作的類別
+    * 與 uvm_component_utils_begin 巨集一樣，只是它適用於參數化的，且其中某些成員變數要使用 field_automation 機制實作的類別
 * **uvm_component_utils_end**
     * 它總是與 uvm_component_*_begin 成對出現，作為 factory 註冊的結束標誌
 # uvm_component 的限制
@@ -127,3 +127,16 @@ endclass
 * **copy 函數也是 uvm_object 的一個函數，在使用 copy 前，目標實例必須已經使用new函數分配好了記憶體空間**，而使用 clone 函數時，目標實例可以只是一個空指標。換言之，**clone = new + copy**
 * **雖然 uvm_component 無法使用 clone 函數，但可以使用 copy 函數** 因為在呼叫 copy 之前，目標實例已經完成了實例化，其 parent 參數已經指定了
 * uvm_component 的另一個限制是，**位於同一個父結點下的不同的 component，在實例化時不能使用相同的名字**
+```
+class A extends uvm_component;
+…
+endclass
+class my_env extends uvm_env;
+    virtual function void build_phase(uvm_phase phase);
+        A a1;
+        A a2;
+        a1 = new("a1", this);
+        a2 = new("a1", this);
+    endfunction
+endclass
+```
