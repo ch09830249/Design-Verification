@@ -14,7 +14,7 @@ task my_driver::main_phase(uvm_phase phase);
 endtask
 ```
 如果只是**施加上述一種激勵**，這樣是可以的。但**當要對 DUT 施加不同的激勵時**，那該怎麼辦呢？上述程式碼中是施加了正確
-的包，而下一次測試中**要在第 9 個 transaction 中加入CRC錯誤的包**，那麼可以這麼寫：
+的包，而下一次測試中**要在第 9 個 transaction 中加入CRC 錯誤封包**，那麼可以這麼寫：
 ```
 task my_driver::main_phase(uvm_phase phase);
   my_transaction tr;
@@ -30,7 +30,7 @@ task my_driver::main_phase(uvm_phase phase);
   phase.drop_objection(this);
 endtask
 ```
-**這就相當於將整個 main_phase 重新寫了一遍**。如果現在有了新的需求，需要再測一個超長包。那麼，就需要再次改寫 
+**這就相當於將整個 main_phase 重新寫了一遍**。如果現在有了新的需求，需要再測一個長封包。那麼，就需要再次改寫 
 main_phase ，也就是說，**每多測一種情況，就要多改寫一次 main_phase**。如果經常改寫某個任務或函數，那麼就很容易將之前對
 的地方改錯。所以說，這種方法是不可取的，因為它的可擴展性太差，會常常帶來錯誤。
 **仔細觀察 main_phase，其實只有從 tr=new 語句到 drive_one_pkt 之間的語句在變**。有沒有什麼方法可以將這些語句從 main_phase 
@@ -304,8 +304,8 @@ unlock 函數被呼叫前，一直發送 sequence0 的 transaction。在 unlock 
 sequence1 的 transaction，直到 unlock 函數被呼叫。
 ## sequencer 的 grab 操作
 與 lock 操作一樣，grab 操作也用於暫時擁有 sequencer 的所有權，**只是 grab 操作比 lock 操作優先權更高**。  
-**lock 請求是被插入 sequencer 仲裁隊列的最後面**，等到它時，它前面的仲裁請求都已經結束了。  
-**grab 請求則被放入 sequencer 仲裁隊列的最前面**，它幾乎是一發出就擁有了sequencer的所有權：
+**lock 請求是被插入 sequencer 仲裁佇列的最後面**，等到它時，它前面的仲裁請求都已經結束了。  
+**grab 請求則被放入 sequencer 仲裁佇列的最前面**，它幾乎是一發出就擁有了sequencer的所有權：
 ```
 class sequence1 extends uvm_sequence #(my_transaction);
   ...
@@ -428,7 +428,7 @@ endtask
 ```
 那麼當 wait_for_relevant 回傳後，sequencer 會繼續呼叫 sequence0 的 is_relevant，發現依然是無效狀態，則繼續呼叫
 wait_for_relevant。系統會處於死循環的狀態。
-在代碼清單6-19的例子中，透過控制延時（500000）單位時間來使 sequence0 重新變得有效。假如在這段時間內，sequence1 的
+在程式碼清單6-19的例子中，透過控制延時（500000）單位時間來使 sequence0 重新變得有效。假如在這段時間內，sequence1 的
  transaction 發送完畢後，而 sequence0 中又沒有重載 wait_for_relevant 任務，那麼將會給出如下錯誤提示：
 ```
 UVM_FATAL @ 1166700: uvm_test_top.env.i_agt.sqr@@seq0 [RELMSM] is_relevant()was implemented without defining
@@ -437,8 +437,8 @@ UVM_FATAL @ 1166700: uvm_test_top.env.i_agt.sqr@@seq0 [RELMSM] is_relevant()was 
 wait_for_relevant，是因為巧妙地設定了延時，可以保證不會呼叫到 wait_for_relevant。讀者在使用時應該重載 wait_for_relevant 這個
 任務。
 # sequence 相關巨集及其實現
-## uvm_do 系列宏
-uvm_do 系列宏主要有以下 8 個：
+## uvm_do 系列巨集
+uvm_do 系列巨集主要有以下 8 個：
 ```
 `uvm_do(SEQ_OR_ITEM)
 `uvm_do_pri(SEQ_OR_ITEM, PRIORITY)
@@ -482,7 +482,7 @@ uvm_do 系列宏主要有以下 8 個：
 ```
 `uvm_do_on_pri_with(tr, this, 100, {tr.pload.size == 100;})
 ```
-uvm_do 系列的其他七個宏其實都是用 uvm_do_on_pri_with 巨集來實現的。如 uvm_do 宏：
+uvm_do 系列的其他七個巨集其實都是用 uvm_do_on_pri_with 巨集來實現的。如 uvm_do 巨集：
 ```
 `define uvm_do(SEQ_OR_ITEM) \
     `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, {})
@@ -512,8 +512,8 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 ...
 endclass
 ```
-**uvm_create 巨集的作用是實例化 transaction**。當一個 transaction 被實例化後，可以對其做更多的處理，**處理完畢後使用 uvm_send 宏送出去**。這種使用方式比 uvm_do 系列巨集更靈活。如在上例中，**就將 pload 的最後 4 個 byte 替換為此 transaction 的序號**。
-事實上，在上述的程式碼中，也完全可以不使用 uvm_create 宏，而直接呼叫 new 進行實例化：
+**uvm_create 巨集的作用是實例化 transaction**。當一個 transaction 被實例化後，可以對其做更多的處理，**處理完畢後使用 uvm_send 巨集送出去**。這種使用方式比 uvm_do 系列巨集更靈活。如在上例中，**就將 pload 的最後 4 個 byte 替換為此 transaction 的序號**。
+事實上，在上述的程式碼中，也完全可以不使用 uvm_create 巨集，而直接呼叫 new 進行實例化：
 ```
 virtual task body();
   …
@@ -529,7 +529,7 @@ virtual task body();
   …
 endtask
 ```
-除了 uvm_send 外，還有 uvm_send_pri 宏，它的作用是在將 transaction 交給 sequencer 時設定優先權：
+除了 uvm_send 外，還有 uvm_send_pri 巨集，它的作用是在將 transaction 交給 sequencer 時設定優先權：
 ```
 virtual task body();
   …
@@ -545,8 +545,8 @@ virtual task body();
   …
 endtask
 ```
-## uvm_rand_send 系列宏
-uvm_rand_send 系列宏有以下幾個：
+## uvm_rand_send 系列巨集
+uvm_rand_send 系列巨集有以下幾個：
 ```
 `uvm_rand_send(SEQ_OR_ITEM)
 `uvm_rand_send_pri(SEQ_OR_ITEM, PRIORITY)
@@ -566,19 +566,19 @@ m_trans = new("m_trans");
 `uvm_rand_send_pri(m_trans, 100)
 ```
 ## uvm_rand_send_with
-uvm_rand_send_with 宏，用於指定使用隨機化時的約束，它有兩個參數，第一個是 transaction 的指針，第二個是約束：
+uvm_rand_send_with 巨集，用於指定使用隨機化時的約束，它有兩個參數，第一個是 transaction 的指針，第二個是約束：
 ```
 m_trans = new("m_trans");
 `uvm_rand_send_with(m_trans, {m_trans.pload.size == 100;})
 ```
 ## uvm_rand_send_pri_with
-uvm_rand_send_pri_with 宏，用於指定優先權和約束，它有三個參數，第一個是 transaction 的指針，第二個是優先權，第三個
+uvm_rand_send_pri_with 巨集，用於指定優先權和約束，它有三個參數，第一個是 transaction 的指針，第二個是優先權，第三個
 是約束：
 ```
 m_trans = new("m_trans");
 `uvm_rand_send_pri_with(m_trans, 100, {m_trans.pload.size == 100;})
 ```
-uvm_rand_send 系列巨集及 uvm_send 系列巨集的意義主要在於，如果一個 transaction 佔用的記憶體比較大，那麼很可能希望前後兩次發送的 transaction 都使用同一塊內存，只是其中的內容可以不同，這樣比較節省內存。
+uvm_rand_send 系列巨集及 uvm_send 系列巨集的意義主要在於，如果一個 transaction 佔用的記憶體比較大，那麼很可能希望前後兩次發送的 transaction 都使用同一塊記憶體，只是其中的內容可以不同，這樣比較節省記憶體。
 # start_item 與 finish_item
 不使用巨集產生 transaction 的方式要依賴兩個任務：start_item 和 finish_item。在使用這兩個任務前，必須先實例化 transaction
 後才可以呼叫這兩個任務：
@@ -614,7 +614,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 ...
 endclass
 ```
-上述 assert 語句也可以放在 start_item 之後、finish_item 之前。 uvm_do 系列宏其實是將下述動作封裝在了一個巨集中：
+上述 assert 語句也可以放在 start_item 之後、finish_item 之前。 uvm_do 系列巨集其實是將下述動作封裝在了一個巨集中：
 ```
 virtual task body();
   …
@@ -690,7 +690,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 ...
 endclass
 ```
-pre_do 有一個參數，此參數用來表示 uvm_do 宏是在對一個 transaction 還是在對一個 sequence 進行操作，關於這一點請參考6.4.1
+pre_do 有一個參數，此參數用來表示 uvm_do 巨集是在對一個 transaction 還是在對一個 sequence 進行操作，關於這一點請參考6.4.1
 節。 mid_do 和 post_do 的兩個參數是正在操作的 sequence 或 item 的指針，但其型別是 uvm_sequence_item 型別。透過 cast 可以轉換成目標類型（範例中為my_transaction）。
 ## 嵌套的 sequence
 假設一個產生 CRC 錯誤包的 sequence 如下：
@@ -748,7 +748,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 endclass
 ```
 直接在新的 sequence 的 body 中呼叫定義好的 sequence，從而實作 sequence 的重用。這個功能是非常強大的。在上面程式碼中， 
-m_sequencer 是 case0_sequence 啟動後所使用的 sequencer 的指標。但通常來說並不用這麼麻煩，可以使用 uvm_do 宏來完成這些事情：
+m_sequencer 是 case0_sequence 啟動後所使用的 sequencer 的指標。但通常來說並不用這麼麻煩，可以使用 uvm_do 巨集來完成這些事情：
 ```
 class case0_sequence extends uvm_sequence #(my_transaction);
 …
@@ -767,7 +767,7 @@ endclass
 ```
 uvm_do 系列巨集中，其第一個參數除了可以是 transaction 的指標外，還可以是某個 sequence 的指標。當第一個參數是 transaction
 時，它如6.3.4節程式碼清單6-39所示，呼叫 start_item 和 finish_item；當第一個參數是 sequence 時，它呼叫此 sequence 的 start 任務。
-除了 uvm_do 宏外，前面介紹的 uvm_send 宏、uvm_rand_send 宏、uvm_create 宏，其第一個參數都可以是 sequence 的指標。唯一
+除了 uvm_do 巨集外，前面介紹的 uvm_send 巨集、uvm_rand_send 巨集、uvm_create 巨集，其第一個參數都可以是 sequence 的指標。唯一
 例外的是 start_item 與 finish_item，這兩個任務的參數必須是 transaction 的指標。
 ## 在 sequence 中使用 rand 類型變數
 在 transaction 的定義中，通常會使用 rand 來對變數進行修飾，說明在呼叫 randomize 時要對此欄位進行隨機化。其實在 sequence 中
@@ -800,7 +800,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
   …
 endclass
 ```
-sequence 裡可以加入任意多的 rand 修飾符，用以規範它所產生的 transaction。 sequence 與 transaction 都可以呼叫 randomize 進行隨機化，都可以有 rand 修飾符的成員變量，從某種程度上來說，二者的界線比較模糊。這也就是為什麼 uvm_do 系列宏可以接受 
+sequence 裡可以加入任意多的 rand 修飾符，用以規範它所產生的 transaction。 sequence 與 transaction 都可以呼叫 randomize 進行隨機化，都可以有 rand 修飾符的成員變量，從某種程度上來說，二者的界線比較模糊。這也就是為什麼 uvm_do 系列巨集可以接受 
 sequence 作為其參數的原因。
 在 sequence 中定義 rand 類型變數時，要注意變數的命名。很多人習慣於變數的名字和 transaction 中對應欄位的名字一致：
 ```
@@ -826,7 +826,7 @@ tr.dmac == tr.dmac;})
 ```
 long_seq 中的 dmac 並沒有起到作用。所以，在 sequence 中定義 rand 類型變數以傳遞約束到產生的 transaction 時，變數的名字一定要與 transaction 中對應欄位的名字不同。
 ## transaction 類型的匹配
-一個 sequencer 只能產生一種類型的 transaction，一個 sequence 如果要想在此 sequencer 上啟動，那麼其所產生的 transaction 的類型必須是這種 transaction 或是派生自這種 transaction。
+一個 sequencer 只能產生一種類型的 transaction，一個 sequence 如果要想在此 sequencer 上啟動，那麼其所產生的 transaction 的類型必須是這種 transaction 或是繼承自這種 transaction。
 如果一個 sequence 中產生的 transaction 的類型不是此種 transaction，那麼將會報錯：
 ```
 class case0_sequence extends uvm_sequence #(my_transaction);
@@ -967,8 +967,8 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 
 endclass
 ```
-## sequence 的派生與繼承
-sequence 作為一個類，是可以從其中派生其他 sequence 的：
+## sequence 的衍生與繼承
+sequence 作為一個類，是可以從其中衍生其他 sequence 的：
 ```
 class base_sequence extends uvm_sequence #(my_transaction);
   `uvm_object_utils(base_sequence)
@@ -986,10 +986,10 @@ class case0_sequence extends base_sequence;
 endclass
 ```
 由於在同一個專案中各 sequence 都是類似的，所以可以將許多公用的函數或任務寫在 base sequence 中，其他 sequence 都從此 
-sequence 派生。
-普通的 sequence 這樣使用沒有任何問題，但對於那些使用了 uvm_declare_p_sequence 聲明 p_sequencer 的 base sequence，在派生
+sequence 衍生。
+普通的 sequence 這樣使用沒有任何問題，但對於那些使用了 uvm_declare_p_sequence 聲明 p_sequencer 的 base sequence，在衍生
 的 sequence 中是否也要呼叫此巨集宣告 p_sequencer？這個問題的答案是否定的，因為 uvm_declare_p_sequence 的實質是在 base sequence 
-中宣告了一個成員變數 p_sequencer。當其他的 sequence 從其派生時，p_sequencer 仍然是新的 sequence 的成員變量，所以無
+中宣告了一個成員變數 p_sequencer。當其他的 sequence 從其衍生時，p_sequencer 仍然是新的 sequence 的成員變量，所以無
 須再聲明一次了。
 當然了，如果再聲明一次，系統也不會報錯：
 ```
@@ -1009,7 +1009,7 @@ endclass
 ## virtual sequence 的使用
 ## 帶雙路輸入輸出埠的 DUT
 在本書先前所有的例子中，所使用的 DUT 幾乎都是基於2.2.1節中所示的最簡單的 DUT。為了說明 virtual sequence，本節引入附
-錄B的代碼B-1所示的 DUT。
+錄B的程式碼B-1所示的 DUT。
 這個 DUT 相當於在2.2.1節所示的 DUT 的基礎上增加了一組資料口，這組新的資料口與原先的資料口功能完全一樣。新的數據
 連接埠增加後，由於這組新的資料埠與原先的一模一樣，所以可以在 test 中再額外實例化一個 my_env：
 ```
@@ -1127,8 +1127,8 @@ transaction。
 ## sequence 之間的複雜同步
 上節解決同步的方法看起來非常簡單、實用。不過這裡有兩個問題，
 第一個問題是使用了一個全域的事件 send_over。全域變數對於初寫程式碼的人來說是非常受歡迎的，但是幾乎所有的老師及書本中都會這麼說：除非有必要，否則盡量不要使用全域變
-量。使用全域變數的主要問題即它是全域可見的，本來只是打算在 drv0_seq 和 drv1_seq 中使用這個全域變量，但假如其他的某個 
-sequence 也不小心使用了這個全域變量，在 drv0_seq 觸發 send_over 事件之前，這個 sequence 已經觸發了此事件，這是不允許的。所
+量。使用全域變數的主要問題即它是全域可見的，本來只是打算在 drv0_seq 和 drv1_seq 中使用這個全域變數，但假如其他的某個 
+sequence 也不小心使用了這個全域變數，在 drv0_seq 觸發 send_over 事件之前，這個 sequence 已經觸發了此事件，這是不允許的。所
 以應該盡量避免全域變數的使用。
 第二個問題是上面只是實作了一次同步，如果有多次同步怎麼辦？如 sequence A 要先執行，之後是 B，B 執行後才能是 C，C
 執行後才能是 D，D 執行後才能是 E。這仍然可以使用上面的全局方法解決，只是這會顯得相當笨拙。
@@ -1192,7 +1192,7 @@ endclass
 而不是 v_sqr。這就是 virtual sequence 和 virtual sequencer 中 virtual 的來源。**它們各自並不產生 transaction，而只是控制其他的
 sequence 為對應的 sequencer 產生 transaction**。virtual sequence 和 virtual sequencer 只是扮演一個調度的角色。由於根本不直接產生 
 transaction，所以 virtual sequence 和 virtual sequencer 在定義時根本無需指明要傳送的 transaction 資料類型。
-如果不使用 uvm_do_on 宏，那麼也可以手動啟動 sequence，其效果完全一樣。手工啟動 sequence 的一個優點是可以向其中傳遞
+如果不使用 uvm_do_on 巨集，那麼也可以手動啟動 sequence，其效果完全一樣。手工啟動 sequence 的一個優點是可以向其中傳遞
 一些值：
 
 ```
@@ -1261,7 +1261,7 @@ endclass
 
 ## 僅在 virtual sequence 中控制 objection
 在 sequence 中可以使用 starting_phase 來控制驗證平台的關閉。除了手工啟動 sequence 時為 starting_phase 賦值外，只有將此
- sequence 作為 sequencer 的某動態執行 phase 的 default_sequence 時，其 starting_phase 才不為null。如果將某 sequence 作為 uvm_do 宏的參
+ sequence 作為 sequencer 的某動態執行 phase 的 default_sequence 時，其 starting_phase 才不為null。如果將某 sequence 作為 uvm_do 巨集的參
 數，那麼此 sequence 中的 starting_phase 是為 null 的。在此 sequence 中使用 starting_phase.raise_objection 是沒有任何用處的：
 ```
 class drv0_seq extends uvm_sequence #(my_transaction);
@@ -1296,7 +1296,7 @@ endclass
 即可。只是可惜 uvm_do 系列巨集並不提供 starting_phase 的傳遞功能。
 5.2.3節中提過要嘛在scoreboard中控制objection，要嘛在sequence中控制。關於在sequence中控制objection，在沒有virtual
 在sequence之前，這沒有什麼疑問。但當virtual sequence存在時，尤其是virtual sequence中又可以啟動其他的virtual sequence時，有
-三個地方可以控制objection：一是普通的sequence，二是中間層的virtual sequence（如代碼清單6-76中的cfg_vseq），三是最頂層的
+三個地方可以控制objection：一是普通的sequence，二是中間層的virtual sequence（如程式碼清單6-76中的cfg_vseq），三是最頂層的
 virtual sequence（程式碼清單6-76中的case0_vseq）。那麼應該在何處控制objection來最終控制驗證平台的關閉呢？
 一般來說，只在最頂層的virtual sequence中控制objection。因為virtual sequence是起統一調度作用的，這種統一調度不只體現
 在transaction上，也應該體現在objection的控制上。在驗證平台中使用objection時，經常會出現沒有按照預期結束模擬的情況。這
