@@ -147,7 +147,7 @@ m_trans.constraint_mode(0);
 ```
 在這種情況下，隨機化時就需要分別對 crc_err、pre_err 及 sfd_err 進行約束。  
   
-2. SystemVerilog 中一個非常有用的特性是**支援約束的重載**。因此，依然使用第一種方式中 my_transaction 的定義，在其基礎上派生一個新的 transaction：
+2. SystemVerilog 中一個非常有用的特性是**支援約束的重載**。因此，依然使用第一種方式中 my_transaction 的定義，在其基礎上衍生一個新的 transaction：
 ```
 class new_transaction extends my_transaction;
   `uvm_object_utils(new_transaction)
@@ -233,7 +233,7 @@ endfunction
 ```
 UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'bird'.A component of type 'bear'
 ```
-若有派生關係，但是順序顛倒了，
+若有衍生關係，但是順序顛倒了，
 ```
 set_type_override_by_type(parrot::get_type(), bird::get_type());
 ```
@@ -351,7 +351,7 @@ factory.set_type_override_by_type(bird::get_type(), parrot::get_type());
 ```
 類型重載的命令列參數中有三個選項，其中最後一個 replace 表示是否可以被後面的重載覆蓋。
 ## 複雜的重載
-事實上，UVM 支援連續的重載。還是以 bird 與 parrot 的例子來敘述，現在從 parrot 又派生出了一個新的類別 big_parrot：
+事實上，UVM 支援連續的重載。還是以 bird 與 parrot 的例子來敘述，現在從 parrot 又衍生出了一個新的類別 big_parrot：
 ```
 class big_parrot extends parrot;
   virtual function void hungry();
@@ -392,7 +392,7 @@ endfunction
 # I am a big_parrot, I am hungry      // print_hungry(parrot_inst);
 # I am a bird, I am hungry2
 ```
-除了這種連續的重載外，還有一種是替換式的重載。假如從 bird 派生出了新的鳥 sparrow：
+除了這種連續的重載外，還有一種是替換式的重載。假如從 bird 衍生出了新的鳥 sparrow：
 ```
 class sparrow extends bird;
   virtual function void hungry();
@@ -453,11 +453,11 @@ endfunction
 # I am a sparrow, I am hungry
 # I am a bird, I am hungry2
 ```
-在上述 A 的重載語句與 B 的重載四前提中的第三條相違背，sparrow 並沒有派生自 parrot，但是依
+在上述 A 的重載語句與 B 的重載四前提中的第三條相違背，sparrow 並沒有繼承自 parrot，但是依
 然可以重載 parrot。但這樣使用依然是有條件的，最終創建出的實例是 sparrow 類型的，而最初是 bird 類型的，這兩者之間仍然有
-派生關係。程式碼清單8-38與程式碼清單8-37相比，去掉了對 parrot_inst 的實例化。因為在程式碼清單8-38中第86行存在的情況下，再實
+衍生關係。程式碼清單8-38與程式碼清單8-37相比，去掉了對 parrot_inst 的實例化。因為在程式碼清單8-38中第86行存在的情況下，再實
 例化一個 parrot_inst 會出錯。所以，8.2.1節中的重載四前提的第三條應該改為：
-**在有多個重載時，最終重載的類別要與最初被重載的類別有派生關係。最終重載的類別必須派生自最初被重載的類，最初被重載的
+**在有多個重載時，最終重載的類別要與最初被重載的類別有衍生關係。最終重載的類別必須繼承自最初被重載的類，最初被重載的
 類別必須是最終重載類別的父類別**
 ## factory 機制的調試
 factory 機制的重載功能很強大，UVM 提供了 print_override_info 函數來輸出所有的列印訊息，以上節中的 new_monitor 重載 
@@ -547,10 +547,9 @@ mon new_monitor - @865
 從這個拓樸結構中可以清楚看出，env.o_agt.mon 被重載成了 new_monitor 類型。 print_topology 這個函數非常有用，即使在不
 進行 factory 機制偵錯的情況下，也可以透過呼叫它來顯示整個驗證平台的拓樸結構是否與自己預期的一致。因此可以把其放在所
 有測試用例的基底類別 base_test 中。
-## 常用的重載
+# 常用的重載
 ## 重載 transaction
-在有了 factory 機制的重載功能後，建置 CRC 錯誤的測試案例就多了一種選擇。假設有如下的正常 sequence，此 sequence 被作為
-某個測試用例的 default_sequence：
+在有了 factory 機制的重載功能後，建置 CRC 錯誤的測試案例就多了一種選擇。假設有如下的正常 sequence，此 sequence 被作為某個測試用例的 default_sequence：
 ```
 // normal case (不會有 CRC error)
 class normal_sequence extends uvm_sequence #(my_transaction);
@@ -565,10 +564,9 @@ class normal_sequence extends uvm_sequence #(my_transaction);
   `uvm_object_utils(normal_sequence)
 endclass
 ```
-這裡的 my_transaction 使用8.1.2節程式碼清單8-7的定義。現在要建立一個新的測試案例，這是一個異常的測試案例，要測試 
-CRC 錯誤的情況。可以從這個 transaction 派生一個新的 transaction：
+這裡的 my_transaction 使用8.1.2節程式碼清單8-7的定義。現在要建立一個新的測試案例，這是一個異常的測試案例，要測試 CRC 錯誤的情況。可以從這個 transaction 衍生一個新的 transaction：
 ```
-// 派生出 crc err 的 transaction
+// 衍生出 crc err 的 transaction
 class crc_err_tr extends my_transaction;
 ......
   // 重載 my_transaction 的 constraint
@@ -577,8 +575,7 @@ class crc_err_tr extends my_transaction;
   }
 endclass
 ```
-如果使用8.1.2節程式碼清單8-13的方法，那麼需要新建一個 sequence，然後將這個 sequence 作為新的測試案例的
-default_sequence：
+如果使用8.1.2節程式碼清單8-13的方法，那麼需要新建一個 sequence，然後將這個 sequence 作為新的測試案例的 default_sequence：
 ```
 class abnormal_sequence extends uvm_sequence #(my_transaction);
   crc_err_tr tr;
@@ -596,8 +593,7 @@ function void my_case0::build_phase(uvm_phase phase);
                                           abnormal_sequence::type_id::get());
 endfunction
 ```
-但有了 factory 機制的重載功能後，可以不用重寫一個 abnormal_sequence，而繼續使用 normal_sequence 作為新的測試案例
-的 default_sequence，只需要將 my_transaction 使用 crc_err_tr 重載：
+但有了 factory 機制的重載功能後，可以不用重寫一個 abnormal_sequence，而繼續使用 normal_sequence 作為新的測試案例的 default_sequence，只需要將 my_transaction 使用 crc_err_tr 重載：
 ```
 function void my_case0::build_phase(uvm_phase phase);
   super.build_phase(phase);
@@ -610,12 +606,10 @@ function void my_case0::build_phase(uvm_phase phase);
                                           normal_sequence::type_id::get());
 endfunction
 ```
-經過這樣的重載後，normal_sequence 產生的 transaction 就是 CRC 錯誤的 transaction。這比新建一個 CRC 錯誤的 sequence 的方式簡
-練了很多。
+經過這樣的重載後，normal_sequence 產生的 transaction 就是 CRC 錯誤的 transaction。這比新建一個 CRC 錯誤的 sequence 的方式簡單了很多。
 ## 重載 sequence
-transaction 可以重載，同樣的，sequence 也可以重載。上節使用的 transaction 重載能工作的前提是約束也可以重載。但是很多人
-可能並不習慣於這種用法，而習慣於最原始的如8.1.2節中代碼清單8-9的方法。
-在其他測試案例中已經定義瞭如下的兩個 sequence：
+transaction 可以重載，同樣的，sequence 也可以重載。上節使用的 transaction 重載能工作的前提是約束也可以重載。但是很多人可能並不習慣於這種用法，而習慣於最原始的如8.1.2節中代碼清單8-9的方法。
+在其他測試案例中已經定義如下的兩個 sequence：
 ```
 class normal_sequence extends uvm_sequence #(my_transaction);
 
@@ -639,7 +633,7 @@ class case_sequence extends uvm_sequence #(my_transaction);
 endclass
 ```
 這裡使用了巢狀的 sequence。 case_sequence 被當作 default_sequence。現在新建一個測試用例時，可以仍然將 case_sequence 作為 
-default_sequence，只需要從 normal_sequence 派生一個例外的 sequence：
+default_sequence，只需要從 normal_sequence 衍生一個例外的 sequence：
 ```
 class abnormal_sequence extends normal_sequence;
 ......
@@ -661,13 +655,9 @@ function void my_case0::build_phase(uvm_phase phase);
                                           case_sequence::type_id::get());
 endfunction
 ```
-本節所述的內容其實與上節的類似，都能達到同樣的目的。這就是UVM的強大之處，對於同樣的事情，它提供多種方式完
-成，使用者可以自由選擇。
+本節所述的內容其實與上節的類似，都能達到同樣的目的。這就是 UVM 的強大之處，對於同樣的事情，它提供多種方式完成，使用者可以自由選擇。
 ## 重載 component
-8.3.1節和8.3.2節分別使用重載 transaction 和重載 sequence 的方式產生異常的測試案例。其實，還可以使用重載 driver 的方式產
-生。假設某個測試案例使用8.3.1節程式碼清單8-45的 normal_sequence 作為其 default_sequence。這是一個只產生正常 transaction 的 
-sequence，使用它建構的測試案例是一個正常的用例。現在如果要產生一個 CRC 錯誤的測試案例，可以依然使用這個 sequence 作為
-default_sequence，只是需要定義如下的 driver：
+8.3.1節和8.3.2節分別使用重載 transaction 和重載 sequence 的方式產生異常的測試案例。其實，還可以使用重載 driver 的方式產生。假設某個測試案例使用8.3.1節程式碼清單8-45的 normal_sequence 作為其 default_sequence。這是一個只產生正常 transaction 的 sequence，使用它建構的測試案例是一個正常的用例。現在如果要產生一個 CRC 錯誤的測試案例，可以依然使用這個 sequence 作為 default_sequence，只是需要定義如下的 driver：
 ```
 class crc_driver extends my_driver;
 ......
@@ -700,27 +690,15 @@ function void my_case0::build_phase(uvm_phase phase);
                                           normal_sequence::type_id::get());
 endfunction
 ```
-在本節所舉的例子中看不出重載driver的優勢，因為CRC錯誤是一個非常普通的異常測試案例。對於那些特別異常的測試用
-例，異常到使用sequence實現起來非常麻煩的情況，重載driver就會顯示出其優勢。
-除了driver可以重載外，scoreboard與參考模型等都可以重載。尤其對於參考模型來說，處理異常的激勵源是相當耗時的一件
-事情。可能對於一個DUT來說，其80%的程式碼都是用來處理異常情況，作為模擬DUT的參考模型來說，更是如此。如果將所有的
-異常情況都用一個參考模型實現，那麼這個參考模型程式碼量將會非常大。但是如果將其分散為數十個參考模型，則每一個處理一種
-異常情況，當建立相應異常的測試案例時，將正常的參考模型由它替換掉。這樣，可使程式碼清晰，並增加了可讀性。
+在本節所舉的例子中看不出重載 driver 的優勢，因為 CRC 錯誤是一個非常普通的異常測試案例。對於那些特別異常的測試用例，異常到使用 sequence 實現起來非常麻煩的情況，重載 driver 就會顯示出其優勢。
+除了 driver 可以重載外，scoreboard 與 reference model 等都可以重載。尤其對於參考模型來說，處理異常的激勵源是相當耗時的一件事情。可能對於一個 DUT 來說，其 80% 的程式碼都是用來處理異常情況，作為模擬 DUT 的參考模型來說，更是如此。如果將所有的異常情況都用一個參考模型實現，那麼這個參考模型程式碼量將會非常大。但是如果將其分散為數十個參考模型，則每一個處理一種異常情況，當建立相應異常的測試案例時，將正常的參考模型由它替換掉。這樣，可使程式碼清晰，並增加了可讀性。
 ## 重載 driver 以實現所有的測試案例
-重載driver使得一些在sequence中比較難實現的測試案例輕易地在driver中實作。那如果放棄sequence，只使用factory機制實
-現測試用例可能嗎？答案確實是可能的。當不用sequence時，那麼要在driver中控制發送包的種類、數量，對於objection的控制又
-要從sequence回到driver中，恰如2.2.3節那樣，似乎一切都回到了起點。
+重載 driver 使得一些在 sequence 中比較難實現的測試案例輕易地在 driver 中實作。那如果放棄 sequence，只使用 factory 機制實現測試用例可能嗎？答案確實是可能的。當不用 sequence 時，那麼要在 driver 中控制發送包的種類、數量，對於 objection 的控制又要從 sequence 回到 driver 中，恰如2.2.3節那樣，似乎一切都回到了起點。
 但不推薦這麼做：
-·引入sequence的原因是將資料流產生的功能從driver中獨立出來。取消sequence相當於一種倒退，會使得driver的功能不明
-的確，與現代程式設計中模組化、功能化的趨勢不合。
-·雖然用driver實作某些測試案例比sequence更方便，但是對於另外一些測試案例，在sequence裡做起來會比driver中更加方
-便。
-·sequence的強大之處在於，它可以在一個sequence中啟動另外的sequence，從而可以最大程度地實現不同測試用例之間
-sequence的重用。但是對於driver來說，要實現這樣的功能，只能將一些基本的產生激勵的函數寫在基類driver中。用戶會發現到最
-後這個driver的程式碼量非常恐怖。
-·使用virtual sequence可以協調、同步不同激勵的產生。當放棄sequence時，在不同的driver之間完成這樣的同步則比較難。
-基於以上原因，請不要將所有的測試案例都使用driver重載實作。只有將driver的重載與sequence結合，才與UVM的最初設
-計初衷相符合，也才能建構起可重用性高的驗證平台。完成同樣的事情有很多種方式，應綜合考慮選擇最合理的方式。
-
-
-
+* 引入 sequence 的原因是將資料流產生的功能從 driver 中獨立出來。取消 sequence 相當於一種倒退，會使得 driver 的功能不明確，與現代程式設計中模組化、功能化的趨勢不合。
+* 雖然用 driver 實作某些測試案例比 sequence 更方便，但是對於另外一些測試案例，在 sequence 裡做起來會比 driver 中更加方便。
+* sequence 的強大之處在於，它可以在一個 sequence 中啟動另外的 sequence，從而可以最大程度地實現不同測試用例之間 sequence 的重用。但是對於 driver 來說，要實現這樣的功能，只能將一些基本的產生激勵的函數寫在基類 driver 中。用戶會發現到最後這個 driver 的程式碼量非常恐怖。
+* 使用 virtual sequence 可以協調、同步不同激勵的產生。當放棄 sequence 時，在不同的 driver 之間完成這樣的同步則比較難。  
+基於以上原因，**請不要將所有的測試案例都使用 driver 重載實作**。只有將 driver 的重載與 sequence 結合，才與 UVM 的最初設計初衷相符合，也才能建構起可重用性高的驗證平台。完成同樣的事情有很多種方式，應綜合考慮選擇最合理的方式。
+# factory 機制的實現
+// 後續更新
