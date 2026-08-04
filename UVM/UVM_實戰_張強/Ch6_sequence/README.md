@@ -473,7 +473,7 @@ uvm_do 系列巨集主要有以下 8 個：
 其中 uvm_do、uvm_do_with、uvm_do_pri、uvm_do_pri_with 在前面已經提到過了，這裡只介紹另外 4 個。
 ## uvm_do_on 
 * 用於明確指定使用哪個 sequencer 發送此 transaction
-  * 第一個參數是 transaction 的指針
+  * 第一個參數是 transaction 的指標
   * 第二個參數是 sequencer 的指標
 * 當在 sequence 中使用 uvm_do 等巨集時，其預設的 sequencer 就是此 sequence 啟動時為其指定的 sequencer，sequence 將這個 sequencer 的指標放在其成員變數 m_sequencer 中。事實上，uvm_do 等價於：
 ```
@@ -481,23 +481,23 @@ uvm_do 系列巨集主要有以下 8 個：
 ```
 這裡看起來指定使用哪個 sequencer 似乎並沒有用，它的真正作用要在6.5節 virtual sequence 中體現。
 ## uvm_do_on_pri
-  * 第一個參數是 transaction 的指針
-  * 第二個是 sequencer 的指針
+  * 第一個參數是 transaction 的指標
+  * 第二個是 sequencer 的指標
   * 第三個是優先權：
 ```
-`uvm_do_on(tr, this, 100)
+`uvm_do_on_pri(tr, this, 100)
 ```
 ## uvm_do_on_with
- * 第一個參數是 transaction 的指針
- * 第二個是 sequencer 的指針
+ * 第一個參數是 transaction 的指標
+ * 第二個是 sequencer 的指標
  * 第三個是約束：
 ```
 `uvm_do_on_with(tr, this, {tr.pload.size == 100;})
 ```
 ## uvm_do_on_pri_with
 * 所有 uvm_do 巨集中參數最多的一個
-  * 第一個參數是 transaction 的指針
-  * 第二個是 sequencer 的指針
+  * 第一個參數是 transaction 的指標
+  * 第二個是 sequencer 的指標
   * 第三個是優先級
   * 第四個是約束：
 ```
@@ -534,7 +534,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 endclass
 ```
 **uvm_create 巨集的作用是實例化 transaction**。當一個 transaction 被實例化後，可以對其做更多的處理，**處理完畢後使用 uvm_send 巨集送出去**。這種使用方式比 uvm_do 系列巨集更靈活。如在上例中，**就將 pload 的最後 4 個 byte 替換為此 transaction 的序號**。
-事實上，在上述的程式碼中，也完全可以不使用 uvm_create 巨集，而直接呼叫 new 進行實例化：
+事實上，在上述的程式碼中，**也完全可以不使用 uvm_create 巨集，而直接呼叫 new 進行實例化**：
 ```
 virtual task body();
   …
@@ -581,28 +581,26 @@ m_trans = new("m_trans");
 `uvm_rand_send(m_trans)
 ```
 ## uvm_rand_send_pri
-uvm_rand_send_pri 巨集用於指定 transaction 的優先權。它有兩個參數，第一個是transaction的指針，第二個是優先權：
+uvm_rand_send_pri 巨集用於指定 transaction 的優先權。它有兩個參數，第一個是 transaction 的指標，第二個是優先權：
 ```
 m_trans = new("m_trans");
 `uvm_rand_send_pri(m_trans, 100)
 ```
 ## uvm_rand_send_with
-uvm_rand_send_with 巨集，用於指定使用隨機化時的約束，它有兩個參數，第一個是 transaction 的指針，第二個是約束：
+uvm_rand_send_with 巨集，用於指定使用隨機化時的約束，它有兩個參數，第一個是 transaction 的指標，第二個是約束：
 ```
 m_trans = new("m_trans");
 `uvm_rand_send_with(m_trans, {m_trans.pload.size == 100;})
 ```
 ## uvm_rand_send_pri_with
-uvm_rand_send_pri_with 巨集，用於指定優先權和約束，它有三個參數，第一個是 transaction 的指針，第二個是優先權，第三個
-是約束：
+uvm_rand_send_pri_with 巨集，用於指定優先權和約束，它有三個參數，第一個是 transaction 的指標，第二個是優先權，第三個是約束：
 ```
 m_trans = new("m_trans");
 `uvm_rand_send_pri_with(m_trans, 100, {m_trans.pload.size == 100;})
 ```
-uvm_rand_send 系列巨集及 uvm_send 系列巨集的意義主要在於，如果一個 transaction 佔用的記憶體比較大，那麼很可能希望前後兩次發送的 transaction 都使用同一塊記憶體，只是其中的內容可以不同，這樣比較節省記憶體。
+uvm_rand_send 系列巨集及 uvm_send 系列巨集的意義主要在於，**如果一個 transaction 佔用的記憶體比較大，那麼很可能希望前後兩次發送的 transaction 都使用同一塊記憶體，只是其中的內容可以不同，這樣比較節省記憶體**。
 # start_item 與 finish_item
-不使用巨集產生 transaction 的方式要依賴兩個任務：start_item 和 finish_item。在使用這兩個任務前，必須先實例化 transaction
-後才可以呼叫這兩個任務：
+不使用巨集產生 transaction 的方式要依賴兩個任務：start_item 和 finish_item。在使用這兩個任務前，必須先實例化 transaction 後才可以呼叫這兩個任務：
 ```
 tr = new("tr");
 start_item(tr);
@@ -635,14 +633,18 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 ...
 endclass
 ```
-上述 assert 語句也可以放在 start_item 之後、finish_item 之前。 uvm_do 系列巨集其實是將下述動作封裝在了一個巨集中：
+**上述 assert 語句也可以放在 start_item 之後、finish_item 之前**。 uvm_do 系列巨集其實是將下述動作封裝在了一個巨集中：
+當 start_item() 返回時： (我有一個 item 要送，請幫我跟 driver 仲裁)
+1. sequence 已經取得 grant
+2. driver 還沒拿到 item
+3. item 還可以修改
 ```
 virtual task body();
   …
   tr = new("tr");
-  start_item(tr);
+  start_item(tr);                                           // start_item() 並不會真的把 transaction 送出去
   assert(tr.randomize() with {tr.pload.size() == 200;});
-  finish_item(tr);
+  finish_item(tr);                                          // finish_item() 才是真正送出
   …
 endtask
 ```
@@ -658,7 +660,7 @@ endtask
 如果不指定優先權參數，預設的優先權為 -1
 ## pre_do、mid_do 與 post_do
 uvm_do 巨集封裝了從 transaction 實例化到傳送的一系列操作，封裝的越多，則其彈性越差。為了增加 uvm_do 系列巨集的功能，
-UVM 提供了三個介面：pre_do、mid_do與post_do。
+UVM 提供了三個介面：pre_do、mid_do 與 post_do。
 * pre_do 是一個任務，在 start_item 中被調用，它是 start_item 返回前執行的最後一行程式碼，在它執行完畢後才對 transaction 進行隨機化
 * mid_do 是一個函數，位於 finish_item 的最開始。執行完此函數後，finish_item 才進行其他操作。
 * post_do 也是一個函數，也位於 finish_item 中，它是 finish_item 返回前執行的最後一行程式碼。它們的執行順序大致為：
@@ -712,9 +714,10 @@ class case0_sequence extends uvm_sequence #(my_transaction);
 endclass
 ```
 pre_do 有一個參數，此參數用來表示 uvm_do 巨集是在對一個 transaction 還是在對一個 sequence 進行操作，關於這一點請參考6.4.1
-節。 mid_do 和 post_do 的兩個參數是正在操作的 sequence 或 item 的指針，但其型別是 uvm_sequence_item 型別。透過 cast 可以轉換成目標類型（範例中為my_transaction）。
+節。mid_do 和 post_do 的兩個參數是正在操作的 sequence 或 item 的指標，但其型別是 uvm_sequence_item 型別。透過 cast 可以轉換成目標類型（範例中為 my_transaction）。
+# sequence 進階應用
 ## 嵌套的 sequence
-假設一個產生 CRC 錯誤包的 sequence 如下：
+假設一個產生 CRC 錯誤封包的 sequence 如下：
 ```
 class crc_seq extends uvm_sequence#(my_transaction);
 …
@@ -734,22 +737,21 @@ class long_seq extends uvm_sequence#(my_transaction);
   endtask
 endclass
 ```
-現在要寫一個新的 sequence，它可以交替產生上面的兩種包。那麼在新的 sequence 裡面可以這樣寫：
+現在要寫一個新的 sequence，它可以交替產生上面的兩種封包。那麼在新的 sequence 裡面可以這樣寫：
 ```
 class case0_sequence extends uvm_sequence #(my_transaction);
   virtual task body();
-  my_transaction tr;
-  repeat (10) begin
-    `uvm_do_with(tr, {tr.crc_err == 1; tr.dmac == 48'h980F;})
-    `uvm_do_with(tr, {tr.crc_err == 0; tr.pload.size() == 1500; tr.dmac == 48'hF675;})
-  end
+    my_transaction tr;
+    repeat (10) begin
+      `uvm_do_with(tr, {tr.crc_err == 1; tr.dmac == 48'h980F;})
+      `uvm_do_with(tr, {tr.crc_err == 0; tr.pload.size() == 1500; tr.dmac == 48'hF675;})
+    end
   endtask
 endclass
 ```
-似乎這樣寫起來顯得特別麻煩。產生的兩種不同的封包中，第一個約束條件有兩個，第二個約束條件有三個。但是假如約束條
-件有十個呢？如果整個驗證平台中有 30 個測試案例都用到這樣的兩種包，那就要在這 30 個測試案例的 sequence 中加入這些程式碼，
+似乎這樣寫起來顯得特別麻煩。產生的兩種不同的封包中，第一個約束條件有兩個，第二個約束條件有三個。但是假如約束條件有十個呢？如果整個驗證平台中有 30 個測試案例都用到這樣的兩種包，那就要在這 30 個測試案例的 sequence 中加入這些程式碼，
 這是一件相當恐怖的事情，而且特別容易出錯。既然已經定義好 crc_seq 和 long_seq，那麼有沒有簡單的方法呢？答案是肯定的。
-在一個 sequence 的 body 中，除了可以使用 uvm_do 巨集產生 transaction 外，其實還可以啟動其他的 sequence，也就是一個 sequence 內啟動另外一個 sequence，這就是嵌套的 sequence：
+**在一個 sequence 的 body 中，除了可以使用 uvm_do 巨集產生 transaction 外，其實還可以啟動其他的 sequence，也就是一個 sequence 內啟動另外一個 sequence，這就是嵌套的 sequence**：
 ```
 class case0_sequence extends uvm_sequence #(my_transaction);
 …
