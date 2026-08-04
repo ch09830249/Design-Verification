@@ -168,25 +168,34 @@ function void my_env::connect_phase(uvm_phase phase);
   A_inst.A_port.connect(B_inst.B_export);  // 連接兩個 component
 endfunction
 ```
+運行上述程式碼，可以看到模擬器給出如下的錯誤提示：
+```
+# UVM_ERROR @ 0: uvm_test_top.env.B_inst.B_export [Connection Error] connection count of 0 does not meet
+# UVM_ERROR @ 0: uvm_test_top.env.A_inst.A_port [Connection Error] connection count of 0 does not meet
+# UVM_FATAL @ 0: reporter [BUILDERR] stopping due to build errors
+```
+connect 函數的使用是沒有什麼問題的，A_port 與 B_export 的連接也是沒有問題的，那麼問題出在什麼地方？
+反思上述的 put 操作，A 透過其連接埠 A_port 把一個 transaction 傳送給 B，這個 A_port 在 transaction 傳輸的過程中扮演了什麼角色呢？PORT 恰如一扇門，EXPORT 也是如此。既然是一扇門，那麼它們也就只是一個通行的作用，它不可能把一筆 transaction 存放下來，因為它只是一道門，沒有儲存作用，除了轉發操作之外不作其他操作。因此，這筆 transaction 一定要由 B_export 後續的某個組件進行處理。**在 UVM 中，完成這種後續處理的也是一種連接埠：IMP**。
 ## UVM 中的 IMP
 IMP 承擔了 UVM 中 TLM 的絕大部分實作程式碼
 ```
+// PUT
 uvm_blocking_put_imp#(T, IMP);
 uvm_nonblocking_put_imp#(T, IMP);
 uvm_put_imp#(T, IMP);
-
+// GET
 uvm_blocking_get_imp#(T, IMP);
 uvm_nonblocking_get_imp#(T, IMP);
 uvm_get_imp#(T, IMP);
-
+// PEEK
 uvm_blocking_peek_imp#(T, IMP);
 uvm_nonblocking_peek_imp#(T, IMP);
 uvm_peek_imp#(T, IMP);
-
+// GET PEEK
 uvm_blocking_get_peek_imp#(T, IMP);
 uvm_nonblocking_get_peek_imp#(T, IMP);
 uvm_get_peek_imp#(T, IMP);
-
+// TRANSPORT
 uvm_blocking_transport_imp#(REQ, RSP, IMP);
 uvm_nonblocking_transport_imp#(REQ, RSP, IMP);
 uvm_transport_imp#(REQ, RSP, IMP);
@@ -194,6 +203,8 @@ uvm_transport_imp#(REQ, RSP, IMP);
 * IMP 定義中的 blocking、nonblocking、put、get、peek、get_peek、transport 等關鍵字不是它們發起做對應類型的操作，而**只意味著它們可以和相應類型的 PORT 或 EXPORT 進行通信，且通信時作為被動承擔者**
 * 依照控制流的優先排序，IMP 的優先權最低，一個 PORT 可以連接到一個 IMP，並發起三種操作，反之則不行
 * 前六個 IMP 定義中的**第一個參數 T 是這個 IMP 傳輸的資料型態**。**第二個參數 IMP，為實現這個介面的一個 component (就是該 port 所在 component 的 pointer)**
+以 blocking_put 埠為例，在圖4-7中，A_port 被連接到 B_export，而 B_export 被連接到 B_imp。當寫下 A.A_port.put（transaction）時，此時 B.B_imp 會通知 B 有 transaction 過來了，這個過程是如何進行的呢？可以簡單理解成
+ A.A_port.put（transaction）這個任務會呼叫 B.B_export 的 put，B.B_export 的 put（transaction）又會呼叫 B.B_imp 的 put（transaction），而 B_imp.put 最終又會呼叫 B 的相關任務，如 B.put（transaction）。所以關於 A_port 的操作最終會落到 B.put 這個任務上，這個任務是屬於 B 的任務，與 A 無關，與 A 的 PORT 無關，也與 B 的 EXPORT 和 IMP 無關。也就是說，這些 put 操作最終還是要由 B 這個 component 來實現，也就是要由一個 component 來實現介面的操作。所以每個 IMP 要和一個 component 相對應。
 * **Class A 的 code**
 ```
 class A extends uvm_component;
@@ -209,7 +220,7 @@ task A::main_phase(uvm_phase phase);
     #10;
     tr = new("tr");
     assert(tr.randomize());
-    A_port.put(tr);    // 發送 transaction
+    A_port.put(tr);          // 發送 transaction 給 B export
   end
 endtask
 ```
@@ -227,7 +238,7 @@ function void B::connect_phase(uvm_phase phase);
   B_export.connect(B_imp);    // 將 B 的 export 連接到 imp
 endfunction
 
-function void B::put(my_transaction tr);      // Class B 實作 put 函數, 單純 print 出來
+function void B::put(my_transaction tr);            // Class B 實作 put 函數, 單純 print 出來
   `uvm_info("B", "receive a transaction", UVM_LOW)
   tr.print();
 endfunction
@@ -235,13 +246,36 @@ endfunction
 **PS: 在 B 的程式碼中，關鍵是要實作一個 put 函數/任務。如果不實現，將會給出如下的錯誤提示：**
 ```
 # ** Error: /home/landy/uvm/uvm-1.1d/src/tlm1/uvm_imps.svh(85): No field named 'put'.
-# Region: /uvm_pkg::uvm_blocking_put_imp #(top_tb_sv_unit::my_transact
-ion, top_tb_sv_unit::B)
+# Region: /uvm_pkg::uvm_blocking_put_imp #(top_tb_sv_unit::my_transaction, top_tb_sv_unit::B)
 ```
 * env 的 code 相同，連接 A 的 port 到 B 的 export
 * **IMP 是作為連結的終點**。在 UVM 中，只有 IMP 才能作為連結關係的終點。**如果是 PORT 或 EXPORT 作為終點，則會報錯**
 ## PORT 與 IMP 的連接
+在 UVM 三種連接埠依控制流優先權排列中，**PORT 優先權最高，IMP 的最低**。理所當然的，一個 PORT 可以調用 connect 函數並把 IMP 作為函數呼叫時的參數。假如有三個 component：A、B 和 env，其中 env 是 A 和 B 的父結點，現在要把 A 中的 PORT 和 B 中的 IMP 連接起來實現通信，如圖所示。
 ![image](https://github.com/user-attachments/assets/07eb0e42-0acb-4ebb-b7bc-fa5002fd108b)  
+A 的程式碼與程式碼清單 4-8 相同，B 的定義如下：
+```
+class B extends uvm_component;
+  `uvm_component_utils(B)
+  uvm_blocking_put_imp#(my_transaction, B) B_imp;
+…
+endclass
+…
+function void B::put(my_transaction tr);
+  `uvm_info("B", "receive a transaction", UVM_LOW)
+  tr.print();
+endfunction
+```
+由於 A 中採用了 blocking_put 類型的 PORT，所以在 B 中 IMP 對應的型別是 uvm_blocking_put_imp。同時，這個 IMP 有兩個參數，
+* 第一個參數是將要傳輸的 transaction
+* 第二個參數前面說過，就是實作介面的 uvm_component，這裡就是 B_imp 所在的 uvm_component B
+IMP 的 new 函數與 PORT 的相似，
+* 第一個參數是名字
+* 第二個參數是一個 uvm_component 的變量，一般填入 this 即可
+B 中的關鍵是定義一個任務/函數 put。回顧一下，上節在介紹 IMP 的時候，A_port 的 put 操作最終要落到 B 的 put。所以在 B 中要定義一個名字為 put 的任務/函數。這裡有如下的規律：
+當 A_port 的類型是 nonblocking_put（為了方便，省略了前綴 uvm_和後綴 _port，下同），B_imp 的類型是 nonblocking_put（為了方便，省略了前綴 uvm_ 和後綴 _imp，下同）時，那麼就要在 B 中定義一個名字為 try_put 的函數和一個名為 can_put 的函數。當 A_port 的類型是 put，B_imp 的類型是 put 時，那麼就要在 B 中定義 3 個接口，一個是 put 任務/函數，一個是 try_put 函數，一個是 can_put 函數。其他規則由下表所示:
+
+
 | **Port 類型 (`A_port`)**           | **Imp 類型 (`B_imp`)**            | **B 中需定義的方法**                                                                                                                                                                                           |
 | -------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `uvm_nonblocking_put_port`       | `uvm_nonblocking_put_imp`       | `function bit try_put(input T t);` <br> `function bit can_put();`                                                                                                                                       |
@@ -265,17 +299,45 @@ ion, top_tb_sv_unit::B)
 | `try_put()` | ❌ 否 | 非阻塞傳送資料。只有接收方準備好才會成功。 | `bit`（成功與否） |
 | `can_put()` | ❌ 否 | 詢問是否**可以送**資料，但不會真的送。 | `bit`（是否能送） |
 
-在前述的這些規律中，對於所有blocking系列的連接埠來說，可以定義對應的任務或函數，如對於blocking_put連接埠來說，可以定
-義名字為put的任務，也可以定義名字為put的函數。這是因為A會呼叫B中名字為put的接口，而不管這個接口的型別。由於A中的
-put是個任務，所以B中的put可以是任務，也可以是函數。但是對於nonblocking系列連接埠來說，只能定義函數。
+在前述的這些規律中，對於所有 blocking 系列的連接埠來說，可以定義對應的任務或函數，如對於 blocking_put 連接埠來說，可以定義名字為 put 的任務，也可以定義名字為 put 的函數。這是因為 A 會呼叫 B 中名字為 put 的接口，而不管這個接口的型別。由於 A 中的 put 是個任務，所以 B 中的 put 可以是任務，也可以是函數。但是對於 nonblocking 系列連接埠來說，只能定義函數。  
+回到前面的例子中來，當 B 中完成 B_imp 和 put 的定義後，在 env 的 connect_phase 就需要把 A_port 和 B_imp 連接在一起了：
+```
+function void my_env::connect_phase(uvm_phase phase);
+  super.connect_phase(phase);
+  A_inst.A_port.connect(B_inst.B_imp);
+endfunction
+```
+connect 函數一定要在 connect_phase 呼叫。連線完成後，當在 A 中透過 put 向 A_port 寫入一個 transaction 時，B 的 put 馬上會被調用，並執行其中的程式碼。 A 的程式碼與4.2.2節程式碼清單4-8相同，在此段程式碼中，A 向 A_port 寫入了 10 個 transaction，因此 B 的 put 會被調用 10 次。
 ## EXPORT 與 IMP 的連接
-PORT 可以與 IMP 連接，同樣的 EXPORT 也可以與IMP相連接，其連接方法與 PORT 和 IMP 的連接完全一樣
+* PORT 可以與 IMP 連接，同樣的 EXPORT 也可以與IMP相連接，其連接方法與 PORT 和 IMP 的連接完全一樣
+* 不過在那個連結中 EXPORT 只是當作中間環節，這裡把 EXPORT 當作連結的起點  
+要實現 A 中的 EXPORT 與 B 中的 IMP 連接，A 的程式碼為：
+```
+class A extends uvm_component;
+  `uvm_component_utils(A)
+  uvm_blocking_put_export#(my_transaction) A_export;  // 改成 export
+…
+endclass
+…
+task A::main_phase(uvm_phase phase);
+  my_transaction tr;
+  repeat(10) begin
+    #10;
+    tr = new("tr");
+    assert(tr.randomize());
+    A_export.put(tr);
+  end
+endtask
+```
+B 的程式碼與程式碼清單4-10完全相同。 my_env 中的連結關係為：
 ```
 function void my_env::connect_phase(uvm_phase phase);
           super.connect_phase(phase);
           A_inst.A_export.connect(B_inst.B_imp);  // 就是將 A_port 改成 A_export
 endfunction
 ```
+如上述程式碼所示，就可以實現一個 EXPORT 和一個 IMP 的連接。與上一小節的例子比較可以發現，除了 A_port 變成 A_export
+之外，其他沒有改變。在 B 中也必須定義一個名字為 put 的任務。上一節中羅列的那些規律，對於 EXPORT 依然適用。
 ## PORT 與 PORT 的連接
 ![image](https://github.com/user-attachments/assets/edb3c087-d918-4bf1-a3a2-12dfdca2404d)
 上圖中，A 與 C 中是 PORT，B 中是 IMP。UVM 支援 C 的 PORT 連接到 A 的 PORT，並最終連接到 B 的 IMP
