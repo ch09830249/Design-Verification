@@ -1,6 +1,6 @@
 # sequence 基礎
 ## 從 driver 中剝離激勵產生功能
-最開始時，driver的main_phase是這樣的：
+最開始時，driver 的 main_phase 是這樣的：
 ```
 task my_driver::main_phase(uvm_phase phase);
   my_transaction tr;
@@ -13,8 +13,7 @@ task my_driver::main_phase(uvm_phase phase);
   phase.drop_objection(this);
 endtask
 ```
-如果只是**施加上述一種激勵**，這樣是可以的。但**當要對 DUT 施加不同的激勵時**，那該怎麼辦呢？上述程式碼中是施加了正確
-的包，而下一次測試中**要在第 9 個 transaction 中加入CRC 錯誤封包**，那麼可以這麼寫：
+如果只是**施加上述一種激勵**，這樣是可以的。但**當要對 DUT 施加不同的激勵時**，那該怎麼辦呢？上述程式碼中是施加了正確的封包，而下一次測試中**要在第 9 個 transaction 中加入CRC 錯誤封包**，那麼可以這麼寫：
 ```
 task my_driver::main_phase(uvm_phase phase);
   my_transaction tr;
@@ -30,12 +29,35 @@ task my_driver::main_phase(uvm_phase phase);
   phase.drop_objection(this);
 endtask
 ```
-**這就相當於將整個 main_phase 重新寫了一遍**。如果現在有了新的需求，需要再測一個長封包。那麼，就需要再次改寫 
-main_phase ，也就是說，**每多測一種情況，就要多改寫一次 main_phase**。如果經常改寫某個任務或函數，那麼就很容易將之前對
-的地方改錯。所以說，這種方法是不可取的，因為它的可擴展性太差，會常常帶來錯誤。
-**仔細觀察 main_phase，其實只有從 tr=new 語句到 drive_one_pkt 之間的語句在變**。有沒有什麼方法可以將這些語句從 main_phase 
-中獨立出來呢？最好的方法就是在不同的測試案例中決定這幾行語句的內容。這種想法中已經包含了激勵的產生與驅動的分離這
-個觀點。 drive_one_pkt 是驅動，這是 driver 應該做的事情，但是**像產生什麼樣的包、如何產生等這些事情應該從 driver 中獨立出去**。
+**這就相當於將整個 main_phase 重新寫了一遍**。如果現在有了新的需求，需要再測一個長封包。那麼，就需要再次改寫 main_phase ，也就是說，**每多測一種情況，就要多改寫一次 main_phase**。如果經常改寫某個任務或函數，那麼就很容易將之前對
+的地方改錯。所以說，這種方法是不可取的，因為它的可擴展性太差，會常常帶來錯誤。**仔細觀察 main_phase，其實只有從 tr=new 語句到 drive_one_pkt 之間的語句在變**。有沒有什麼方法可以將這些語句從 main_phase 中獨立出來呢？最好的方法就是在不同的測試案例中決定這幾行語句的內容。這種想法中已經包含了**激勵的產生與驅動的分離這個觀點**。drive_one_pkt 是驅動，這是 driver 應該做的事情，但是**像產生什麼樣的封包、如何產生等這些事情應該從 driver 中獨立出去**。要實現上述目標，可以使用函數來實現：
+```
+function void gen_pkt(ref my_transaction tr);
+  tr = new;
+  assert(tr.randomize);
+endfunction
+task my_driver::main_phase(uvm_phase phase);
+  my_transaction tr;
+  bit send_crc_err = 0;
+  phase.raise_objection(this);
+  for(int i = 0; i < 10; i++) begin
+    gen_pkt(tr);
+    drive_one_pkt(tr);
+  end
+  phase.drop_objection(this);
+endtask
+```
+如上圖所示，可以定義一個產生正常封包的 gen_pkt 函數，但是如何定義一個 CRC 錯誤封包的函數呢？難道像下面這樣嗎？
+```
+function void gen_pkt(ref my_transaction tr);
+  tr = new;
+  assert(tr.randomize with {crc_err == 1;});
+endfunction
+```
+這樣帶來的一個最大的問題就是 gen_pkt 函數的重複定義，顯然這樣是不被允許的。為了避免重複定義，有兩種策略：
+* 第一種是使用虛函數。將程式碼清單6-3中的 gen_pkt 定義為 virtual 類型，然後在建造 CRC 錯誤的測試案例時，從 my_driver 派生一個新的 crc_err_driver，並重載 gen_pkt 函式。但是這樣新的問題又出現了，如何在這個測試案例中實例化這個新的 driver 呢？似乎只能重新定義一個 my_agent [1]，為了實例化這個新的 agent，只能重新定義一個 my_env。這種解決方式顯然是不可取的。
+* 第二種解決方式是讓定義的函數的名字是不一樣的，但是在 driver 的 main_phase 中又無法執行這個不同名字的函數。這是一個相當難的問題，單純用 SystemVerilog 提供的一些介面是根本無法實現的。UVM 為了解決這個問題，引進了 sequence 機制，在解決的過程中也使用了 factory 機制、config 機制。使用 sequence 機制之後，在不同的測試案例中，將不同的 sequence 設定成 sequencer 的 main_phase 的 default_sequence。當 sequencer 執行到 main_phase 時，發現有 default_sequence，那麼它就啟動 sequence。仔細回想上面的過程，sequencer 啟動 sequence 並執行的過程就相當於之前的 gen_pkt，只是呼叫的位置從 driver 變到 sequencer。sequencer 將 sequence 產生的 transaction 交給 driver，這其實與在 driver 裡面呼叫 gen_pkt 沒有本質的差別。
+
 ## sequence 的啟動與執行
 當完成一個 sequence 的定義後，可以使用 start 任務將其啟動：
 ```
@@ -43,19 +65,18 @@ my_sequence my_seq;
 my_seq = my_sequence::type_id::create("my_seq");
 my_seq.start(sequencer);
 ```
-除了直接啟動之外，還可以使用 default_sequence 啟動。事實上 default_sequence 會呼叫 start 任務，它有兩種呼叫方式，其中一
-種是前文已經介紹過的：
+除了直接啟動之外，還可以使用 default_sequence 啟動。事實上 default_sequence 會呼叫 start 任務，它有兩種呼叫方式，其中一種是前文已經介紹過的：
 ```
 // 設定該 sequencer 的 default sequence 為 case0_sequence
 uvm_config_db#(uvm_object_wrapper)::set(this,
                                         "env.i_agt.sqr.main_phase",
                                         "default_sequence",
-                                        case0_sequence::type_id::get());
+                                        case0_sequence::type_id::get());  // 代入該 sequence 的 class
 ```
 另外一種方式是先實例化要啟動的 sequence，之後再透過 default_sequence 啟動：
 ```
 function void my_case0::build_phase(uvm_phase phase);
-  ase0_sequence cseq;
+  case0_sequence cseq;
   super.build_phase(phase);
   cseq = new("cseq");
   uvm_config_db#(uvm_sequence_base)::set(this,
@@ -725,7 +746,7 @@ class case0_sequence extends uvm_sequence #(my_transaction);
   endtask
 endclass
 ```
-似乎這樣寫起來顯得特別麻煩。產生的兩種不同的包中，第一個約束條件有兩個，第二個約束條件有三個。但是假如約束條
+似乎這樣寫起來顯得特別麻煩。產生的兩種不同的封包中，第一個約束條件有兩個，第二個約束條件有三個。但是假如約束條
 件有十個呢？如果整個驗證平台中有 30 個測試案例都用到這樣的兩種包，那就要在這 30 個測試案例的 sequence 中加入這些程式碼，
 這是一件相當恐怖的事情，而且特別容易出錯。既然已經定義好 crc_seq 和 long_seq，那麼有沒有簡單的方法呢？答案是肯定的。
 在一個 sequence 的 body 中，除了可以使用 uvm_do 巨集產生 transaction 外，其實還可以啟動其他的 sequence，也就是一個 sequence 內啟動另外一個 sequence，這就是嵌套的 sequence：
@@ -1072,7 +1093,7 @@ endfunction
 ```
 ## sequence 之間的簡單同步
 在這個新的驗證平台中有兩個 driver，它們原本是完全等價的，但是出於某些原因的考慮，如 DUT 要求 driver0 必須先發送一個
-最大長度的包，在此基礎上 driver1 才可以發送包。這是一個 sequence 之間同步的過程，一個很自然的想法是，將這個同步的過程
+最大長度的封包，在此基礎上 driver1 才可以發送包。這是一個 sequence 之間同步的過程，一個很自然的想法是，將這個同步的過程
 使用一個全域的事件來完成：
 ```
 文件：src/ch6/section6.5/6.5.2/my_case0.sv
@@ -1233,7 +1254,7 @@ endclass
 員變數。
 回顧一下，為了解決 sequence 的同步，之前使用 send_over 這個全域變數的方式來解決。那麼在 virtual sequence 中是如何解決的
 呢？事實上這個問題在 virtual sequence 中根本就不是個問題。由於 virtual sequence 的 body 是順序執行，所以只需要先產生一個最長
-的包，產生完畢後再將其他的 sequence 啟動起來，沒有必要去刻意地同步。這只是 virtual sequence 強大的調度功能的一個小小的體
+的封包，產生完畢後再將其他的 sequence 啟動起來，沒有必要去刻意地同步。這只是 virtual sequence 強大的調度功能的一個小小的體
 現。
 virtual sequence 的使用可以減少 config_db 語句的使用。由於 config_db::set 函數的第二個路徑參數是字串，非常容易出錯，
 所以減少 config_db 語句的使用可以降低出錯的機率。在上節中，使用了兩個 uvm_config_db 語句將兩個 sequence 送給了對應的 
