@@ -339,7 +339,8 @@ endfunction
 如上述程式碼所示，就可以實現一個 EXPORT 和一個 IMP 的連接。與上一小節的例子比較可以發現，除了 A_port 變成 A_export
 之外，其他沒有改變。在 B 中也必須定義一個名字為 put 的任務。上一節中羅列的那些規律，對於 EXPORT 依然適用。
 ## PORT 與 PORT 的連接
-![image](https://github.com/user-attachments/assets/edb3c087-d918-4bf1-a3a2-12dfdca2404d)
+在前面的連接中，不存在層次的關系。在 UVM 中，支援帶層次的連結關係，如圖所示。    
+![image](https://github.com/user-attachments/assets/edb3c087-d918-4bf1-a3a2-12dfdca2404d)  
 上圖中，A 與 C 中是 PORT，B 中是 IMP。UVM 支援 C 的 PORT 連接到 A 的 PORT，並最終連接到 B 的 IMP
 * **Class C code (類似 driver)**
 ```
@@ -382,7 +383,10 @@ endfunction
 task A::main_phase(uvm_phase phase);
 endtask
 ```
+PORT 與 PORT 之間的連結不只限於兩層，可以有無限多層。
 ## EXPORT 與 EXPORT 的連接
+除了支援 PORT 與 PORT 的連接外，UVM 同樣支援 EXPORT 與 EXPORT 之間的連接，如圖所示。
+右圖中，A 中是 PORT，B 與 C 中是 EXPORT，B 還有一個 IMP。 UVM 支援 C 的 EXPORT 連接到 B 的 EXPORT，並最終連接到 B 的 IMP。  
 ![image](https://github.com/user-attachments/assets/0a0477c6-5ba2-4572-a500-5b721027c6a8)
 * **Class C code (類似 C: agent, B: monitor)**
 ```
@@ -414,6 +418,7 @@ function void my_env::connect_phase(uvm_phase phase);
               A_inst.A_port.connect(C_inst.C_export); // 連接 A->C
 endfunction
 ```
+同樣的，EXPORT 與 EXPORT 之間的連結也不只限於兩層，也可以有無限多層。
 ## blocking_get 端口的使用
 * 使用 blocking_get 系列連接埠的框圖如下圖所示
 ![image](https://github.com/user-attachments/assets/547d9eef-20d0-4c8d-8b2e-75280b9dd3d5)
@@ -487,6 +492,8 @@ function void my_env::connect_phase(uvm_phase phase);
   B_inst.B_port.connect(A_inst.A_export);
 endfunction
 ```
+* 上面介紹了 blocking_get_port 與 blocking_get_export 及 blocking_get_imp 的連接。與 blocking_put 系列連接埠類似，blocking_get_port 也
+可以直接連接到 blocking_get_imp，同時 blocking_get_port 也可以連接到 blocking_get_port，blocking_get_export 也可以連接到 blocking_get_export。
 * 需要謹記的是連結的終點必須是一個 IMP
 ## blocking_transport 端口的使用
 * 在 transport 系列連接埠中，通信變成了雙向的
@@ -515,7 +522,7 @@ endtask
 ```
 class B extends uvm_component;
   `uvm_component_utils(B)
-  uvm_blocking_transport_imp#(my_transaction, my_transaction, B) B_imp;
+  uvm_blocking_transport_imp#(my_transaction, my_transaction, B) B_imp;  // B 中需要定義一個類型為 uvm_blocking_transport_imp 的 IMP
 endclass
 
 // B 中的 transaport 任務接收到這筆 transaction，根據這筆 transaction 做某些操作，並把操作的結果當作 transport 的第二個參數送出
@@ -534,6 +541,7 @@ function void my_env::connect_phase(uvm_phase phase);
   A_inst.A_transport.connect(B_inst.B_imp);
 endfunction
 ```
+在 A 中呼叫 transport 任務，並把生成的 transaction 當作第一個參數。B 中的 transaport 任務接收到這筆 transaction，根據這筆 transaction 做某些操作，並把操作的結果當作 transport 的第二個參數送出。A 根據接收到的 rsp 決定後面的行為。在本例中，是 blocking_transport_port 直接連接到 blocking_transport_imp，前者還可以連接到 blocking_transport_export，這三者之間的連接關係與 blocking_put 系列連接埠類似。
 ## nonblocking 端口的使用
 * nonblocking 的所有操作都是非阻塞的，換言之，**必須用函數實現，而不能用任務實現**
 ![image](https://github.com/user-attachments/assets/2106d6dc-db20-47fe-be60-79ca90be6266)
@@ -566,14 +574,14 @@ class B extends uvm_component;
 endclass
 
 // 確認 queue 中是否有 transaction
-function bit B::can_put();
+function bit B::can_put();    // 這裡是 function
   if (tr_q.size() > 0)
     return 0;
   else
     return 1;
 endfunction
 
-function bit B::try_put(my_transaction tr);
+function bit B::try_put(my_transaction tr);  // 這裡是 function
   `uvm_info("B", "receive a transaction", UVM_LOW)
   if (tr_q.size() > 0)
     return 0;
@@ -602,6 +610,7 @@ function void my_env::connect_phase(uvm_phase phase);
   A_inst.A_export.connect(B_inst.B_imp);
 endfunction
 ```
+# UVM 中的通信方式
 ## UVM 中 analysis 端口
 UVM 中還有 2 種特殊的端口：**analysis_port 和 analysis_export**
 1. 一個 analysis_port（analysis_export）可以連接多個 IMP，也就是說，analysis_port（analysis_export）與 IMP
