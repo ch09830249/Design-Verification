@@ -172,14 +172,16 @@ virtual task body();
   end
 endtask
 ```
+# 使用 factory 機制進行重載
 ## factory 機制式的重載
 以前面程式碼清單為例，定義好 bird 與 parrot，並在測試案例中呼叫 print_hungry 函數。將程式碼的 build_phase 中改為如下語句：
 ```
 function void my_case0::build_phase(uvm_phase phase);
-  set_type_override_by_type(bird::get_type(), parrot::get_type());  // 這行表示當建立 bird 類型時，實際會產生 parrot 類型的物件，這是 UVM 的 型別覆寫（type override） 機制。
+......
+  set_type_override_by_type(bird::get_type(), parrot::get_type());    // 這行表示當建立 bird 類型時，實際會產生 parrot 類型的物件，這是 UVM 的 型別覆寫（type override） 機制。
 
-  bird_inst   = bird::type_id::create("bird_inst");      // 雖然指定產生 bird，但因為有 type override，實際上會產生 parrot。
-  parrot_inst = parrot::type_id::create("parrot_inst");  // 直接建立 parrot 物件。
+  bird_inst   = bird::type_id::create("bird_inst");                   // 雖然指定產生 bird，但因為有 type override，實際上會產生 parrot。
+  parrot_inst = parrot::type_id::create("parrot_inst");               // 直接建立 parrot 物件。
   
   print_hungry(bird_inst);
   print_hungry(parrot_inst);
@@ -201,13 +203,41 @@ set_type_override_by_type 語句相當於在 factory 機制的表格中加入了
 使用 factory 機制的重載是有前提的，並不是任意的類別都可以互相重載。要使用重載的功能，必須滿足以下要求：  
 **第一，無論是重載的類別（parrot）或被重載的類別（bird），都要在定義時註冊到 factory 機制中。**  
 **第二，被重載的類別（bird）在實例化時，要使用 factory 機制式的實例化方式，而不能使用傳統的 new 方式。**  
-**第三，最重要的是，重載的類別（parrot）要與被重載的類別（bird）有派生關係。重載的類別必須派生自被重載的類，被重載的類別必須是重載類別的父類別。**  
-**第四，component 與 object 之間互相不能重載。雖然 uvm_component 是派生自 uvm_object，但這兩者的血緣關係太遠了，遠到根本不能重載。從兩者的 new 參數的函數就可以看出來，二者互相重載時，多出來的一個 parent 參數會使 factory 機制無所適從。**  
-若沒有派生關係，會出現類似以下的 error messege
+**第三，最重要的是，重載的類別（parrot）要與被重載的類別（bird）有衍生關係。重載的類別必須繼承自被重載的類，被重載的類別必須是重載類別的父類別。**  
+**第四，component 與 object 之間互相不能重載。雖然 uvm_component 是衍生自 uvm_object，但這兩者的血緣關係太遠了，遠到根本不能重載。從兩者的 new 參數的函數就可以看出來，二者互相重載時，多出來的一個 parent 參數會使 factory 機制無所適從。**  
+若沒有衍生關係，以 bear 類別為例
+```
+class bear extends uvm_object;
+  virtual function void hungry();
+    $display("I am a bear, I am hungry");
+    endfunction
+    function void hungry2();
+    $display("I am a bear, I am hungry2");
+  endfunction
+
+  `uvm_object_utils(bear)
+  function new(string name = "bear");
+    super.new(name);
+  endfunction
+endclass
+```
+在 build_phase 中使用 bear 重載 bird：
+```
+function void my_case0::build_phase(uvm_phase phase);
+…
+  set_type_override_by_type(bird::get_type(), bear::get_type());
+…
+endfunction
+```
+會出現類似以下的 error messege
 ```
 UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'bird'.A component of type 'bear'
 ```
-若有派生關係，但是順序顛倒了，即重載的類別是被重載類別的父類，那麼也會出錯
+若有派生關係，但是順序顛倒了，
+```
+set_type_override_by_type(parrot::get_type(), bird::get_type());
+```
+即重載的類別是被重載類別的父類，那麼也會出錯
 ```
 UVM_FATAL @ 0: reporter [FCTTYP] Factory did not return an object of type 'parrot'. A component of type
 ```
@@ -237,10 +267,10 @@ class new_monitor extends my_monitor;
     `uvm_component_utils(new_monitor)
     
     virtual task main_phase(uvm_phase phase);
-    fork
-      super.main_phase(phase);
-    join_none
-    `uvm_info("new_monitor", "I am new monitor", UVM_MEDIUM)
+      fork
+        super.main_phase(phase);
+      join_none
+      `uvm_info("new_monitor", "I am new monitor", UVM_MEDIUM)
     endtask
 endclass
 ```
@@ -254,8 +284,7 @@ set_inst_override_by_type("env.o_agt.mon", my_monitor::get_type(), new_monitor::
 ```
 I am new_monitor
 ```
-無論是 set_type_override_by_type 或是 set_inst_override_by_type，它們的參數都是一個 uvm_object_wrapper 型的型別參數，這種
-參數透過 xxx：：get_type() 的形式取得。 UVM 還提供了另外一種簡單的方法來替換這種晦澀的寫法：字串。
+無論是 set_type_override_by_type 或是 set_inst_override_by_type，它們的參數都是一個 uvm_object_wrapper 型的型別參數，這種參數透過 xxx：：get_type() 的形式取得。UVM 還提供了另外一種簡單的方法來替換這種晦澀的寫法：字串。
 與 set_type_override_by_type 相對的是 set_type_override，它的原型是：
 ```
 extern static function void set_type_override(string original_type_name,        // 透過 Class 的名稱
@@ -276,25 +305,20 @@ extern function void set_inst_override(string relative_inst_path,
 ```
 set_inst_override("env.o_agt.mon", "my_driver", "new_monitor");
 ```
-上述的所有函數都是 uvm_component 的函數，但是如果在一個無法使用 component 的地方，**如在 top_tb 的 initial 語句裡，就無法
-使用。UVM 提供了另外四個函數來取代上述的四個函數，這四個函數的原型是：**
+上述的所有函數都是 uvm_component 的函數，但是如果在一個無法使用 component 的地方，**如在 top_tb 的 initial 語句裡，就無法使用。UVM 提供了另外四個函數來取代上述的四個函數，這四個函數的原型是：**
 ```
-extern function
-void set_type_override_by_type (uvm_object_wrapper original_type,
-                                uvm_object_wrapper override_type,
-                                bit replace=1);
-extern function
-void set_inst_override_by_type (uvm_object_wrapper original_type,
-                                uvm_object_wrapper override_type,
-                                string full_inst_path);
-extern function
-void set_type_override_by_name (string original_type_name,
-                                string override_type_name,
-                                bit replace=1);
-extern function
-void set_inst_override_by_name (string original_type_name,
-                                string override_type_name,
-                                string full_inst_path);
+extern function void set_type_override_by_type (uvm_object_wrapper original_type,
+                                                uvm_object_wrapper override_type,
+                                                bit replace=1);
+extern function void set_inst_override_by_type (uvm_object_wrapper original_type,
+                                                uvm_object_wrapper override_type,
+                                                string full_inst_path);
+extern function void set_type_override_by_name (string original_type_name,
+                                                string override_type_name,
+                                                bit replace=1);
+extern function void set_inst_override_by_name (string original_type_name,
+                                                string override_type_name,
+                                                string full_inst_path);
 ```
 這四個函數都位於 uvm_factory 類別中，其中  
 第一個函數與 uvm_component 中的同名函數類似，傳遞的參數相同。
@@ -312,8 +336,7 @@ end
 ```
 factory.set_type_override_by_type(bird::get_type(), parrot::get_type());
 ```
-事實上，uvm_component 的四個重載函數直接呼叫了 factory 的對應函數。
-除了可以在程式碼中進行重載外，還可以在**命令列中進行重載**。對於實例重載和類型重載，分別有各自的命令列參數：
+事實上，uvm_component 的四個重載函數直接呼叫了 factory 的對應函數。除了可以在程式碼中進行重載外，還可以在**命令列中進行重載**。對於實例重載和類型重載，分別有各自的命令列參數：
 ```
 <sim command> +uvm_set_inst_override=<req_type>,<override_type>,<full_inst_path>
 <sim command> +uvm_set_type_override=<req_type>,<override_type>[,<replace>]
