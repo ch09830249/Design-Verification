@@ -737,7 +737,9 @@ function void my_env::connect_phase(uvm_phase phase);
 endfunction
 ```
 
-* 第一種最簡單，但是其層次關係並不好，第二種稍顯麻煩，第三種既具有明顯的層次關係，同時其實作也較簡單
+* 第一種最簡單，但是其層次關係並不好
+* 第二種稍顯麻煩
+* 第三種既具有明顯的層次關係，同時其實作也較簡單
 * 在上面的例子中，scoreboard 只接收一路數據，但在現實情況中，scoreboard 除了接收 monitor 的資料之外，還要接收 reference model的資料。對應的 scoreboard 就要再增加一個 uvm_analysis_imp 的 IMP，如 model_imp。此時問題就出現了，由於**收到的兩路資料應該要做不同的處理，所以這個新的 IMP 也要有一個 write 任務與其對應。但 write 只有一個**，怎麼辦？
 UVM 考慮到了這種情況，它定義了一個宏 uvm_analysis_imp_decl 來解決這個問題，其使用方式為：
 ```
