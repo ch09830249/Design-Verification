@@ -668,7 +668,7 @@ PS: 與 put 系列連接埠的 PORT 和 EXPORT 直接相連會出錯的情況一
 * **monitor code 如下:**
 ```
 class monitor extends uvm_monitor;
-    uvm_analysis_port#(my_transaction) ap;    // 宣告 uvm_analysis_port
+    uvm_analysis_port#(my_transaction) ap;                    // 宣告 uvm_analysis_port
     task main_phase(uvm_phase phase);
         super.main_phase(phase);
         my_transaction tr;
@@ -681,8 +681,8 @@ endclass
 * **scoreboard code 如下:**
 ```
 class scoreboard extends uvm_scoreboard;
-      uvm_analysis_imp#(my_transaction, scoreboard) scb_imp;
-      task write(my_transaction tr);    // 實作 write task
+      uvm_analysis_imp#(my_transaction, scoreboard) scb_imp;  // 宣告 uvm_analysis_imp
+      task write(my_transaction tr);                          // 實作 write task
             //do something on tr
       endtask
 endclass
@@ -701,23 +701,23 @@ endfunction
 * **agent code 如下:**
 ```
 class my_agent extends uvm_agent ;
-    uvm_analysis_port #(my_transaction) ap;    // 宣告 ap
+    uvm_analysis_port #(my_transaction) ap;    // 宣告 uvm_analysis_port
     …
 
     function void build_phase(uvm_phase phase);
           super.build_phase(phase);
-          ap = new("ap", this);    // 實例化 ap
+          ap = new("ap", this);    // 實例化 uvm_analysis_port
           …
     endfunction
 
     function void my_agent::connect_phase(uvm_phase phase);
-        mon.ap.connect(this.ap);
+        mon.ap.connect(this.ap);    // monitor 的 ap 和 agent 的 ap 相連
         …
     endfunction
 endclass
 
 function void my_env::connect_phase(uvm_phase phase);
-    o_agt.ap.connect(scb.scb_imp);
+    o_agt.ap.connect(scb.scb_imp);  // env 中再將 agent 的 ap 與 scb 的 ap 相連
     …
 endfunction
 ```
@@ -739,13 +739,13 @@ endfunction
 
 * 第一種最簡單，但是其層次關係並不好
 * 第二種稍顯麻煩
-* 第三種既具有明顯的層次關係，同時其實作也較簡單
-* 在上面的例子中，scoreboard 只接收一路數據，但在現實情況中，scoreboard 除了接收 monitor 的資料之外，還要接收 reference model的資料。對應的 scoreboard 就要再增加一個 uvm_analysis_imp 的 IMP，如 model_imp。此時問題就出現了，由於**收到的兩路資料應該要做不同的處理，所以這個新的 IMP 也要有一個 write 任務與其對應。但 write 只有一個**，怎麼辦？
-UVM 考慮到了這種情況，它定義了一個宏 uvm_analysis_imp_decl 來解決這個問題，其使用方式為：
+* 第三種既具有明顯的層次關係，同時其實作也較簡單  
+**Q:** 在上面的例子中，scoreboard 只接收一路數據，但在現實情況中，scoreboard 除了接收 monitor 的資料之外，還要接收 reference model 的資料。對應的 scoreboard 就要再增加一個 uvm_analysis_imp 的 IMP，如 model_imp。此時問題就出現了，由於**收到的兩路資料應該要做不同的處理，所以這個新的 IMP 也要有一個 write 任務與其對應。但 write 只有一個**，怎麼辦？  
+**A:** UVM 考慮到了這種情況，它定義了一個宏 uvm_analysis_imp_decl 來解決這個問題，其使用方式為：
 ```
 /*
-程式碼透過宏 uvm_analysis_imp_decl 聲明了兩個後綴 _monitor 和 _model。
-UVM 會根據這兩個後綴定義兩個新的 IMP 類別：uvm_analysis_imp_monitor 和 uvm_analysis_imp_model
+  程式碼透過宏 uvm_analysis_imp_decl 聲明了兩個後綴 _monitor 和 _model。
+  UVM 會根據這兩個後綴定義兩個新的 IMP 類別：uvm_analysis_imp_monitor 和 uvm_analysis_imp_model
 */
 `uvm_analysis_imp_decl(_monitor)
 `uvm_analysis_imp_decl(_model)
@@ -756,8 +756,8 @@ class my_scoreboard extends uvm_scoreboard;
   uvm_analysis_imp_monitor#(my_transaction, my_scoreboard) monitor_imp;
   uvm_analysis_imp_model#(my_transaction, my_scoreboard) model_imp;
 /*
-當與 monitor_imp 相連接的 analysis_port 執行 write 函數時，會自動呼叫 write_monitor 函數，
-而與 model_imp 相連接的 analysis_port 執行 write 函數時，會自動呼叫 write_model 函數
+  當與 monitor_imp 相連接的 analysis_port 執行 write 函數時，會自動呼叫 write_monitor 函數，
+  而與 model_imp 相連接的 analysis_port 執行 write 函數時，會自動呼叫 write_model 函數
 */
   extern function void write_monitor(my_transaction tr);
   extern function void write_model(my_transaction tr);
