@@ -317,11 +317,18 @@ endfunction
 ```
 ## objection 機制
 ## objection 與 task phase
+```
+task main_phase(uvm_phase phase);
+ phase.raise_objection(this);
+…
+ phase.drop_objection(this);
+endtask
+```
 * 在進入某一 phase 時，UVM 會收集此 phase 提出的所有 objection，並且實時監測所有 objection 是否已經被撤銷了，當發現所有都已經撤銷後，那麼就會關閉此 phase，開始進入下一個 phase。當所有的 phase 都執行完畢後，就會呼叫 $finish 來將整個的驗證平台關掉
 * 如果 UVM 發現此 phase 沒有提起任何 objection，那麼將會直接跳到下一個 phase。假如驗證平台中只有（注意「只有」兩個字）driver 中提起了異議，而 monitor 等都沒有提起，很顯然，driver 中的程式碼是可以執行的，那麼 monitor 中的程式碼能夠執行嗎？答案是肯定的。當進入 monitor 後，系統會監測到已經有 objection 被提起了，所以會執行 monitor 中的程式碼。當過了 100 個單位時間之後，driver 中的 objection 被撤銷。此時，UVM 監測發現所有的 objection 都被撤銷了（因為只有 driver raise_objection），於是 UVM 會直接「殺死」monitor 中的無限循環進程，並且跳到下一個 phase，即 post_main_phase（）。假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻就為 100。
 * 如果 driver 根本沒有 raise_objection，而且所有其他 component 的 main_phase 裡面也沒有 raise_objection，那麼在進入 main_phase 時，UVM 發現沒有任何 objection 被提起，於是雖然 driver 中有一個延時 100 個單位時間的程式碼，monitor 中有一個無限循環，UVM 也都不理會，它會直接跳到 post_main_phase，假設進入 main_phase 的時刻為 0，那麼進入 post_main_phase 的時刻還是為 0
 * UVM 使用者一定要注意：如果想要執行一些耗費時間的程式碼，那麼要在此 phase 下任一個 component 中至少提起一次 objection
-* 上述結論只適用於 12 個 run-time 的 phase。對於 run_phase 則不適用。由於 run_phase 與動態運行的 phase 是並行運行的，如果 12 個動態運行的 phase 有 objection 被提起，那麼 run_phase 根本不需要 raise_objection 就可以自動執行
+* **上述結論只適用於 12 個 run-time 的 phase。對於 run_phase 則不適用**。由於 run_phase 與動態運行的 phase 是並行運行的，如果 12 個動態運行的 phase 有 objection 被提起，那麼 run_phase 根本不需要 raise_objection 就可以自動執行
    * 第一個是其他動態運行的 phase 中有 objection 被提起。在這種情況下，運行時間受其他動態運行 phase 中 objection 控制，run_phase 只能被動地接受
    * 第二是在 run_phase 中 raise_objection。這種情況下運行時間完全受 run_phase 控制\
 <img width="515" height="754" alt="image" src="https://github.com/user-attachments/assets/433a0dee-53aa-4473-9cf9-645ee4ed484e" />
@@ -332,17 +339,206 @@ endfunction
 房間中，分別有一個歷史遺留的井 run_phase（OVM 遺留的），可以直通樓頂。
 在每層的每個房間及各個房間的井中，都有可能存在著殭屍（objection）及需要通電才能運轉的機器（在每個phase中寫的代
 碼）。整大樓處於斷電的狀態。
-有一棵叫UVM的植物，在經歷start_of_simulation_phase之後，於0時刻進入到最頂層（12層）：pre_reset_phase。在進入後，
+有一棵叫 UVM 的植物，在經歷 start_of_simulation_phase 之後，於 0 時刻進入到最頂層（12層）：pre_reset_phase。在進入後，
 它首先為本層所有房間及所有井（run_phase）通電，如果房間及井中有機器，那麼這些機器就會運轉起來。
-這棵植物在通電完畢後開始檢測各個房間中有沒有殭屍（是否raise_objection），如果任一個房間中有殭屍，那麼就開始消
+這棵植物在通電完畢後開始檢測各個房間中有沒有殭屍（是否 raise_objection），如果任一個房間中有殭屍，那麼就開始消
 滅這些殭屍，一直到所有殭屍消失（drop_objection）。當所有的殭屍被消滅後，它就斷掉這一層各房間的電，所有正在運作的
-機器將會停止運轉，然後這棵UVM植物進入下一層。要注意的是，它只會斷掉所有房間的電，而沒有斷掉所有的井（run_phase）
+機器將會停止運轉，然後這棵 UVM 植物進入下一層。要注意的是，它只會斷掉所有房間的電，而沒有斷掉所有的井（run_phase）
 中的電，所以各個井中如果有機器，那麼它們仍然在正常運作。
 如果所有的房間中都沒有殭屍，那麼它直接斷電並進入下一層，在這種情況下，所有的機器只發出一聲轟鳴聲，便被緊急終
-止了。這棵UVM植物一層一層消滅殭屍，一直到消滅底層post_shutdown_phase中的殭屍。此時，12個動態運行phase全部結束，
-它們中的殭屍全部被消滅完畢。這棵UVM植物並不是立即進入extract_phase，而是開始查看所有的井（run_phase）中是否有僵
+止了。這棵 UVM 植物一層一層消滅殭屍，一直到消滅底層 post_shutdown_phase 中的殭屍。此時，12 個動態運行 phase 全部結束，
+它們中的殭屍全部被消滅完畢。這棵 UVM 植物並不是立即進入 extract_phase，而是開始查看所有的井（run_phase）中是否有僵
 屍，如果有那麼就開始消滅它們，一直到所有的殭屍消失，否則直接斷掉井中的電，所有井中正在運轉的機器停止運轉。當
-run_phase中的殭屍也被消滅完畢後，開始進入extract_phase。
+ run_phase 中的殭屍也被消滅完畢後，開始進入 extract_phase。
 所以，欲使每一層中的機器（代碼）運轉起來，只要在這一層的任何一個房間（任一component）中加入一個殭屍
 （raise_objection）即可。如果殭屍永遠無法消失（phase.raise_objection與phase.drop_objection之間是一個無限循環），那麼就會一
 直停留在這一層。
+## 參數 phase 的必要性
+在 UVM 中所有 phase 的函數/任務參數中，都有一個 phase：
+```
+task main_phase(uvm_phase phase);
+```
+這個輸入參數中的 phase 是什麼意思？為什麼要加入這樣一個東西？看了上一小節的例子，應該可以回答這個問題了。因為要
+便於在任何 component 的 main_phase 中都能 raise_objection，而要 raise_objection 則必須透過 phase.raise_objection 來完成，所以必須將
+ phase 作為參數傳遞到 main_phase 等任務中。可以想像，如果沒有這個 phase 參數，那麼想要提起一個 objection 就會比較麻煩了。
+這裡比較有趣的問題是：類似 build_phase 等 function phase 是否可以提起和撤銷 objection 呢?
+```
+function void my_case0::build_phase(uvm_phase phase);
+ phase.raise_objection(this);
+ super.build_phase(phase);
+ phase.drop_objection(this);
+endfunction
+```
+運行上述代碼後系統並不會報錯。不過，一般不會這麼用。 phase 的引入是為了解決何時結束仿真的問題，它更多面向 
+main_phase 等 task phase，而不是面向 function phase。
+## 控制 objection 的最佳選擇
+在整棵 UVM 樹中，樹的結點是如此之多，那麼在什麼地方控制 objection 最合理呢？ driver 中、monitor 中、agent 中、scoreboard 
+中或是 env 中？
+在第2章的例子中，最初是在 driver 中 raise_objection，但事實上，在 driver 中 raise_objection 的時刻並不多。這是因為 driver 中
+通常都是一個無限循環的程式碼，如下所示：
+```
+task driver::main_phase(uvm_phase phase);
+ while(1) begin
+  seq_item_port.get_next_item(req);
+  …//drive the interface according to the information in req
+ end
+endtask
+```
+如果是在 while（1）的前面 raise_objection，在 while 循環的 end 後面 drop_objection，由於無限迴圈的特性，phase.drop_objection 永遠不會被執行到。
+```
+task driver::main_phase(uvm_phase phase);
+ phase.raise_objection(this);
+ while(1) begin
+  seq_item_port.get_next_item(req);
+  …//drive the interface according to the information in req
+ end
+ phase.drop_objection(this);
+endtask
+```
+一個常見的思考是將 raise_objection 放在 get_next_item 之後，這樣的話，就可以避免無限循環的問題：
+```
+task driver::main_phase(uvm_phase phase);
+ while(1) begin
+  seq_item_port.get_next_item(req);
+  phase.raise_objection(this);
+  …//drive the interface according to the information in req
+  phase.drop_objection(this);
+ end
+endtask
+```
+但是關鍵問題是如果其他地方沒有 raise_objection 的話，那麼如前面所言，UVM 不等 get_next_item 執行完成就已經跳到了
+post_main_phase。
+在 monitor 和 reference model 中，都有類似的情況，它們都是無限循環的。因此一般不會在 driver 和 monitor 中控制 objection。
+一般來說，在實際的驗證平台中，通常會在以下兩種 objection 的控制策略中選擇一種：
+第一種是在 scoreboard 中進行控制。在2.3.6節中，scoreboard 的 main_phase 被做成一個無限迴圈。如果要在 scoreboard 中控制
+objection，則需要去除這個無限循環，透過 config_db：：set 的方式設定收集到的 transaction 的數量 pkt_num，當收集到足夠數量的
+transaction 後跳出循環：
+```
+task my_scoreboard::main_phase(uvm_phase phase);
+ phase.raise_objection(this);
+ fork
+  while (1) begin
+   exp_port.get(get_expect);
+   expect_queue.push_back(get_expect);
+  end
+  for(int i = 0; i < pkt_num; i++) begin
+   act_port.get(get_actual);
+   …
+  end
+ join_any
+ phase.drop_objection(this);
+endtask
+```
+上述程式碼中將原本的 fork...join 語句改為了 fork...join_any。當收集到足夠的 transaction 後，第二個進程終結，從而跳出
+fork...join_any，執行 drop_objection 語句。  
+第二種，如在第2章中介紹的例子那樣，在 sequence 中提起 sequencer 的 objection，當 sequence 完成後，再撤銷此 objection。
+以上兩種方式在驗證平台中都有應用。其中用得最多的是第二種，這種方式是 UVM 所提倡的方式。 UVM 的設計哲學就是全部
+由 sequence 來控制激勵的生成，因此一般情況下只在 sequence 中控制 objection。
+## set_drain_time 的使用
+無論任何功能的模組，都有其處理延時。如圖5-5a所示，0時刻DUT開始接收輸入，直到p時刻才有資料輸出。
+<img width="736" height="789" alt="image" src="https://github.com/user-attachments/assets/71f53ea9-78ca-4c5d-9c57-411b3f7332dc" />  
+在 sequence 中，n 時刻發送完畢最後一個 transaction，如果此時立刻 drop_objection，那麼最後在 n+p 時刻 DUT 輸出的包將無法接
+收到。因此，在 sequence 中，最後一個包發送完畢後，要延時 p 時間才能 drop_objection：
+```
+virtual task body();
+ if(starting_phase != null)
+  starting_phase.raise_objection(this);
+ repeat (10) begin
+  `uvm_do(m_trans)
+ end
+ #100;
+ if(starting_phase != null)
+  starting_phase.drop_objection(this);
+endtask
+```
+要延時的時間與激勵有很大關係。圖5-5a處理的是短包，所以延時只有 p；圖5-5b處理的是長包，延時的時間大於圖5-
+5a。在隨機發送激勵時，延遲的大小也是隨機的。所以無法精確地控制延時，只能根據激勵選擇一個最大的延時。
+這種延時對於所有sequence來說都是必須的，如果在每個sequence中都這樣延時，顯然是不合理的。如果某一天，DUT對於同
+樣的激勵，其處理延時變大，那就要修改所有的延時大小。
+考慮到這種情況，UVM 為所有的 objection 設定了 drain_time 這一屬性。所謂 drain_time，用5.2.1節最後的例子來說，就是當所
+有的殭屍都被消滅後，UVM 植物不會馬上進入下一層，而是等待一段時間，在這段時間內，那些正在運作的機器依然在正常地運
+轉，時間一到才會進入下一層。 drain_time 的設定方式為：
+```
+task base_test::main_phase(uvm_phase phase);
+ phase.phase_done.set_drain_time(this, 200);
+endtask
+```
+phase_done 是 uvm_phase 內定義的一個成員變數：
+```
+uvm_objection phase_done; // phase done objection
+```
+當呼叫 phase.raise_objection 或 phase.drop_objection 時，其實質是呼叫 phase_done 的 raise_objection 和 drop_objection。當 UVM 在
+ main_phase 偵測到所有的 objection 被撤銷後，接下來會檢查有沒有設定 drain_time。如果沒有設置，則馬上進入到
+post_main_phase，否則延遲 drain_time 後再進入 post_main_phase。如果在 post_main_phase 及其後面都沒有提起 objection，那麼最終會前進到final_phase，結束仿真。
+為了偵測 drain_time 的效果，在 case0_sequence 中使用 uvm_info 列印出 drop_objection：
+```
+class case0_sequence extends uvm_sequence #(my_transaction);
+ …
+ virtual task body();
+  …
+  #10000;
+  `uvm_info("case0_sequence", "drop objection", UVM_LOW)
+  …
+ endtask
+ …
+endclass
+```
+同時在 my_case0 中列印出進入 post_main_phase 和 final_phase 的時間：
+```
+task my_case0::post_main_phase(uvm_phase phase);
+ `uvm_info("my_case0", "enter post_main phase", UVM_LOW)
+endtask
+
+function void my_case0::final_phase(uvm_phase phase);
+ `uvm_info("my_case0", "enter final phase", UVM_LOW)
+endfunction
+```
+運行上述程式碼，可以得到以下結果：
+```
+# UVM_INFO my_case0.sv(14) @ 10000: uvm_test_top.env.i_agt.sqr@@case0_sequence [case0_sequence] drop objection
+# UVM_INFO my_case0.sv(45) @ 10200: uvm_test_top [my_case0] enter post_main phase
+# UVM_INFO my_case0.sv(49) @ 10200: uvm_test_top [my_case0] enter final phase
+```
+可以看到在 10000 時刻 drop_objection，但是直到 10200 時刻才進入 post_main_phase，兩者之間的時間差 200 恰恰就是在 base_test 
+中設定的 drain_time。
+drain_time 屬於 uvm_objection 的特性。如果只在 main_phase 中呼叫 set_drain_time 函數設定 drain_time，但是在其他 phase，如
+configure_phase 中沒有設置，那麼在 configure_phase 中所有的 objection 被撤銷後，就會立即進入 post_configure_phase。換言之，一個
+phase 對應一個 drain_time，並不是所有的 phase 共用一個 drain_time。在沒有設定的情況下，drain_time 的預設值為0。
+## objection 的調試
+與 phase 的調試一樣，UVM 同樣提供了命令列參數來進行 objection 的調試：
+```
+<sim command> +UVM_OBJECTION_TRACE
+```
+上一節的範例加入此命令列參數後的部分輸出如下：
+```
+# UVM_INFO @ 0: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr.case0_sequence raised 1 objection(
+# UVM_INFO @ 10000: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr.case0_sequence dropped
+```
+在呼叫 raise_objection 時，count=1 表示這次只提起了這一個 objection。可以使用如下的方式一次提起兩個 objection：
+```
+virtual task body();
+ if(starting_phase != null)
+  starting_phase.raise_objection(this, "case0 objection", 2);
+ #10000;
+ if(starting_phase != null)
+  starting_phase.drop_objection(this, "case0 objection", 2);
+endtask
+```
+raise_objection 的第二個參數是字串，可以為空，第三個參數為 objection 的數量。 drop_objection 的後兩個參數與此類似。此
+時，加入 UVM_OBJECTION_TRACE 命令列參數的輸出結果變成：
+```
+# UVM_INFO @ 0: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr.case0_sequence raised 2 objection(
+# UVM_INFO @ 10000: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr.case0_sequence dropped
+```
+除了上述有用資訊外，還會輸出一些冗餘的資訊：
+```
+# UVM_INFO @ 0: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr added 2 objection(s) to its
+# UVM_INFO @ 0: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt added 2 objection(s) to its total …
+# UVM_INFO @ 10000: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt.sqr subtracted 2 objection(
+# UVM_INFO @ 10000: main_objection [OBJTN_TRC] Object uvm_test_top.env.i_agt subtracted 2 objection(s) 
+```
+這是因為 UVM 採用的是樹狀結構來管理所有的 objection。當有一個 objection 被提起後，會檢查從當前 component 一直到最頂層
+的 uvm_top 的 objection 的數量。上述輸出結果中的 total 就是整個驗證平台中所有活躍的（被提起且沒有被撤銷的）objection 的數
+量。
+# domain 的應用
+// 後續更新
