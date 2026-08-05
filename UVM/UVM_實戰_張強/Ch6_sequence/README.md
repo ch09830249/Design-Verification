@@ -926,7 +926,7 @@ class my_sequencer extends uvm_sequencer #(my_transaction);
   `uvm_component_utils(my_sequencer)
 endclass
 ```
-在其 build_phase 中，使用 config_db：：get 得到這兩個成員變數的值。之後 sequence 在發送 transaction 時，必須將目的位址設定
+在其 build_phase 中，使用 config_db::get 得到這兩個成員變數的值。之後 sequence 在發送 transaction 時，必須將目的位址設定
 為 dmac，來源位址設定為 smac。現在的問題是，如何在 sequence 的 body 中得到這兩個變數的值呢？
 在6.4.1節介紹巢狀的 sequence 時，引入了 m_sequencer 這個屬於每個 sequence 的成員變量，但如果直接使用 m_sequencer 得
 到這兩個變數的值：
@@ -1145,7 +1145,7 @@ function void my_case0::build_phase(uvm_phase phase);
 endfunction
 ```
 當進入 main_phase 時，這兩個 sequence 會同步啟動，但由於 drv1_seq 要等待 send_over 事件的到來，所以它並不會馬上產生
-transaction，而 drv0_seq 則會直接產生 transaction。當 drv0_se q發送完一個最長套件後，send_over 事件被觸發，於 drv1_seq 開始產生
+transaction，而 drv0_seq 則會直接產生 transaction。當 drv0_seq 發送完一個最長套件後，send_over 事件被觸發，於 drv1_seq 開始產生
 transaction。
 ## sequence 之間的複雜同步
 上節解決同步的方法看起來非常簡單、實用。不過這裡有兩個問題，
@@ -1252,7 +1252,7 @@ endclass
 
 在 read_file_seq 中，需要一個字串的檔案名字，在手動啟動時可以指定檔案名字，但是 uvm_do 系列巨集無法實現這個功能，
 因為 string 類型變數前不能使用 rand 修飾符。這就是手工啟動 sequence 的優勢。
-在case0_vseq的定義中，一般都要使用uvm_declare_p_sequencer巨集。這個在前文已經講述過了，透過它可以引用sequencer的成
+在 case0_vseq 的定義中，一般都要使用 uvm_declare_p_sequencer 巨集。這個在前文已經講述過了，透過它可以引用 sequencer 的成
 員變數。
 回顧一下，為了解決 sequence 的同步，之前使用 send_over 這個全域變數的方式來解決。那麼在 virtual sequence 中是如何解決的
 呢？事實上這個問題在 virtual sequence 中根本就不是個問題。由於 virtual sequence 的 body 是順序執行，所以只需要先產生一個最長
