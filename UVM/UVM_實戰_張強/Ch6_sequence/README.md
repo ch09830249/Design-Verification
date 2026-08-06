@@ -1284,8 +1284,8 @@ endclass
 
 ## 僅在 virtual sequence 中控制 objection
 在 sequence 中可以使用 starting_phase 來控制驗證平台的關閉。除了手工啟動 sequence 時為 starting_phase 賦值外，只有將此
- sequence 作為 sequencer 的某動態執行 phase 的 default_sequence 時，其 starting_phase 才不為null。如果將某 sequence 作為 uvm_do 巨集的參
-數，那麼此 sequence 中的 starting_phase 是為 null 的。在此 sequence 中使用 starting_phase.raise_objection 是沒有任何用處的：
+ sequence 作為 sequencer 的某動態執行 phase 的 default_sequence 時，其 starting_phase 才不為 null。如果將某 sequence 作為 uvm_do 巨集的參
+數 (或是 seq.start(...))，那麼此 sequence 中的 starting_phase 是為 null 的。在此 sequence 中使用 starting_phase.raise_objection 是沒有任何用處的：
 ```
 class drv0_seq extends uvm_sequence #(my_transaction);
 …
@@ -1307,22 +1307,106 @@ class case0_vseq extends uvm_sequence;
     drv0_seq seq0;
     if(starting_phase != null)
       starting_phase.raise_objection(this);
-    `uvm_do_on(seq0, p_sequencer.p_sqr0);
+    `uvm_do_on(seq0, p_sequencer.p_sqr0);        // 因為將某 sequence 作為 uvm_do 巨集的參數，此 sequence 中使用 starting_phase.raise_objection 是沒有任何用處
     #100;
     if(starting_phase != null)
       starting_phase.drop_objection(this);
   endtask
 endclass
 ```
-執行上述程式碼，會發現 drv0_seq 中的 starting_phase 為 null，因此不會對 objection 進行操作。
-若讓 drv0_seq 中的 starting_phase 不為 null 其實比較容易解決，只要將父 sequence 的 starting_phase 賦值給子 sequence 的 starting_phase
-即可。只是可惜 uvm_do 系列巨集並不提供 starting_phase 的傳遞功能。
-5.2.3節中提過要嘛在scoreboard中控制objection，要嘛在sequence中控制。關於在sequence中控制objection，在沒有virtual
-在sequence之前，這沒有什麼疑問。但當virtual sequence存在時，尤其是virtual sequence中又可以啟動其他的virtual sequence時，有
-三個地方可以控制objection：一是普通的sequence，二是中間層的virtual sequence（如程式碼清單6-76中的cfg_vseq），三是最頂層的
-virtual sequence（程式碼清單6-76中的case0_vseq）。那麼應該在何處控制objection來最終控制驗證平台的關閉呢？
-一般來說，只在最頂層的virtual sequence中控制objection。因為virtual sequence是起統一調度作用的，這種統一調度不只體現
-在transaction上，也應該體現在objection的控制上。在驗證平台中使用objection時，經常會出現沒有按照預期結束模擬的情況。這
-種情況下就需要層層地查找哪裡有objection被提起了，哪裡有objection被撤銷了。雖然可以透過5.2.5節提及的objection調試手段來
-輔助進行，但它終究是一件比較麻煩的事。如果大家約定俗成都只在最頂層的virtual sequence中控制objection，那麼在遇到這樣
-的問題時，只查找最頂層的virtual sequence即可，從而大大提高效率。
+執行上述程式碼，會發現 drv0_seq 中的 starting_phase 為 null，因此不會對 objection 進行操作。若讓 drv0_seq 中的 starting_phase 不為 null 其實比較容易解決，只要將父 sequence 的 starting_phase 賦值給子 sequence 的 starting_phase 即可。只是可惜 uvm_do 系列巨集並不提供 starting_phase 的傳遞功能。
+5.2.3節中提過要嘛在 scoreboard 中控制 objection，要嘛在 sequence 中控制。關於在 sequence 中控制 objection，在沒有 virtual sequence之前，這沒有什麼疑問。但當 virtual sequence 存在時，尤其是 virtual sequence 中又可以啟動其他的 virtual sequence 時，有三個地方可以控制 objection：一是普通的 sequence，二是中間層的 virtual sequence（如程式碼清單6-76中的 cfg_vseq），三是最頂層的 virtual sequence（程式碼清單6-76中的 case0_vseq）。那麼應該在何處控制 objection 來最終控制驗證平台的關閉呢？
+一般來說，**只在最頂層的 virtual sequence 中控制 objection**。因為 virtual sequence 是起統一調度作用的，這種統一調度不只體現在 transaction 上，也應該體現在 objection 的控制上。在驗證平台中使用 objection 時，經常會出現沒有按照預期結束模擬的情況。這種情況下就需要層層地查找哪裡有 objection 被提起了，哪裡有 objection 被撤銷了。雖然可以透過5.2.5節提及的 objection 調試手段來輔助進行，但它終究是一件比較麻煩的事。如果大家約定俗成都只在最頂層的 virtual sequence 中控制 objection，那麼在遇到這樣的問題時，只查找最頂層的 virtual sequence 即可，從而大大提高效率。
+```
+層層查找太麻煩了!! 統一最頂層 virtual sequence 來控制 objection
+case0_vseq
+ ├── cfg_vseq
+ │    ├── drv0_seq
+ │    └── drv1_seq
+ └── data_vseq
+      ├── drv2_seq
+      └── drv3_seq
+```
+## 在 sequence 中慎用 fork join_none
+將6.5.1節中的 DUT 的資料口擴展為 4 路，那麼對應的驗證平台中也要有 4 個完全相同的 driver、sequencer。那麼 my_vsqr 可以這樣定義：
+```
+class my_vsqr extends uvm_sequencer;
+  my_sequencer p_sqr[4];
+  …
+  `uvm_component_utils(my_vsqr)
+endclass
+```
+當 DUT 上電重設後，需要 4 個 my_driver 同時發送資料。在 virtual sequence 中可以使用 fork 來啟動 4 個 sequence：
+```
+class case0_vseq extends uvm_sequence;
+  virtual task body();
+  drv_seq dseq[4];
+  for(int i = 0; i < 4; i++)
+    fork
+      automatic int j = i;
+      uvm_do_on(dseq[j], p_sequencer.p_sqr[j]);
+    join_none
+  endtask
+endclass
+```
+這裡使用了 join_none，由於 join_none 的特性，系統並不等 fork 起來的進程結束就進入下一次的 for 循環，因此上面的 for 循環的展開後如下：
+```
+class case0_vseq extends uvm_sequence;
+  virtual task body();
+    drv_seq dseq[4];
+    fork
+      uvm_do_on(dseq[0], p_sequencer.p_sqr[0]);
+    join_none
+    fork
+      uvm_do_on(dseq[1], p_sequencer.p_sqr[1]);
+    join_none
+    fork
+      uvm_do_on(dseq[2], p_sequencer.p_sqr[2]);
+    join_none
+    fork
+      uvm_do_on(dseq[3], p_sequencer.p_sqr[3]);
+    join_none
+  endtask
+endclass
+```
+這樣會有什麼問題？
+當 sequence 啟動後會自動執行它的 body 任務。當 body 執行完成時，那麼這個 sequence 就相當於已經完成了其使命，已經結束
+了。如果使用 fork join_none，由於 join_none 的特性，當使用 uvm_do_on 巨集將四個 dseq 分別放在四個 p_sqr 上執行時，系統會新啟動 4 
+個進程，但不等待這 4 個 mseq 執行完畢就直接回傳了。返回之後就到了 endtask，此時系統認為這個 sequence 已經執行完成了。
+執行完成之後，系統將會清理這個 sequence 之前佔據的記憶體空間，「殺死」掉由其啟動的進程，於是這 4 個啟動的 dseq 還沒完成就
+直接被「殺死」掉了。也就是說，看似分別往 4 個 p_sqr 分別丟了一個 sequence，但事實上這個 sequence 根本沒有執行。這是關鍵所
+在！
+要避免這個問題有多種方法，一是使用 wait fork 語句：
+```
+class case0_vseq extends uvm_sequence;
+  …
+  virtual task body();
+  my_transaction tr;
+  drv_seq dseq[4];
+  …
+  for(int i = 0; i < 4; i++)
+    fork
+      automatic int j = i;
+      `uvm_do_on(dseq[j], p_sequencer.p_sqr[j]);
+    join_none
+    wait fork;
+  …
+  endtask
+endclass
+```
+wait fork 語句將會等待前方被 fork 起來的程序執行完畢。
+另外一個方法是使用fork join：
+```
+class case0_vseq extends uvm_sequence;
+  virtual task body();
+  drv_seq dseq[4];
+  fork
+    uvm_do_on(dseq[0], p_sequencer.p_sqr[0]);
+    uvm_do_on(dseq[1], p_sequencer.p_sqr[1]);
+    uvm_do_on(dseq[2], p_sequencer.p_sqr[2]);
+    uvm_do_on(dseq[3], p_sequencer.p_sqr[3]);
+  join
+  endtask
+endclass
+```
+只是這樣就無法使用for迴圈了。
