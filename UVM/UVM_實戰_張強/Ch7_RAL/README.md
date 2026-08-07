@@ -1,4 +1,4 @@
-# 寄存器模型簡介
+# 暫存器模型簡介
 ## 暫存器模型簡介
 * **帶暫存器配置匯流排的 DUT**
 先前所有的例子中，所使用的 DUT 幾乎都只有一組資料輸入輸出口，而沒有行為控制口，這樣的 DUT 幾乎是沒有任何價值的。通常來說，**DUT 中會有一組控制端口，透過控制端口，可以配置 DUT 中的暫存器，DUT 可以根據暫存器的值來改變其行為**。這組控制埠就是**暫存器配置匯流排**。如附程式碼所示
@@ -43,7 +43,7 @@ module dut(clk, rst_n, bus_cmd_valid, bus_op, bus_addr, bus_wr_data, bus_rd_data
             invert <= 1'b0;
         else if(bus_cmd_valid && bus_op) begin  // bus_op: 1 => 寫入
             case(bus_addr)
-                16'h9: begin                    // 當在此總線上對 16'h9（即 invert 暫存器）的位址進行寫操作，從 bus_wr_data 寫到 invert
+                16'h9: begin                    // 當在此匯流排上對 16'h9（即 invert 暫存器）的位址進行寫操作，從 bus_wr_data 寫到 invert
                     invert <= bus_wr_data[0];
                 end
                 default: begin                  // 對其他地址進行操作則不會有任何結果
@@ -59,7 +59,7 @@ module dut(clk, rst_n, bus_cmd_valid, bus_op, bus_addr, bus_wr_data, bus_rd_data
         else if(bus_cmd_valid && !bus_op) begin      // bus_op: 0 => 讀取
             case(bus_addr)
                 16'h9: begin
-                    bus_rd_data <= {15'b0, invert};  // 當在此總線上對 16'h9（即 invert 暫存器）的位址進行讀操作，讀到 bus_rd_data
+                    bus_rd_data <= {15'b0, invert};  // 當在此匯流排上對 16'h9（即 invert 暫存器）的位址進行讀操作，讀到 bus_rd_data
                 end
                 default: begin
                     bus_rd_data <= 16'b0;            // 對其他地址進行操作則不會有任何結果
@@ -74,17 +74,17 @@ endmodule
 1. 這個 DUT 中，只有一個**1 bit 的暫存器 invert，為其分配位址 16'h9**  
     如果它的值為 1，那麼 DUT 在輸出時會**將輸入的資料取反**  
     如果為 0，則將輸入資料**直接發送出去**
-2. invert 可以透過總線 bus_* 進行配置  
+2. invert 可以透過匯流排 bus_* 進行配置  
     bus_op 為 1 時表示**寫**操作  
     bus_op 為 0 時表示**讀取**操作  
 3. bus_addr 表示位址，bus_rd_data 表示**讀取的數據**，bus_wr_data 表示要**寫入的數據**
-4. bus_cmd_valid 為 1 時表示總線數據有效，只持續一個時鐘，DUT 應該在其為 1 期間採樣總線數據  
+4. bus_cmd_valid 為 1 時表示匯流排數據有效，只持續一個時鐘，DUT 應該在其為 1 期間採樣匯流排數據  
     如果是**讀取**操作，應該在下一個時鐘給出讀取數據  
     如果是**寫入**操作，應該在下一個時脈把資料寫入  
-    當在此總線上對 16'h9（即 invert 暫存器）的位址進行讀寫操作時，會得到結果，對其他地址進行操作則不會有任何結果  
+    當在此匯流排上對 16'h9（即 invert 暫存器）的位址進行讀寫操作時，會得到結果，對其他地址進行操作則不會有任何結果  
 6. 不支援 burst 操作，不支援延遲回應等
   
-針對此總線，有以下的transaction定義：  
+針對此匯流排，有以下的transaction定義：  
 src/ch7/section7.1/7.1.1/bus_transaction.sv
 
 ```  
@@ -177,8 +177,8 @@ endtask
 現在，整個驗證平台的框圖變成如圖所示的形式。
 <img width="1148" height="812" alt="image" src="https://github.com/user-attachments/assets/45d0f449-afdb-4864-a727-e1b974d0ce7c" />  
 
-* **需要寄存器模型才能做的事情**  
-考慮下一個問題，在上節所示的 DUT 中，invert 暫存器用於控制 DUT 是否將輸入的激勵位元取反。在取反的情況下，參考模型 (Reference Model) 需要讀取此暫存器的值，如果為 1，那麼其輸出 transaction 也需要進行反轉。可是如何在參考模型中讀取一個暫存器的值呢？就目前讀者所掌握的知識來說，**只能先透過使用 bus_driver 向總線上發送讀取指令，並給出要讀的暫存器位址來查看一個暫存器的值。** 要實現這個過程，需要啟動一個 sequence，這個 sequence 會發送一個 transaction 給 bus_driver。所以  
+* **需要暫存器模型才能做的事情**  
+考慮下一個問題，在上節所示的 DUT 中，invert 暫存器用於控制 DUT 是否將輸入的激勵位元取反。在取反的情況下，參考模型 (Reference Model) 需要讀取此暫存器的值，如果為 1，那麼其輸出 transaction 也需要進行反轉。可是如何在參考模型中讀取一個暫存器的值呢？就目前讀者所掌握的知識來說，**只能先透過使用 bus_driver 向匯流排上發送讀取指令，並給出要讀的暫存器位址來查看一個暫存器的值。** 要實現這個過程，需要啟動一個 sequence，這個 sequence 會發送一個 transaction 給 bus_driver。所以  
 * 第一個問題是**如何在參考模型的控制下來啟動一個 sequence 以讀取暫存器**  
     **A:** 一個簡單的想法是設定一個**全域事件（又是全域變數！）**，然後在參考模型中觸發這個事件。在 virtual sequence 中等待這個事件的到來，等到了，則啟動 sequence。這裡用到了全域變量，這是相當忌諱的。如果不使用全域變量，那麼可以用一個非全域事件來取代。利用 config 機制分別為 virtual sequencer 和 Reference Model 設定一個 config_object，在此 object 中設定一個事件，例如 rd_reg_event，然後在 Reference Model 中觸發這個事件，而在 virtual sequence 中則要等待這個事件的到來：(這個事件等到後就啟動一個 sequence，開始讀取暫存器)
   
@@ -189,7 +189,7 @@ endtask
 * 第二個問題是，**sequence 讀取的暫存器的值如何傳遞給參考模型**  
   **A:** 當 sequence 讀取到暫存器後，可以再透過 6.6.2 節所示的 config_db 傳遞給參考模型，在**參考模型中使用 6.6.3 節所示的 wait_modified 來更新資料**  
   
-從上面可以看出這個過程相當麻煩。在一個大的設計中，其暫存器有數百上千個。為了區分這麼多的暫存器，又需要許多其他額外的設定。其實，這個讀取過程可以使用寄存器模型來實作。如果有了寄存器模型，那麼這個過程就可以簡化為：
+從上面可以看出這個過程相當麻煩。在一個大的設計中，其暫存器有數百上千個。為了區分這麼多的暫存器，又需要許多其他額外的設定。其實，這個讀取過程可以使用暫存器模型來實作。如果有了暫存器模型，那麼這個過程就可以簡化為：
   
 ```
 task my_model::main_phase(uvm_phase phase);
@@ -206,8 +206,8 @@ endtask
 * **有了暫存器模型之後**
   Reference Model 只與暫存器模型打交道，無論是**發送讀取的指令**還是**取得讀取操作的回傳值**，都可以由暫存器模型完成。有了暫存器模型後，**可以在任何耗費時間的 phase 中使用暫存器模型以前閘（FRONTDOOR）存取或後門（BACKDOOR）存取的方式來讀取暫存器的值**，同時還能在**某些不耗費時間的 phase（如check_phase）中使用後門（BACKDOOR）訪問的方式來讀取暫存器的值**
 * 前門（FRONTDOOR）存取與後門（BACKDOOR）存取
-    * 前門訪問: 指的是透過模擬 CPU 在總線上發出讀取指令，進行讀寫操作。**在這個過程中，模擬時間（$time函數得到的時間）是一直往前走的**
-    * 後門訪問: 與前門訪問相對的概念。它不是透過總線進行讀寫操作，而是**直接透過層次化的引用來改變暫存器的值**
+    * 前門訪問: 指的是透過模擬 CPU 在匯流排上發出讀取指令，進行讀寫操作。**在這個過程中，模擬時間（$time函數得到的時間）是一直往前走的**
+    * 後門訪問: 與前門訪問相對的概念。它不是透過匯流排進行讀寫操作，而是**直接透過層次化的引用來改變暫存器的值**
 另外，暫存器模型也提供一些任務，如 mirror、update，它們**可以批次完成暫存器模型與 DUT 中相關暫存器的交互作用** (後續會介紹)
 可見，UVM 暫存器模型的本質就是重新定義了驗證平台與 DUT 的暫存器接口，使驗證人員能更好地組織及配置暫存器，簡化流程、減少工作量
 * **暫存器模型中的基本概念**
@@ -216,11 +216,11 @@ endtask
   
 如上的狀態暫存器共有四個域，分別是 empty、full、overflow、underflow。這四個域對應暫存器模型中的 uvm_reg_field。名字為「reserved」的並不是一個域  
 * **uvm_reg**：它比 uvm_reg_field 高一個級別，但還是比較小的單位。一個暫存器中至少包含一個 uvm_reg_field
-* **uvm_reg_block**：它是一個比較大的單位，在其中可以加入許多的 uvm_reg，也可以加入其他的 uvm_reg_block。**一個寄存器模型中至少包含一個 uvm_reg_block**
+* **uvm_reg_block**：它是一個比較大的單位，在其中可以加入許多的 uvm_reg，也可以加入其他的 uvm_reg_block。**一個暫存器模型中至少包含一個 uvm_reg_block**
 * **uvm_reg_map**：每個暫存器在加入暫存器模型時都有其位址，**uvm_reg_map 就是儲存這些位址，並將其轉換成可以存取的物理位址**（**因為加入暫存器模型中的暫存器位址一般都是偏移位址，而不是絕對位址**）。**當暫存器模型使用前門存取方式來實作讀取或寫入操作時，uvm_reg_map 就會將位址轉換成絕對位址**，啟動一個讀取或寫入的 sequence，並將讀取或寫入的結果傳回。在每個 reg_block 內部，至少有一個（通常也只有一個）uvm_reg_map
 ## 簡單的暫存器模型
 * **只有一個暫存器的暫存器模型**
-本節為前面所示的 DUT 建立暫存器模型。這個 DUT 非常簡單，它只有一個暫存器 invert。要為其建造寄存器模型，**首先要從 uvm_reg 派生一個 invert 類別**：
+本節為前面所示的 DUT 建立暫存器模型。這個 DUT 非常簡單，它只有一個暫存器 invert。要為其建造暫存器模型，**首先要從 uvm_reg 衍生一個 invert 類別**：
 src/ch7/section7.2/reg_model.sv
   
 ```  
@@ -248,11 +248,11 @@ endclass
 * super.new 函數
     * 第一個參數: **這裡的寬度並不是指這個暫存器的有效寬度，而是指這個暫存器中總共的位數**。如對於一個 16 位的暫存器，其中可能只使用了 8 位，那麼這裡要填寫的是 16，而不是 8。**這個數字一般與系統匯流排的寬度一致**
     * 第二個參數: super.new 中另外一個參數是是否要加入覆蓋率的支持，這裡選擇 UVM_NO_COVERAGE，即不支持  
-每一個派生自 uvm_reg 的類別都有一個 build，**這個 build 與 uvm_component 的 build_phase 並不一樣，它不會自動執行，而需要手動調用**，與 build_phase 相似的是所有的 uvm_reg_field都在這裡實例化。當 reg_data 實例化後，要呼叫 data.configure 函數來設定這個字段。
+每一個繼承自 uvm_reg 的類別都有一個 build，**這個 build 與 uvm_component 的 build_phase 並不一樣，它不會自動執行，而需要手動呼叫**，與 build_phase 相似的是所有的 uvm_reg_field都在這裡實例化。當 reg_data 實例化後，要呼叫 data.configure 函數來設定這個字段。
 * data.configure 函數
     * 第一個參數: 就是此域（uvm_reg_field）的父輩，也就是此域位於哪個暫存器中，這裡當然是填寫 this 了
     * 第二個參數: 是此域的寬度，由於 DUT 中 invert 的寬度為 1，所以這裡為 1
-    * 第三個參數: 是此域的最低位元在整個暫存器中的位置，從 0 開始計數。假如一個暫存器如下圖所示，其低 3 位元和高 5 位元沒有使使用，其中只有一個字段，此字段的有效寬度為 8 位，那麼在調用 configure 時，第二個參數就要填寫 8，第三個參數則要填寫 3，因為這 reg_field 是從第 4 位開始的<img width="964" height="313" alt="image" src="https://github.com/user-attachments/assets/72615fc4-caf1-4979-b69d-94d9296d6072" />  
+    * 第三個參數: 是此域的最低位元在整個暫存器中的位置，從 0 開始計數。假如一個暫存器如下圖所示，其低 3 位元和高 5 位元沒有使使用，其中只有一個字段，此字段的有效寬度為 8 位，那麼在呼叫 configure 時，第二個參數就要填寫 8，第三個參數則要填寫 3，因為這 reg_field 是從第 4 位開始的<img width="964" height="313" alt="image" src="https://github.com/user-attachments/assets/72615fc4-caf1-4979-b69d-94d9296d6072" />  
     * 第四個參數表示此欄位的存取方式。 UVM 共支援如下 25 種存取方式：  
 1）RO：讀寫此域都無影響  
 2）RW：會盡量寫入，讀取時對此域無影響  
@@ -286,7 +286,7 @@ endclass
     * 第八個參數表示這個域是否可以隨機化。這主要用於對暫存器進行隨機寫入測試，如果選擇了 0，那麼此域將不會隨機化，而一直是重設值，否則將會隨機出一個數值來。這一個參數當且僅當第四個參數為 RW、WRC、WRS、WO、W1、WO1 時才有效
     * 第九個參數表示這個域是否可以單獨存取
   
-**定義好此暫存器後，需要在一個由 reg_block 派生的類別中將其實例化：**  
+**定義好此暫存器後，需要在一個由 reg_block 衍生的類別中將其實例化：**  
 src/ch7/section7.2/reg_model.sv
   
 ```  
@@ -320,11 +320,11 @@ endclass
   
 隨後實例化 invert 並呼叫 invert.configure 函數。這個函數的主要功能是指定暫存器進行後門存取操作時的路徑
 * data.configure 函數
-    * 第一個參數是此暫存器所在 uvm_reg_block 的指針，這裡填入 this
-    * 第二個參數是 reg_file 的指針（7.4.2節將會介紹 reg_file 的概念）這裡暫時填寫 null
+    * 第一個參數是此暫存器所在 uvm_reg_block 的指標，這裡填入 this
+    * 第二個參數是 reg_file 的指標（7.4.2節將會介紹 reg_file 的概念）這裡暫時填寫 null
     * 第三個參數是此暫存器的後閘存取路徑，關於這點請參考 7.3 節，這裡暫且為空  
   
-當調用完 configure 時，需要手動調用 invert 的 build 函數，將 invert 中的域實例化。最後一步則是將此暫存器加入 default_map 中。 **uvm_reg_map 的作用是儲存所有暫存器的位址**，因此必須將實例化的暫存器加入 default_map 中，否則無法進行前門存取操作
+當呼叫完 configure 時，需要手動呼叫 invert 的 build 函數，將 invert 中的域實例化。最後一步則是將此暫存器加入 default_map 中。 **uvm_reg_map 的作用是儲存所有暫存器的位址**，因此必須將實例化的暫存器加入 default_map 中，否則無法進行前門存取操作
 * add_reg 函數
     * 第一個參數是要加入的暫存器
     * 第二個參數是暫存器的位址，這裡是 16’h9
@@ -332,11 +332,11 @@ endclass
   
 到此為止，一個簡單的暫存器模型已經完成。回顧前面介紹過的暫存器模型中的一些常用概念。
 * **uvm_reg_field** 是最小的單位，是具體儲存暫存器數值的變量，可以直接用這個類別
-* **uvm_reg** 則是一個"空殼子"，或者用專業名詞來說，它是一個純虛類，因此是不能直接使用的，必須由其派生一個新類，在這個新類別中至少加入一個 uvm_reg_field，然後這個新類別才可以使用
+* **uvm_reg** 則是一個"空殼子"，或者用專業名詞來說，它是一個純虛類，因此是不能直接使用的，必須由其衍生一個新類，在這個新類別中至少加入一個 uvm_reg_field，然後這個新類別才可以使用
 * **uvm_reg_block** 則是用來組織大量 uvm_reg 的一個大容器  
-打個比方說，uvm_reg 是一個小瓶子，其中必須裝上藥丸（uvm_reg_field）才有意義，這個裝藥丸的過程就是定義派生類的過程，而 uvm_reg_block 則是一個大箱子，它中可以放許多小瓶子（uvm_reg），也可以放其他稍微小一點的箱子（uvm_reg_block）。整個暫存器模型就是一個大箱子（uvm_reg_block）
+打個比方說，uvm_reg 是一個小瓶子，其中必須裝上藥丸（uvm_reg_field）才有意義，這個裝藥丸的過程就是定義衍生類的過程，而 uvm_reg_block 則是一個大箱子，它中可以放許多小瓶子（uvm_reg），也可以放其他稍微小一點的箱子（uvm_reg_block）。整個暫存器模型就是一個大箱子（uvm_reg_block）
   
-* **將寄存器模型整合到驗證平台中**
+* **將暫存器模型整合到驗證平台中**
 暫存器模型的**前門存取**方式工作流程如圖所示，其中圖 a 為讀取操作，圖 b 為寫入操作：
 <img width="1194" height="739" alt="image" src="https://github.com/user-attachments/assets/bed2cd08-8ea4-4dca-92f8-fff73ae17099" />  
 暫存器模型的前門存取操作可以分成**讀取**和**寫入**兩種。無論是讀或寫，暫存器模型都會透過 sequence 產生一個 uvm_reg_bus_op 的變量，此變數中儲存操作類型（讀取或寫入）和操作的位址，如果是寫入操作，還會有要寫入的資料。此變數中的資訊要經過一個轉換器（adapter）轉換後交給 bus_sequencer，隨後交給 bus_driver，由 bus_driver 實作最終的前門存取讀寫操作。因此，必須要定義好一個轉換器。如下例為一個簡單的轉換器的程式碼：
@@ -382,9 +382,9 @@ endclass : my_adapter
 * **reg2bus**
   * 將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式
 * **bus2reg**
-  * 當監測到總線上有操作時，它將收集來的 transaction 轉換成寄存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值
+  * 當監測到匯流排上有操作時，它將收集來的 transaction 轉換成暫存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值
   
-說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於總線的特殊性，bus_driver 在驅動總線進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
+說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於匯流排的特殊性，bus_driver 在驅動匯流排進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
 src/ch7/section7.2/base_test.sv
   
 ```
@@ -427,7 +427,7 @@ endfunction
 要將一個暫存器模型整合到 base_test 中，那麼至少需要在 base_test 中定義兩個成員變量，一是 reg_model，另外一個就是 reg_sqr_adapter。將所有用到的類別在 build_phase 中實例化。在實例化後 reg_model 還要做四件事：
 * 第一個是呼叫 configure 函數，其第一個參數是 parent block，由於是最頂層的 reg_block，因此填入 null，第二個參數是後門訪問路徑，請參考7.3節，這裡傳入一個空的字串
 * 第二是呼叫 build 函數，將所有的暫存器實例化
-* 第三是呼叫 lock_model 函數，**呼叫此函數後，reg_model 中就不能再加入新的寄存器了**
+* 第三是呼叫 lock_model 函數，**呼叫此函數後，reg_model 中就不能再加入新的暫存器了**
 * 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，**呼叫此函數後，所有暫存器的值都將變為設定的重設值**  
 暫存器模型的前門存取操作最終都會由 uvm_reg_map 完成，因此在 connect_phase 中，需要將轉換器和 bus_sequencer 通過 set_sequencer 函數告知 reg_model 的 default_map，並將 default_map 設定為自動預測狀態
   
@@ -465,7 +465,7 @@ task my_model::main_phase(uvm_phase phase);
 
   super.main_phase(phase);
   
-  // 從寄存器模型讀取初始值
+  // 從暫存器模型讀取初始值
   p_rm.invert.read(status, value, UVM_FRONTDOOR);
 
   while(1) begin
@@ -473,7 +473,7 @@ task my_model::main_phase(uvm_phase phase);
     new_tr = new("new_tr");
     new_tr.copy(tr);
 
-    // 如果 invert 寄存器的值為非零，則進行翻轉處理
+    // 如果 invert 暫存器的值為非零，則進行翻轉處理
     if(value)
       invert_tr(new_tr);
 
@@ -501,7 +501,7 @@ extern virtual task read(output uvm_status_e status,
 * 第一個是 uvm_status_e 型的變量，這是一個輸出，用來表明讀取操作是否成功
 * 第二個是讀取的數值，也是輸出
 * 第三個是讀取的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR
-由於參考模型一般不會寫入暫存器，因此對於 write 任務，以在 virtual sequence 進行寫入操作為例說明。在 sequence 中使用暫存器模型，通常透過 p_sequencer 的形式引用。需要先在 sequencer 中有一個暫存器模型的指針，程式碼清單 7-10 中已經為 v_sqr.p_rm 賦值了。因此可以直接以如下方式進行寫入操作：
+由於參考模型一般不會寫入暫存器，因此對於 write 任務，以在 virtual sequence 進行寫入操作為例說明。在 sequence 中使用暫存器模型，通常透過 p_sequencer 的形式引用。需要先在 sequencer 中有一個暫存器模型的指標，程式碼清單 7-10 中已經為 v_sqr.p_rm 賦值了。因此可以直接以如下方式進行寫入操作：
 src/ch7/section7.2/my_case0.sv
 
 ```
@@ -511,7 +511,7 @@ class case0_cfg_vseq extends uvm_sequence;
     uvm_status_e status;
     uvm_reg_data_t value;
   …
-    // 透過 sequencer 中的寄存器模型指標 (p_rm) 進行前門存取寫入
+    // 透過 sequencer 中的暫存器模型指標 (p_rm) 進行前門存取寫入
     p_sequencer.p_rm.invert.write(status, 1, UVM_FRONTDOOR);
   …
   endtask
@@ -539,7 +539,7 @@ extern virtual task write(output uvm_status_e status,
 暫存器模型對 sequence 的 transaction 類型沒有任何要求。因此，可以在一個發送 my_transaction 的 sequence 中使用暫存器模型對暫存器進行讀寫操作
 ## 後門訪問與前門訪問
 * **UVM 中前門存取的實現**
-所謂前門存取操作就是透過暫存器配置匯流排（如 APB 協定、OCP 協定、I2C 協定等）來對 DUT 進行操作。無論在任何總線協議中，前門存取操作只有兩種：**讀取操作**和**寫入操作**。前門訪問操作是比較正統的用法。對一塊實際焊接在電路板上正常運作的晶片來說，此時若要存取其中的某些暫存器，前門存取操作是唯一的方法。在 7.1.2 節介紹暫存器模型時曾經講過，對於參考模型來說，最大的問題是如何在其中啟動一個 sequence，當時列舉了全局變數和 config_db 的兩種方式。除了這兩種方式之外，如果能夠在參考模型中得到一個 sequencer 的指針，也可以在此 sequencer 上啟動一個 sequence。這通常比較容易實現，只要在其中設定一個 p_sqr 的變量，並在 env 中將 sequencer 的指標賦值給此變數即可。接下來的關鍵就是分別寫一個讀寫的 sequence：
+所謂前門存取操作就是透過暫存器配置匯流排（如 APB 協定、OCP 協定、I2C 協定等）來對 DUT 進行操作。無論在任何匯流排協議中，前門存取操作只有兩種：**讀取操作**和**寫入操作**。前門訪問操作是比較正統的用法。對一塊實際焊接在電路板上正常運作的晶片來說，此時若要存取其中的某些暫存器，前門存取操作是唯一的方法。在 7.1.2 節介紹暫存器模型時曾經講過，對於參考模型來說，最大的問題是如何在其中啟動一個 sequence，當時列舉了全域變數和 config_db 的兩種方式。除了這兩種方式之外，如果能夠在參考模型中得到一個 sequencer 的指標，也可以在此 sequencer 上啟動一個 sequence。這通常比較容易實現，只要在其中設定一個 p_sqr 的變量，並在 env 中將 sequencer 的指標賦值給此變數即可。接下來的關鍵就是分別寫一個讀寫的 sequence：
 src/ch7/section7.2/7.3.1/reg_access_sequence.sv
 
 ```
@@ -575,7 +575,7 @@ task my_model::main_phase(uvm_phase phase);
 …
   reg_access_sequence reg_seq;
   super.main_phase(phase);
-  // 建立並啟動寄存器存取 sequence
+  // 建立並啟動暫存器存取 sequence
   reg_seq = new("reg_seq");
   reg_seq.addr = 16'h9;
   reg_seq.is_wr = 0;
@@ -584,7 +584,7 @@ task my_model::main_phase(uvm_phase phase);
   while(1) begin
     // … 此處應有交易獲取邏輯 (如 port.get) …
     
-    // 根據讀取到的寄存器數值決定是否翻轉交易
+    // 根據讀取到的暫存器數值決定是否翻轉交易
     if(reg_seq.rdata)
       invert_tr(new_tr);
       
@@ -593,7 +593,7 @@ task my_model::main_phase(uvm_phase phase);
 endtask
 ```
   
-sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在寄存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指針，而在在暫存器模型中也有一個這樣的指針，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指針。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的
+sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在暫存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指標，而在在暫存器模型中也有一個這樣的指標，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指標。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的
  transaction 都非常相似，在綜合了它們的特徵後，UVM 內建了一種 transaction：uvm_reg_item。透過 adapter 的 bus2reg 及 reg2bus，可以實現 uvm_reg_item 與目標 transaction 的轉換。以讀取操作為例，其完整的流程為：
 * 參考模型呼叫暫存器模型的讀取任務
 * 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
@@ -602,7 +602,7 @@ sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_
 * driver 得到 bus_req 後驅動它，得到讀取的值，並將讀取值放入 bus_req 中，呼叫 item_done
 * 暫存器模型呼叫 adapter.bus2reg（bus_req，rw）將 bus_req 中的讀取值傳遞給 rw
 * 將 rw 中的讀取資料回傳參考模型
-在 6.7.2 節介紹 sequence 的應答機制時提到過，如果 driver 一直發送應答而 sequence 不收集應答，那麼將會導致 sequencer 的應答案隊列溢出。UVM 考慮到這種情況，在 adapter 中設定了 provide_responses 選項：
+在 6.7.2 節介紹 sequence 的應答機制時提到過，如果 driver 一直發送應答而 sequence 不收集應答，那麼將會導致 sequencer 的應答案佇列溢出。UVM 考慮到這種情況，在 adapter 中設定了 provide_responses 選項：
 UVM source code
   
 ```
@@ -623,7 +623,7 @@ endclass
 * 將 rw 中的讀取資料回傳參考模型
 
 * **後門存取操作的定義**
-為了講述後門存取操作，從本節開始，將在 7.1.1 節的 DUT 的基礎上引入一個新的 DUT，如附錄 B 的程式碼清單 B-3 所示。這個 DUT 中加入了暫存器 counter。它的功能就是統計 rx_dv 為高電位的時脈數。在通訊系統中，有大量計數器用於統計各種包裹的數量，如超長包、長包、中包、短包、超短包等。這些計數器的一個共同的特點是它們是唯讀的，DUT 的匯流排介面無法透過前門存取操作對其進行寫入操作。除了是唯讀外，這些暫存器的位寬一般都比較寬，如32位、48位或64位等，它們的位寬超過了設計中對加法器寬度的上限限制。計數器在計數過程中需要使用加法器，對於加法器來說，在同等製程下，位寬越寬則其時序越差，因此在設計上一般會規定加法器的最大位寬。在上述DUT中，加法器的位寬被限制在16位。要實現 32 位元的 counter 的加法操作，需要使用兩個疊加的16位元加法器。為 counter 指派 16‘h5 和 16’h6 的位址，採用大端格式將高位元資料存放在低位址。此計數器是可讀的，另外可以對其進行寫入 1 清 0 操作。如果對其寫入其他數值，則不會起作用。後門存取是與前門存取相對的操作，從廣義上來說，所有不透過 DUT 的匯流排而對 DUT 內部的暫存器或記憶體進行存取的操作都是後門訪問操作。如在 top_tb 中可以使用下列方式對 counter 賦初值：
+為了講述後門存取操作，從本節開始，將在 7.1.1 節的 DUT 的基礎上引入一個新的 DUT，如附錄 B 的程式碼清單 B-3 所示。這個 DUT 中加入了暫存器 counter。它的功能就是統計 rx_dv 為高電位的時脈數。在通訊系統中，有大量計數器用於統計各種包裹的數量，如超長封包、長封包、中封包、短封包、超短封包等。這些計數器的一個共同的特點是它們是唯讀的，DUT 的匯流排介面無法透過前門存取操作對其進行寫入操作。除了是唯讀外，這些暫存器的位寬一般都比較寬，如32位、48位或64位等，它們的位寬超過了設計中對加法器寬度的上限限制。計數器在計數過程中需要使用加法器，對於加法器來說，在同等製程下，位寬越寬則其時序越差，因此在設計上一般會規定加法器的最大位寬。在上述DUT中，加法器的位寬被限制在16位。要實現 32 位元的 counter 的加法操作，需要使用兩個疊加的16位元加法器。為 counter 指派 16‘h5 和 16’h6 的位址，採用大端格式將高位元資料存放在低位址。此計數器是可讀的，另外可以對其進行寫入 1 清 0 操作。如果對其寫入其他數值，則不會起作用。後門存取是與前門存取相對的操作，從廣義上來說，所有不透過 DUT 的匯流排而對 DUT 內部的暫存器或記憶體進行存取的操作都是後門訪問操作。如在 top_tb 中可以使用下列方式對 counter 賦初值：
 src/ch7/section7.3/7.3.2/top_tb.sv
   
 ```
@@ -634,12 +634,12 @@ end
 ```
   
 所有後門存取操作都是不消耗模擬時間（即 $time 列印的時間）而只消耗運行時間的。這是後門訪問操作的最大優勢。既然有了前門訪問操作，那麼為什麼還需要後門訪問操作呢？後門訪問操作存在的意義在於：
-* 後門訪問操作能夠更好地完成前門訪問操作所做的事情。**後門存取不消耗模擬時間**，與前門存取操作相比，它消耗的運行時間要遠小於前門訪問操作的運行時間。在一個大型晶片的驗證中，在其正常工作前需要配置眾多的寄存器，配置時間可能要達到一個或幾個小時，而如果使用後門訪問操作，則時間可能會縮短為原來的1/100
+* 後門訪問操作能夠更好地完成前門訪問操作所做的事情。**後門存取不消耗模擬時間**，與前門存取操作相比，它消耗的運行時間要遠小於前門訪問操作的運行時間。在一個大型晶片的驗證中，在其正常工作前需要配置眾多的暫存器，配置時間可能要達到一個或幾個小時，而如果使用後門訪問操作，則時間可能會縮短為原來的1/100
 * **後門訪問操作能夠完成前門訪問操作不能完成的事情**。如在網路通訊系統中，計數器通常都是唯讀的（有些會附加清零功能），無法對其指定一個非零的初值。而大部分計數器都是多個加法器的疊加，需要測試它們的進位操作。本節 DUT 的 counter 使用了兩個疊加的 16 位元加法器，需要測試當計數到 32‘hFFFF 時能否順利進位成為 32’h1_0000，這可以透過延長模擬時間使其計數到 32‘hFFFF，這在本節的 DUT 中是可以的，因為計數器每個時脈都加 1。但是在實際應用中，可能要幾萬個或更多的時鐘才會加 1，因此需要大量的運行時間，如幾天。這只是 32 位元加法器的情況，如果是 48 位元的計數器，情況則會更糟。這種情況下，後閘存取操作能夠完成前門存取作業完成的事情，給唯讀的暫存器一個初值  
-當然，與前門訪問操作相比，後門訪問操作也有其劣勢。如所有的前門存取操作都可以在波形檔案中找到總線訊號變化的波形及所有操作的記錄。但是**後門存取操作則無法在波形檔案中找到操作痕跡**。**其操作記錄只能仰仗驗證平台編寫者在進行後門訪問操作時輸出的列印訊息**，這樣便增加了調試的難度
+當然，與前門訪問操作相比，後門訪問操作也有其劣勢。如所有的前門存取操作都可以在波形檔案中找到匯流排訊號變化的波形及所有操作的記錄。但是**後門存取操作則無法在波形檔案中找到操作痕跡**。**其操作記錄只能仰仗驗證平台編寫者在進行後門訪問操作時輸出的列印訊息**，這樣便增加了調試的難度
 
 * **使用 interface 進行後門存取操作**
-上一節中提到在 top_tb 中使用絕對路徑對寄存器進行後門存取操作，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以新建一個後門 interface：
+上一節中提到在 top_tb 中使用絕對路徑對暫存器進行後門存取操作，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以新建一個後門 interface：
 src/ch7/section7.3/7.3.3/backdoor_if.sv
   
 ```
@@ -667,10 +667,10 @@ task my_case0::configure_phase(uvm_phase phase);
 endtask
 ```
   
-如果有 n 個寄存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用寄存器模型提供的後門存取或根本不想建立寄存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
+如果有 n 個暫存器，那麼需要寫 n 個 poke 函數，同時如果有讀取要求的話，還要寫 n 個 peek 函數，這限制了其使用，且此文件完全沒有任何移植性。這種方式在實際中是有應用的，它適用於不想使用暫存器模型提供的後門存取或根本不想建立暫存器模型，同時又必須要對 DUT 中的一個暫存器或一塊記憶體（memory）進行後門存取操作的情況。
 
 * **UVM中後門存取操作的實作：DPI+VPI**
-在 7.3.2 節和 7.3.3 節提供了兩種廣義的後門存取方式，它們的共同點即都是在 SystemVerilog 中實現的。**但是在實際的驗證平台中，還有在 C/C++ 程式碼中對 DUT 中的暫存器進行讀寫的需求**。Verilog 提供 VPI 接口，可以將 DUT 的層次結構開放給外部的 C/C++ 代碼。常用的 VPI 介面有以下兩個：
+在 7.3.2 節和 7.3.3 節提供了兩種廣義的後門存取方式，它們的共同點即都是在 SystemVerilog 中實現的。**但是在實際的驗證平台中，還有在 C/C++ 程式碼中對 DUT 中的暫存器進行讀寫的需求**。Verilog 提供 VPI 接口，可以將 DUT 的層次結構開放給外部的 C/C++ 程式碼。常用的 VPI 介面有以下兩個：
 
 ```
 vpi_get_value(obj, p_value);
@@ -697,7 +697,7 @@ import "DPI-C" context function int uvm_hdl_read(string path, output uvm_hdl_d a
 uvm_hdl_read("top_tb.my_dut.counter", value);
 ```
 
-與程式碼清單 7-21 相比，可以發現這種方式的優勢：路徑被抽像成了一個字串，從而可以以參數的形式傳遞，並可以存儲，這為建立寄存器模型提供了可能。一個單純的 Verilog 路徑，如 top_tb.my_dut.counter，它是不能傳遞的，也是無法儲存的。
+與程式碼清單 7-21 相比，可以發現這種方式的優勢：路徑被抽像成了一個字串，從而可以以參數的形式傳遞，並可以存儲，這為建立暫存器模型提供了可能。一個單純的 Verilog 路徑，如 top_tb.my_dut.counter，它是不能傳遞的，也是無法儲存的。
 UVM 中使用 DPI+VPI 的方式來進行後門存取操作，它大體的流程是：
 1）在建立暫存器模型時將路徑參數設定好。  
 2）在進行後閘存取的寫入操作時，暫存器模型呼叫 uvm_hdl_deposit 函數：
@@ -707,7 +707,7 @@ import "DPI-C" context function int uvm_hdl_deposit(string path, uvm_hdl_data_t 
 ```
 
 在 C/C++ 側，此函式內部會呼叫 vpi_put_value 函式來對 DUT 中的暫存器進行寫入操作。
-3）進行後門存取的讀取操作時，呼叫 uvm_hdl_read 函數，在 C/C++ 側，此函數內部會呼叫 vpi_get_value 函數來對 DUT 中的寄存器進行讀取操作，並將讀取值傳回。
+3）進行後門存取的讀取操作時，呼叫 uvm_hdl_read 函數，在 C/C++ 側，此函數內部會呼叫 vpi_get_value 函數來對 DUT 中的暫存器進行讀取操作，並將讀取值傳回。
 
 * **UVM 中後門存取操作介面**
 在掌握 UVM 中後門存取操作的原理後，就可以使用暫存器模型的後門存取功能。要使用這個功能，需要做以下的準備：  
@@ -733,7 +733,7 @@ class reg_model extends uvm_reg_block;
 endclass
 ```
 
-由於 counter 是 32 bit，佔據兩個位址，因此在暫存器模型中它是作為兩個暫存器存在的。7.4.4 節將會介紹使它們作為一個寄存器的方法。
+由於 counter 是 32 bit，佔據兩個位址，因此在暫存器模型中它是作為兩個暫存器存在的。7.4.4 節將會介紹使它們作為一個暫存器的方法。
 當上述工作完成後，將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root：
   
 ```
@@ -801,7 +801,7 @@ class case0_cfg_vseq extends uvm_sequence;
 endclass
 ```
   
-## 複雜的寄存器模型
+## 複雜的暫存器模型
 * **層次化的暫存器模型**
 7.2 節的例子中的暫存器模型是一個最小、最簡單的暫存器模型。在整個實作過程中，只是將一個暫存器加入了 uvm_reg_block 中，並在最後的 base_test 中實例化此 reg_block。這個例子之所以這麼做是因為只有一個暫存器。在現實應用中，一般會將 uvm_reg_block 再加入一個 uvm_reg_block 中，然後在 base_test 中實例化後者。從邏輯關係來看，呈現出的是兩級的暫存器模型，如圖 7-7 所示
 <img width="1152" height="795" alt="image" src="https://github.com/user-attachments/assets/6cd3e02d-afac-4fda-9f39-ffd8262b12d3" />  
@@ -862,6 +862,6 @@ endclass
 * 第一步是先實例化子 reg_block
 * 第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的路徑參數設定為空字串，不能發起後門存取操作）
 * 第三步是呼叫子 reg_block 的 build 函數
-* 第四步是調用子 reg_block 的 lock_model 函式
+* 第四步是呼叫子 reg_block 的 lock_model 函式
 * 第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中  
-這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道寄存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
+這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道暫存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
