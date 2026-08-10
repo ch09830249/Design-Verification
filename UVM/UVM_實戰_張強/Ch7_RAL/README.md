@@ -880,7 +880,7 @@ int uvm_hdl_read(char *path, p_vpi_vecval value);
 import "DPI-C" context function int uvm_hdl_read(string path, output uvm_hdl_d ata_t value);
 ```
 
-以後就可以在 SystemVerilog 中像普通函數一樣呼叫 uvm_hdl_read 函數了。這種方式比單純地使用 VPI 的方式簡練許多。它可以直接將參數傳遞給 C/C++ 中的對應函數，省去了單純使用 VPI 時繁雜的註冊系統函數的步驟。整個過程如圖 7-6 所示。
+以後就可以在 SystemVerilog 中像普通函數一樣呼叫 uvm_hdl_read 函數。這種方式比單純地使用 VPI 的方式簡練許多。它可以直接將參數傳遞給 C/C++ 中的對應函數，省去了單純使用 VPI 時繁雜的註冊系統函數的步驟。整個過程如圖 7-6 所示。
 <img width="1154" height="616" alt="image" src="https://github.com/user-attachments/assets/3577c941-4f0c-4ec7-bc8b-fbd655f170a5" />  
 在這種 DPI+VPI 的方式中，要操作的暫存器的路徑被抽像成了字串，而不再是絕對路徑：
 
