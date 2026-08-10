@@ -214,24 +214,22 @@ endtask
     * **uvm_reg_field**：這是暫存器模型中的最小單位。什麼是 reg_field？ 假如有一個狀態暫存器，它各位的意義如下圖所示  
 <img width="1207" height="399" alt="image" src="https://github.com/user-attachments/assets/b46beebf-0fd3-47fd-805f-31bcae70db56" />
   
-如上的狀態暫存器共有四個域，分別是 empty、full、overflow、underflow。這四個域對應暫存器模型中的 uvm_reg_field。名字為「reserved」的並不是一個域  
+如上的狀態暫存器共有四個欄位，分別是 empty、full、overflow、underflow。這四個欄位對應暫存器模型中的 uvm_reg_field。名字為「reserved」的並不是一個欄位  
 * **uvm_reg**：它比 uvm_reg_field 高一個級別，但還是比較小的單位。一個暫存器中至少包含一個 uvm_reg_field
 * **uvm_reg_block**：它是一個比較大的單位，在其中可以加入許多的 uvm_reg，也可以加入其他的 uvm_reg_block。**一個暫存器模型中至少包含一個 uvm_reg_block**
 * **uvm_reg_map**：每個暫存器在加入暫存器模型時都有其位址，**uvm_reg_map 就是儲存這些位址，並將其轉換成可以存取的物理位址**（**因為加入暫存器模型中的暫存器位址一般都是偏移位址，而不是絕對位址**）。**當暫存器模型使用前門存取方式來實作讀取或寫入操作時，uvm_reg_map 就會將位址轉換成絕對位址**，啟動一個讀取或寫入的 sequence，並將讀取或寫入的結果傳回。在每個 reg_block 內部，至少有一個（通常也只有一個）uvm_reg_map
 ## 簡單的暫存器模型
-* **只有一個暫存器的暫存器模型**
-本節為前面所示的 DUT 建立暫存器模型。這個 DUT 非常簡單，它只有一個暫存器 invert。要為其建造暫存器模型，**首先要從 uvm_reg 衍生一個 invert 類別**：
-src/ch7/section7.2/reg_model.sv
-  
+* **只有一個暫存器的暫存器模型**  
+本節為前面所示的 DUT 建立暫存器模型。這個 DUT 非常簡單，它只有一個暫存器 invert。要為其建造暫存器模型，**首先要從 uvm_reg 衍生一個 invert 類別**：  
 ```  
 class reg_invert extends uvm_reg;    // 整個 register
 
-  rand uvm_reg_field reg_data;       // register 某個欄位
+  rand uvm_reg_field reg_data;       // register 某個欄位叫 reg_data
 
   virtual function void build();
-    reg_data = uvm_reg_field::type_id::create("reg_data");
+    reg_data = uvm_reg_field::type_id::create("reg_data");    // 實例化該暫存器欄位
     // parameter: parent, size, lsb_pos, access, volatile, reset value, has_reset, is_rand, individually accessible
-    reg_data.configure(this, 1, 0, "RW", 1, 0, 1, 1, 0);
+    reg_data.configure(this, 1, 0, "RW", 1, 0, 1, 1, 0);      // 設定該暫存器欄位
   endfunction
 
   `uvm_object_utils(reg_invert)
@@ -247,15 +245,15 @@ endclass
 在 new 函數中，要將 invert 暫存器的寬度作為參數傳遞給 super.new 函數。
 * super.new 函數
     * 第一個參數: **這裡的寬度並不是指這個暫存器的有效寬度，而是指這個暫存器中總共的位數**。如對於一個 16 位的暫存器，其中可能只使用了 8 位，那麼這裡要填寫的是 16，而不是 8。**這個數字一般與系統匯流排的寬度一致**
-    * 第二個參數: super.new 中另外一個參數是是否要加入覆蓋率的支持，這裡選擇 UVM_NO_COVERAGE，即不支持  
-每一個繼承自 uvm_reg 的類別都有一個 build，**這個 build 與 uvm_component 的 build_phase 並不一樣，它不會自動執行，而需要手動呼叫**，與 build_phase 相似的是所有的 uvm_reg_field都在這裡實例化。當 reg_data 實例化後，要呼叫 data.configure 函數來設定這個字段。
+    * 第二個參數: super.new 中另外一個參數是**是否要加入覆蓋率的支持，這裡選擇 UVM_NO_COVERAGE，即不支持**  
+每一個繼承自 uvm_reg 的類別都有一個 build，**這個 build 與 uvm_component 的 build_phase 並不一樣，它不會自動執行，而需要手動呼叫**，與 build_phase 相似的是所有的 uvm_reg_field 都在這裡實例化。當 reg_data 實例化後，要呼叫 data.configure 函數來設定這個字段。
 * data.configure 函數
-    * 第一個參數: 就是此域（uvm_reg_field）的父輩，也就是此域位於哪個暫存器中，這裡當然是填寫 this 了
-    * 第二個參數: 是此域的寬度，由於 DUT 中 invert 的寬度為 1，所以這裡為 1
-    * 第三個參數: 是此域的最低位元在整個暫存器中的位置，從 0 開始計數。假如一個暫存器如下圖所示，其低 3 位元和高 5 位元沒有使使用，其中只有一個字段，此字段的有效寬度為 8 位，那麼在呼叫 configure 時，第二個參數就要填寫 8，第三個參數則要填寫 3，因為這 reg_field 是從第 4 位開始的<img width="964" height="313" alt="image" src="https://github.com/user-attachments/assets/72615fc4-caf1-4979-b69d-94d9296d6072" />  
-    * 第四個參數表示此欄位的存取方式。 UVM 共支援如下 25 種存取方式：  
-1）RO：讀寫此域都無影響  
-2）RW：會盡量寫入，讀取時對此域無影響  
+    * 第一個參數: 此欄位（uvm_reg_field）的父輩，也就是此欄位位於哪個暫存器中，這裡當然是填寫 this 
+    * 第二個參數: 此欄位的寬度，由於 DUT 中 invert 的寬度為 1，所以這裡為 1
+    * 第三個參數: 此欄位的最低位元在整個暫存器中的位置，從 0 開始計數。假如一個暫存器如下圖所示，其低 3 位元和高 5 位元沒有使使用，其中只有一個字段，此字段的有效寬度為 8 位，那麼在呼叫 configure 時，第二個參數就要填寫 8，第三個參數則要填寫 3，因為這 reg_field 是從第 4 位開始的 <img width="964" height="313" alt="image" src="https://github.com/user-attachments/assets/72615fc4-caf1-4979-b69d-94d9296d6072" />   
+    * 第四個參數: 此欄位的存取方式。 UVM 共支援如下 25 種存取方式:  
+1）RO：讀寫此欄位都無影響  
+2）RW：會盡量寫入，讀取時對此欄位無影響  
 3）RC：寫入時無影響，讀取時會清除  
 4）RS：寫入時無影響，讀取時會設定所有的位元  
 5）WRC：盡量寫入，讀取時會清零  
@@ -280,25 +278,24 @@ endclass
 24）W1：重設（reset）後，第一次會盡量寫入，其他寫入無影響，讀取時無影響  
 25）WO1：重設後，第一次會盡量寫入，其他的寫入無影響，讀取時會出錯  
 事實上，暫存器的種類多種多樣，如上 25 種存取方式有時並不能滿足使用者的需求，這時就需要自訂暫存​​器的模型
-    * 第五個參數表示是否是易失的（volatile），這個參數一般不會使用
-    * 第六個參數表示此域上電重設後的預設值
-    * 第七個參數表示此域是否有復位，一般的暫存器或暫存器的域都有上電復位值，因此這裡一般也填入 1
-    * 第八個參數表示這個域是否可以隨機化。這主要用於對暫存器進行隨機寫入測試，如果選擇了 0，那麼此域將不會隨機化，而一直是重設值，否則將會隨機出一個數值來。這一個參數當且僅當第四個參數為 RW、WRC、WRS、WO、W1、WO1 時才有效
-    * 第九個參數表示這個域是否可以單獨存取
+    * 第五個參數: 是否是易失的（volatile），這個參數一般不會使用
+    * 第六個參數: 此欄位上電重設後的預設值
+    * 第七個參數: 此欄位是否有復位，一般的暫存器或暫存器的欄位都有上電復位值，因此這裡一般也填入 1
+    * 第八個參數: 此欄位是否可以隨機化。這主要用於對暫存器進行隨機寫入測試，如果選擇了 0，那麼此欄位將不會隨機化，而一直是重設值，否則將會隨機出一個數值來。這一個參數當且僅當第四個參數為 RW、WRC、WRS、WO、W1、WO1 時才有效
+    * 第九個參數: 此欄位是否可以單獨存取
   
 **定義好此暫存器後，需要在一個由 reg_block 衍生的類別中將其實例化：**  
-src/ch7/section7.2/reg_model.sv
   
 ```  
 class reg_model extends uvm_reg_block;
   rand reg_invert invert;
 
   virtual function void build();
-    default_map = create_map("default_map", 0, 2, UVM_BIG_ENDIAN, 0);    // 實例化 uvm_reg_map 並不是直接呼叫 new 函數，而是透過呼叫 uvm_reg_block 的 create_map 來實現
+    default_map = create_map("default_map", 0, 2, UVM_BIG_ENDIAN, 0);      // 實例化 uvm_reg_map 並不是直接呼叫 new 函數，而是透過呼叫 uvm_reg_block 的 create_map 來實現
 
-    invert = reg_invert::type_id::create("invert", , get_full_name());
-    invert.configure(this, null, "");
-    invert.build();
+    invert = reg_invert::type_id::create("invert", , get_full_name());     // 實例化該暫存器 (可以有多個暫存器)
+    invert.configure(this, null, "");                                      // 設定該暫存器
+    invert.build();                                                        // build 該暫存器
     default_map.add_reg(invert, 16'h9, "RW");
   endfunction
 
@@ -313,22 +310,22 @@ endclass
   
 同 uvm_reg 衍生的類別一樣，每一個由 uvm_reg_block 衍生的類別也要定義一個 build 函數，一般在此函數中實作所有暫存器的實例化。一個 uvm_reg_block 中一定要對應一個 uvm_reg_map，系統已經有一個宣告好的 default_map，只需要在 build 中將其實例化。這個**實例化的過程並不是直接呼叫 uvm_reg_map 的 new 函數，而是透過呼叫 uvm_reg_block 的 create_map 來實現**， create_map 有眾多的參數
 * create_map 函數
-    * 第一個參數是名字
-    * 第二個參數是基底位址
-    * 第三個參數則是系統匯流排的寬度，這裡的**單位是 byte 而不是 bit**
-    * 第四個參數是大小端，最後一個參數表示是否能夠依照 byte 定址  
+    * 第一個參數: 名字
+    * 第二個參數: 基底位址
+    * 第三個參數: 系統匯流排的寬度 **(單位是 byte 而不是 bit)**
+    * 第四個參數: 大小端，最後一個參數表示是否能夠依照 byte 定址  
   
 隨後實例化 invert 並呼叫 invert.configure 函數。這個函數的主要功能是指定暫存器進行後門存取操作時的路徑
 * data.configure 函數
-    * 第一個參數是此暫存器所在 uvm_reg_block 的指標，這裡填入 this
-    * 第二個參數是 reg_file 的指標（7.4.2節將會介紹 reg_file 的概念）這裡暫時填寫 null
-    * 第三個參數是此暫存器的後閘存取路徑，關於這點請參考 7.3 節，這裡暫且為空  
+    * 第一個參數: 此暫存器所在 uvm_reg_block 的指標，這裡填入 this
+    * 第二個參數: reg_file 的指標（7.4.2節將會介紹 reg_file 的概念）這裡暫時填寫 null
+    * 第三個參數: 此暫存器的後閘存取路徑 (back-door)，關於這點請參考 7.3 節，這裡暫且為空  
   
-當呼叫完 configure 時，需要手動呼叫 invert 的 build 函數，將 invert 中的域實例化。最後一步則是將此暫存器加入 default_map 中。 **uvm_reg_map 的作用是儲存所有暫存器的位址**，因此必須將實例化的暫存器加入 default_map 中，否則無法進行前門存取操作
+當呼叫完 configure 時，需要手動呼叫 invert 的 build 函數，將 invert 中的欄位實例化。最後一步則是將此暫存器加入 default_map 中。 **uvm_reg_map 的作用是儲存所有暫存器的位址**，因此必須將實例化的暫存器加入 default_map 中，否則無法進行前門存取操作 (front-door)
 * add_reg 函數
-    * 第一個參數是要加入的暫存器
-    * 第二個參數是暫存器的位址，這裡是 16’h9
-    * 第三個參數是此暫存器的存取方式  
+    * 第一個參數: 要加入的暫存器
+    * 第二個參數: 暫存器的位址，這裡是 16’h9
+    * 第三個參數: 此暫存器的存取方式  
   
 到此為止，一個簡單的暫存器模型已經完成。回顧前面介紹過的暫存器模型中的一些常用概念。
 * **uvm_reg_field** 是最小的單位，是具體儲存暫存器數值的變量，可以直接用這個類別
@@ -337,9 +334,9 @@ endclass
 打個比方說，uvm_reg 是一個小瓶子，其中必須裝上藥丸（uvm_reg_field）才有意義，這個裝藥丸的過程就是定義衍生類的過程，而 uvm_reg_block 則是一個大箱子，它中可以放許多小瓶子（uvm_reg），也可以放其他稍微小一點的箱子（uvm_reg_block）。整個暫存器模型就是一個大箱子（uvm_reg_block）
   
 * **將暫存器模型整合到驗證平台中**
-暫存器模型的**前門存取**方式工作流程如圖所示，其中圖 a 為讀取操作，圖 b 為寫入操作：
+暫存器模型的**前門存取**方式工作流程如圖所示，其中圖 a 為讀取操作，圖 b 為寫入操作：  
 <img width="1194" height="739" alt="image" src="https://github.com/user-attachments/assets/bed2cd08-8ea4-4dca-92f8-fff73ae17099" />  
-暫存器模型的前門存取操作可以分成**讀取**和**寫入**兩種。無論是讀或寫，暫存器模型都會透過 sequence 產生一個 uvm_reg_bus_op 的變量，此變數中儲存操作類型（讀取或寫入）和操作的位址，如果是寫入操作，還會有要寫入的資料。此變數中的資訊要經過一個轉換器（adapter）轉換後交給 bus_sequencer，隨後交給 bus_driver，由 bus_driver 實作最終的前門存取讀寫操作。因此，必須要定義好一個轉換器。如下例為一個簡單的轉換器的程式碼：
+暫存器模型的前門存取操作可以分成**讀取**和**寫入**兩種。無論是讀或寫，**暫存器模型都會透過 sequence 產生一個 uvm_reg_bus_op 的變量，此變數中儲存操作類型（讀取或寫入）和操作的位址，如果是寫入操作，還會有要寫入的資料**。此變數中的資訊要經過一個轉換器（adapter）轉換後交給 bus_sequencer，隨後交給 bus_driver，由 bus_driver 實作最終的前門存取讀寫操作。因此，必須要定義好一個轉換器。如下例為一個簡單的轉換器的程式碼：
 src/ch7/section7.2/my_adapter.sv
   
 ```
@@ -352,7 +349,7 @@ class my_adapter extends uvm_reg_adapter;
     super.new(name);
   endfunction : new
 
-  function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+  function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);              // 將 uvm_reg_bus_op 轉成 bus_transaction
     bus_transaction tr;
     tr = new("tr");
     tr.addr = rw.addr;
@@ -362,7 +359,7 @@ class my_adapter extends uvm_reg_adapter;
     return tr;
   endfunction : reg2bus
 
-  function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);
+  function void bus2reg(uvm_sequence_item bus_item, ref uvm_reg_bus_op rw);      // 將 bus_transaction 轉成 uvm_reg_bus_op, 回覆 tr 成功或是失敗
     bus_transaction tr;
     if(!$cast(tr, bus_item)) begin
       `uvm_fatal(tID, "Provided bus_item is not of the correct type. Expecting bus_transaction")
@@ -382,9 +379,9 @@ endclass : my_adapter
 * **reg2bus**
   * 將暫存器模型透過 sequence 發出的 uvm_reg_bus_op 型的變數轉換成 bus_sequencer 能夠接受的形式
 * **bus2reg**
-  * 當監測到匯流排上有操作時，它將收集來的 transaction 轉換成暫存器模型能夠接受的形式，以便暫存器模型能夠更新對應的暫存器的值
+  * 當監測到匯流排上有操作時，它將收集來的 transaction 轉換成暫存器模型能夠接受的形式 (uvm_reg_bus_op)，以便暫存器模型能夠更新對應的暫存器的值
   
-說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？由於匯流排的特殊性，bus_driver 在驅動匯流排進行讀取操作時，它也能順便取得要讀的數值，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
+說到這裡，不得不考慮暫存器模型發起的讀取操作的數值是如何傳回給暫存器模型的？**由於匯流排的特殊性，bus_driver 在驅動匯流排進行讀取操作時，它也能順便取得要讀的數值 (是 bus driver 得到讀取資訊，在放到剛剛得來的 bus_transaction)**，如果它將此值放入從 bus_sequencer 獲得的 bus_transaction 中時，那麼 bus_transaction 中就會有讀取的值，此值經過 adapter 的 bus2reg 函數的傳遞，最後被暫存器模型獲取，這個過程如圖 7-5a 所示。由於並沒有實際的 transaction 的傳遞，所以從 driver 到 adapter 使用了虛線。轉換器寫好之後，就可以在 base_test 中加入暫存器模型了：
 src/ch7/section7.2/base_test.sv
   
 ```
@@ -392,8 +389,8 @@ class base_test extends uvm_test;
 
   my_env env;
   my_vsqr v_sqr;
-  reg_model rm;  // 新加的 reg model
-  my_adapter reg_sqr_adapter;  // 新加的 reg sqr adapter
+  reg_model rm;                  // 新加的 reg model
+  my_adapter reg_sqr_adapter;    // 新加的 reg sqr adapter
 …
   extern function new(string name = "base_test", uvm_component parent = null);
   extern virtual function void build_phase(uvm_phase phase);
@@ -405,6 +402,8 @@ function void base_test::build_phase(uvm_phase phase);
   super.build_phase(phase);
   env = my_env::type_id::create("env", this);
   v_sqr = my_vsqr::type_id::create("v_sqr", this);
+
+  // 以下是 register model 要做的事
   rm = reg_model::type_id::create("rm", this);
   rm.configure(null, "");
   rm.build();
@@ -498,8 +497,8 @@ extern virtual task read(output uvm_status_e status,
 ```
 
 它有多個參數，常用的是其前三個參數。
-* 第一個是 uvm_status_e 型的變量，這是一個輸出，用來表明讀取操作是否成功
-* 第二個是讀取的數值，也是輸出
+* 第一個是 uvm_status_e 型的變量，這是一個輸出，用來**表明讀取操作是否成功**
+* 第二個是**讀取的數值**，也是輸出
 * 第三個是讀取的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR
 由於參考模型一般不會寫入暫存器，因此對於 write 任務，以在 virtual sequence 進行寫入操作為例說明。在 sequence 中使用暫存器模型，通常透過 p_sequencer 的形式引用。需要先在 sequencer 中有一個暫存器模型的指標，程式碼清單 7-10 中已經為 v_sqr.p_rm 賦值了。因此可以直接以如下方式進行寫入操作：
 src/ch7/section7.2/my_case0.sv
@@ -533,8 +532,8 @@ extern virtual task write(output uvm_status_e status,
 ```
 
 它的參數也有很多個，但是與 read 類似，常用的只有前三個。
-* 第一個為 uvm_status_e 型的變量，這是一個輸出，用於表明寫操作是否成功
-* 第二個要寫的值，是一個輸入
+* 第一個為 uvm_status_e 型的變量，這是一個輸出，用於**表明寫操作是否成功**
+* 第二個**要寫的值**，是一個輸入
 * 第三個是寫入操作的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR 
 暫存器模型對 sequence 的 transaction 類型沒有任何要求。因此，可以在一個發送 my_transaction 的 sequence 中使用暫存器模型對暫存器進行讀寫操作
 ## 後門訪問與前門訪問
