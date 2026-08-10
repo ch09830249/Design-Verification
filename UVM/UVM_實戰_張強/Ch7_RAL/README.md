@@ -880,24 +880,24 @@ int uvm_hdl_read(char *path, p_vpi_vecval value);
 import "DPI-C" context function int uvm_hdl_read(string path, output uvm_hdl_d ata_t value);
 ```
 
-以後就可以在 SystemVerilog 中像普通函數一樣呼叫 uvm_hdl_read 函數。這種方式比單純地使用 VPI 的方式簡練許多。它可以直接將參數傳遞給 C/C++ 中的對應函數，省去了單純使用 VPI 時繁雜的註冊系統函數的步驟。整個過程如圖 7-6 所示。
+**以後就可以在 SystemVerilog 中像普通函數一樣呼叫 uvm_hdl_read 函數**。這種方式比單純地使用 VPI 的方式簡練許多。它可以直接將參數傳遞給 C/C++ 中的對應函數，省去了單純使用 VPI 時繁雜的註冊系統函數的步驟。整個過程如圖 7-6 所示。
 <img width="1154" height="616" alt="image" src="https://github.com/user-attachments/assets/3577c941-4f0c-4ec7-bc8b-fbd655f170a5" />  
-在這種 DPI+VPI 的方式中，要操作的暫存器的路徑被抽像成了字串，而不再是絕對路徑：
+在這種 DPI + VPI 的方式中，要操作的暫存器的路徑被抽像成了字串，而不再是絕對路徑：
 
 ```
 uvm_hdl_read("top_tb.my_dut.counter", value);
 ```
 
 與程式碼清單 7-21 相比，可以發現這種方式的優勢：路徑被抽像成了一個字串，從而可以以參數的形式傳遞，並可以存儲，這為建立暫存器模型提供了可能。一個單純的 Verilog 路徑，如 top_tb.my_dut.counter，它是不能傳遞的，也是無法儲存的。
-UVM 中使用 DPI+VPI 的方式來進行後門存取操作，它大體的流程是：
-1）在建立暫存器模型時將路徑參數設定好。  
+UVM 中使用 DPI + VPI 的方式來進行後門存取操作，它大體的流程是：
+1）在建立暫存器模型時將路徑參數設定好 
 2）在進行後閘存取的寫入操作時，暫存器模型呼叫 uvm_hdl_deposit 函數：
 
 ```
 import "DPI-C" context function int uvm_hdl_deposit(string path, uvm_hdl_data_t value);
 ```
 
-在 C/C++ 側，此函式內部會呼叫 vpi_put_value 函式來對 DUT 中的暫存器進行寫入操作。
+在 C/C++ 側，此函式內部會呼叫 vpi_put_value 函式來對 DUT 中的暫存器進行寫入操作
 3）進行後門存取的讀取操作時，呼叫 uvm_hdl_read 函數，在 C/C++ 側，此函數內部會呼叫 vpi_get_value 函數來對 DUT 中的暫存器進行讀取操作，並將讀取值傳回。
 
 * **UVM 中後門存取操作介面**
@@ -915,6 +915,7 @@ class reg_model extends uvm_reg_block;
 …
     invert.configure(this, null, "invert");
 …
+    // counter 是 RTL 內的 register
     counter_high.configure(this, null, "counter[31:16]");
 …
     counter_low.configure(this, null, "counter[15:0]");
@@ -925,7 +926,7 @@ endclass
 ```
 
 由於 counter 是 32 bit，佔據兩個位址，因此在暫存器模型中它是作為兩個暫存器存在的。7.4.4 節將會介紹使它們作為一個暫存器的方法。
-當上述工作完成後，將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root：
+當上述工作完成後，**將暫存器模型整合到驗證平台時，需要設定好根路徑 hdl_root**：
   
 ```
 function void base_test::build_phase(uvm_phase phase);
@@ -940,7 +941,7 @@ function void base_test::build_phase(uvm_phase phase);
 endfunction
 ```
   
-UVM 提供兩類後門存取的函數：一是 UVM_BACKDOOR 形式的 read 和 write，二是 peek 和 poke。這兩類函數的差別是，第一類會在進行操作時模仿 DUT 的行為，第二類則完全不管 DUT 的行為。如對一個唯讀的暫存器進行寫入操作，那麼第一類由於要模擬 DUT 的唯讀行為，所以是寫不進去的，但使用第二類可以寫進去。poke 函數用於第二類寫入操作，其原型為：
+UVM 提供兩類後門存取的函數：一是 UVM_BACKDOOR 形式的 read 和 write，二是 peek 和 poke。這兩類函數的差別是，**第一類會在進行操作時模仿 DUT 的行為，第二類則完全不管 DUT 的行為**。如對一個唯讀的暫存器進行寫入操作，那麼第一類由於要模擬 DUT 的唯讀行為，所以是寫不進去的，但使用第二類可以寫進去。poke 函數用於第二類寫入操作，其原型為：
   
 ```
 task uvm_reg::poke(output uvm_status_e status,
@@ -964,7 +965,10 @@ task uvm_reg::peek(output uvm_status_e status,
                     input int lineno = 0);
 ```
   
-無論是 peek 還是 poke，其常用的參數都是前兩者。各自的第一個參數表示操作是否成功，第二個參數表示讀寫的資料。在 sequence 中，可以使用如下的方式來呼叫這兩個任務：
+無論是 peek 還是 poke，其常用的參數都是前兩者。各自的  
+* 第一個參數: 表示操作是否成功
+* 第二個參數: 表示讀寫的資料  
+在 sequence 中，可以使用如下的方式來呼叫這兩個任務：
   
 ```
 src/ch7/section7.3/7.3.5/my_case0.sv
@@ -996,7 +1000,7 @@ endclass
 * **層次化的暫存器模型**
 7.2 節的例子中的暫存器模型是一個最小、最簡單的暫存器模型。在整個實作過程中，只是將一個暫存器加入了 uvm_reg_block 中，並在最後的 base_test 中實例化此 reg_block。這個例子之所以這麼做是因為只有一個暫存器。在現實應用中，一般會將 uvm_reg_block 再加入一個 uvm_reg_block 中，然後在 base_test 中實例化後者。從邏輯關係來看，呈現出的是兩級的暫存器模型，如圖 7-7 所示
 <img width="1152" height="795" alt="image" src="https://github.com/user-attachments/assets/6cd3e02d-afac-4fda-9f39-ffd8262b12d3" />  
-一般的，只會在第一級的 uvm_reg_block 中加入暫存器，而第二級的 uvm_reg_block 通常只會加入 uvm_reg_block。這樣從整體上呈現出一個比較清晰的結構。假如一個 DUT 分了三個子模組：用來控制全域的 global 模組、用來快取資料的 buf 模組、用來接收發送乙太網路幀的 mac 模組。 global 模組暫存器的位址為 0x0000～0x0FFF，buf 部分的暫存器位址為 0x1000～0x1FFF，mac 部分的暫存器位址為 0x2000～0x2FFF，那麼可以如下定義暫存器模型：  
+一般來說，只會在第一級的 uvm_reg_block 中加入暫存器，而第二級的 uvm_reg_block 通常只會加入 uvm_reg_block。這樣從整體上呈現出一個比較清晰的結構。假如一個 DUT 分了三個子模組：用來控制全域的 global 模組、用來快取資料的 buf 模組、用來接收發送乙太網路幀的 mac 模組。 global 模組暫存器的位址為 0x0000～0x0FFF，buf 部分的暫存器位址為 0x1000～0x1FFF，mac 部分的暫存器位址為 0x2000～0x2FFF，那麼可以如下定義暫存器模型：  
 src/ch7/section7.4/7.4.1/reg_model.sv
   
 ```
@@ -1015,8 +1019,8 @@ endclass
 class reg_model extends uvm_reg_block;
 
   rand global_blk gb_ins;
-  rand buf_blk bb_ins;
-  rand mac_blk mb_ins;
+  rand buf_blk    bb_ins;
+  rand mac_blk    mb_ins;
 
   virtual function void build();
     default_map = create_map("default_map", 0, 2, UVM_BIG_ENDIAN, 0);
@@ -1051,7 +1055,7 @@ endclass
   
 要將一個子 reg_block 加入父 reg_block 中
 * 第一步是先實例化子 reg_block
-* 第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的路徑參數設定為空字串，不能發起後門存取操作）
+* 第二步是呼叫子 reg_block 的 configure 函數。如果需要使用後門訪問，則在這個函數中要說明子 reg_block 的路徑，這個路徑不是絕對路徑，而是相對於父 reg_block 來說的路徑（簡單起見，上述程式碼中的**路徑參數設定為空字串，不能發起後門存取操作**）
 * 第三步是呼叫子 reg_block 的 build 函數
 * 第四步是呼叫子 reg_block 的 lock_model 函式
 * 第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中  
