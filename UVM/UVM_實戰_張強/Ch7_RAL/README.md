@@ -385,53 +385,246 @@ endclass : my_adapter
 src/ch7/section7.2/base_test.sv
   
 ```
+//------------------------------------------------------------------------------
+// Base test
+//
+// 負責建立並連接：
+//   1. 驗證環境 my_env
+//   2. Virtual sequencer my_vsqr
+//   3. UVM Register Model
+//   4. Register adapter
+//------------------------------------------------------------------------------
 class base_test extends uvm_test;
 
+  // 主要驗證環境，通常包含 agent、scoreboard、coverage 等元件
   my_env env;
+
+  // Virtual sequencer
+  // 用來集中管理不同介面的實體 sequencer
   my_vsqr v_sqr;
-  reg_model rm;                  // 新加的 reg model
-  my_adapter reg_sqr_adapter;    // 新加的 reg sqr adapter
-…
-  extern function new(string name = "base_test", uvm_component parent = null);
+
+  // UVM Register Model
+  // 描述 DUT 的 register、field、address map 等資訊
+  reg_model rm;
+
+  // Register adapter
+  // 負責在 RAL 的 uvm_reg_bus_op 與自訂 bus transaction 之間轉換
+  my_adapter reg_sqr_adapter;
+
+  `uvm_component_utils(base_test)
+
+  // Constructor 宣告
+  extern function new(
+    string name = "base_test",
+    uvm_component parent = null
+  );
+
+  // 建立 testbench component 與 Register Model
   extern virtual function void build_phase(uvm_phase phase);
+
+  // 連接 sequencer、Register Model 與 adapter
   extern virtual function void connect_phase(uvm_phase phase);
 
-endclass
+endclass : base_test
 
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+function base_test::new(
+  string name = "base_test",
+  uvm_component parent = null
+);
+  super.new(name, parent);
+endfunction : new
+
+
+//------------------------------------------------------------------------------
+// build_phase
+//
+// 此階段主要負責：
+//   1. 建立 environment
+//   2. 建立 virtual sequencer
+//   3. 建立並初始化 Register Model
+//   4. 建立 Register adapter
+//
+// build_phase 由上而下執行，適合建立 UVM component 及相關物件。
+//------------------------------------------------------------------------------
 function void base_test::build_phase(uvm_phase phase);
+
+  // 執行父類別 uvm_test 的 build_phase
   super.build_phase(phase);
+
+  // 透過 UVM factory 建立驗證環境
+  // parent 設成 this，表示 env 是 base_test 的 child component
   env = my_env::type_id::create("env", this);
+
+  // 建立 virtual sequencer
+  // parent 同樣設成 base_test
   v_sqr = my_vsqr::type_id::create("v_sqr", this);
 
-  // 以下是 register model 要做的事
-  rm = reg_model::type_id::create("rm", this);
-  rm.configure(null, "");
-  rm.build();
-  rm.lock_model();
-  rm.reset();
-  reg_sqr_adapter = new("reg_sqr_adapter");
-  env.p_rm = this.rm;
-endfunction
 
+  //---------------------------------------------------------------------------
+  // 建立及初始化 Register Model
+  //---------------------------------------------------------------------------
+
+  // 透過 factory 建立 Register Model
+  rm = reg_model::type_id::create("rm", this);
+
+  // 設定 Register Model 的 parent block 與 HDL path
+  //
+  // 第一個參數為 parent register block：
+  //   null 表示 rm 是最上層 register block。
+  //
+  // 第二個參數為 HDL path：
+  //   空字串表示此處不指定額外的 HDL path。
+  //   若要進行 backdoor access，通常需要正確設定 HDL path。
+  rm.configure(null, "");
+
+  // 建立 Register Model 內部結構
+  //
+  // reg_model::build() 通常由使用者自行實作，內容可能包括：
+  //   - 建立 uvm_reg
+  //   - 建立 uvm_reg_field
+  //   - 建立 address map
+  //   - 將 register 加入 map
+  rm.build();
+
+  // 鎖定 Register Model
+  //
+  // lock_model() 完成後：
+  //   - Register Model 的階層與位址配置不可再修改
+  //   - UVM 會完成 address map 等內部資料結構的整理
+  //
+  // 因此必須在 build() 完成後才呼叫。
+  rm.lock_model();
+
+  // 將 Register Model 內部的 desired value 與 mirrored value
+  // 重設為模型中定義的 reset value
+  //
+  // 注意：
+  //   rm.reset() 只會重設 RAL 模型內部的狀態，
+  //   不會驅動 DUT reset，也不會存取 DUT。
+  rm.reset();
+
+  // 建立 Register adapter
+  //
+  // adapter 負責：
+  //   reg2bus()：將 RAL operation 轉成 bus transaction
+  //   bus2reg()：將 bus transaction 結果轉回 RAL operation
+  reg_sqr_adapter = new("reg_sqr_adapter");
+
+  // 將 Register Model handle 提供給 environment
+  //
+  // env 內部元件或 sequence 可透過 env.p_rm 存取同一份 Register Model。
+  // 此處只是傳遞 handle，沒有複製 Register Model。
+  env.p_rm = this.rm;
+
+endfunction : build_phase
+
+
+//------------------------------------------------------------------------------
+// connect_phase
+//
+// 此階段主要負責：
+//   1. 將各實體 sequencer handle 放入 virtual sequencer
+//   2. 將 Register Model handle 放入 virtual sequencer
+//   3. 將 RAL address map 連接至 bus sequencer 和 adapter
+//   4. 設定 Register Model 的 prediction 方式
+//
+// connect_phase 在 build_phase 之後執行，因此各 component 已經建立完成。
+//------------------------------------------------------------------------------
 function void base_test::connect_phase(uvm_phase phase);
+
+  // 執行父類別的 connect_phase
   super.connect_phase(phase);
+
+  //---------------------------------------------------------------------------
+  // 設定 virtual sequencer
+  //---------------------------------------------------------------------------
+
+  // 將 my interface agent 的實體 sequencer handle
+  // 指派給 virtual sequencer。
+  //
+  // Virtual sequence 可透過：
+  //   p_sequencer.p_my_sqr
+  // 啟動 my interface sequence。
   v_sqr.p_my_sqr = env.i_agt.sqr;
+
+  // 將 register bus agent 的實體 sequencer handle
+  // 指派給 virtual sequencer。
+  //
+  // Virtual sequence 可透過：
+  //   p_sequencer.p_bus_sqr
+  // 啟動 bus sequence。
   v_sqr.p_bus_sqr = env.bus_agt.sqr;
+
+  // 將 Register Model handle 提供給 virtual sequencer
+  //
+  // Virtual sequence 可透過：
+  //   p_sequencer.p_rm
+  // 呼叫 register 的 read()、write()、update()、mirror() 等方法。
   v_sqr.p_rm = this.rm;
-  rm.default_map.set_sequencer(env.bus_agt.sqr, reg_sqr_adapter);
+
+
+  //---------------------------------------------------------------------------
+  // 將 Register Model 連接到 bus sequencer
+  //---------------------------------------------------------------------------
+
+  // 告訴 default_map：
+  //
+  //   1. 前門存取要使用哪一個 bus sequencer
+  //   2. 要使用哪一個 adapter 進行 transaction 格式轉換
+  //
+  // 前門寫入流程：
+  //
+  //   reg.write()
+  //      -> rm.default_map
+  //      -> reg_sqr_adapter.reg2bus()
+  //      -> env.bus_agt.sqr
+  //      -> bus driver
+  //      -> DUT
+  //
+  // 前門讀取完成後：
+  //
+  //   bus driver
+  //      -> bus transaction
+  //      -> reg_sqr_adapter.bus2reg()
+  //      -> RAL
+  rm.default_map.set_sequencer(
+    env.bus_agt.sqr,
+    reg_sqr_adapter
+  );
+
+  // 啟用 auto prediction
+  //
+  // 當透過此 register map 發起 read/write 且操作完成後，
+  // RAL 會自動更新 Register Model 的 mirrored value。
+  //
+  // 適合：
+  //   - Register 存取主要由 RAL 發起
+  //   - 不使用獨立的 uvm_reg_predictor
+  //
+  // 限制：
+  //   - 若 DUT register 被其他 bus master 修改
+  //   - 或由非 RAL sequence 直接進行 bus 存取
+  //
+  // RAL 不一定知道這些變化，mirror 可能與 DUT 不一致。
   rm.default_map.set_auto_predict(1);
-endfunction
+
+endfunction : connect_phase
+
 ```
   
 要將一個暫存器模型整合到 base_test 中，那麼至少需要在 base_test 中定義兩個成員變量，一是 reg_model，另外一個就是 reg_sqr_adapter。將所有用到的類別在 build_phase 中實例化。在實例化後 reg_model 還要做四件事：
 * 第一個是呼叫 configure 函數，其第一個參數是 parent block，由於是最頂層的 reg_block，因此填入 null，第二個參數是後門訪問路徑，請參考7.3節，這裡傳入一個空的字串
 * 第二是呼叫 build 函數，將所有的暫存器實例化
-* 第三是呼叫 lock_model 函數，**呼叫此函數後，reg_model 中就不能再加入新的暫存器了**
+* 第三是呼叫 lock_model 函數，**呼叫此函數後，reg_model 中就不能再加入新的暫存器**
 * 第四是呼叫 reset 函數，如果不呼叫此函數，那麼 reg_model 中所有暫存器的值都是 0，**呼叫此函數後，所有暫存器的值都將變為設定的重設值**  
 暫存器模型的前門存取操作最終都會由 uvm_reg_map 完成，因此在 connect_phase 中，需要將轉換器和 bus_sequencer 通過 set_sequencer 函數告知 reg_model 的 default_map，並將 default_map 設定為自動預測狀態
   
 * **在驗證平台中使用暫存器模型**
-當一個暫存器模型被建立好後，可以在 sequence 和其他 component 中使用。以在參考模型中使用為例，需要在參考模型中有一個暫存器模型的指標：
+**當一個暫存器模型被建立好後，可以在 sequence 和其他 component 中使用**。以在參考模型中使用為例，需要在參考模型中有一個暫存器模型的指標：
 src/ch7/section7.2/my_model.sv
   
 ```
@@ -536,7 +729,7 @@ extern virtual task write(output uvm_status_e status,
 * 第二個**要寫的值**，是一個輸入
 * 第三個是寫入操作的方式，可選 UVM_FRONTDOOR 和 UVM_BACKDOOR 
 暫存器模型對 sequence 的 transaction 類型沒有任何要求。因此，可以在一個發送 my_transaction 的 sequence 中使用暫存器模型對暫存器進行讀寫操作
-## 後門訪問與前門訪問
+## 後門訪問與前門訪問 => 這段只是解釋 RAL 底層運作的方式
 * **UVM 中前門存取的實現**
 所謂前門存取操作就是透過暫存器配置匯流排（如 APB 協定、OCP 協定、I2C 協定等）來對 DUT 進行操作。無論在任何匯流排協議中，前門存取操作只有兩種：**讀取操作**和**寫入操作**。前門訪問操作是比較正統的用法。對一塊實際焊接在電路板上正常運作的晶片來說，此時若要存取其中的某些暫存器，前門存取操作是唯一的方法。在 7.1.2 節介紹暫存器模型時曾經講過，對於參考模型來說，最大的問題是如何在其中啟動一個 sequence，當時列舉了全域變數和 config_db 的兩種方式。除了這兩種方式之外，如果能夠在參考模型中得到一個 sequencer 的指標，也可以在此 sequencer 上啟動一個 sequence。這通常比較容易實現，只要在其中設定一個 p_sqr 的變量，並在 env 中將 sequencer 的指標賦值給此變數即可。接下來的關鍵就是分別寫一個讀寫的 sequence：
 src/ch7/section7.2/7.3.1/reg_access_sequence.sv
@@ -561,7 +754,7 @@ class reg_access_sequence extends uvm_sequence#(bus_transaction);
     `uvm_send(tr)
     `uvm_info(tID, "successful access register", UVM_MEDIUM)
     
-    this.rdata = tr.rd_data;
+    this.rdata = tr.rd_data;        // 將 read data 直接放進當前的 transaction
   endtask
 
 endclass
@@ -592,15 +785,14 @@ task my_model::main_phase(uvm_phase phase);
 endtask
 ```
   
-sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在暫存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指標，而在在暫存器模型中也有一個這樣的指標，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指標。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的
- transaction 都非常相似，在綜合了它們的特徵後，UVM 內建了一種 transaction：uvm_reg_item。透過 adapter 的 bus2reg 及 reg2bus，可以實現 uvm_reg_item 與目標 transaction 的轉換。以讀取操作為例，其完整的流程為：
-* 參考模型呼叫暫存器模型的讀取任務
-* 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
-* 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
-* 把 bus_req 交給 bus_sequencer
-* driver 得到 bus_req 後驅動它，得到讀取的值，並將讀取值放入 bus_req 中，呼叫 item_done
-* 暫存器模型呼叫 adapter.bus2reg（bus_req，rw）將 bus_req 中的讀取值傳遞給 rw
-* 將 rw 中的讀取資料回傳參考模型
+sequence 是自動執行的，但是在其執​​行完畢後（body 及 post_body 呼叫完成），為此 sequence 分配的記憶體仍然是有效的，所以可以使用 reg_seq 繼續引用此 sequence。上述讀取操作正是用到了這一點。對 UVM 來說，其在暫存器模型中使用的方式也與此類似。上述操作方式的關鍵是在參考模型中有一個 sequencer 的指標，而在在暫存器模型中也有一個這樣的指標，它就是 7.2.2 節中，在 base_test 的 connect_phase 為 default map 設定的 sequencer 指標。當然，對於 UVM 來說，它是一種通用的驗證方法學，所以要能夠處理各種 transaction 類型。幸運的是，這些要處理的 transaction 都非常相似，在綜合了它們的特徵後，UVM 內建了一種 transaction：uvm_reg_item。透過 adapter 的 bus2reg 及 reg2bus，可以實現 uvm_reg_item 與目標 transaction 的轉換。以讀取操作為例，其完整的流程為：
+1. 參考模型呼叫暫存器模型的讀取任務
+2. 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
+3. 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
+4. 把 bus_req 交給 bus_sequencer
+5. driver 得到 bus_req 後驅動它，得到讀取的值，並將讀取值放入 bus_req 中，呼叫 item_done
+6. 暫存器模型呼叫 adapter.bus2reg（bus_req，rw）將 bus_req 中的讀取值傳遞給 rw
+7. 將 rw 中的讀取資料回傳參考模型
 在 6.7.2 節介紹 sequence 的應答機制時提到過，如果 driver 一直發送應答而 sequence 不收集應答，那麼將會導致 sequencer 的應答案佇列溢出。UVM 考慮到這種情況，在 adapter 中設定了 provide_responses 選項：
 UVM source code
   
@@ -613,16 +805,16 @@ endclass
 ```
   
 在設定了此選項後，暫存器模型在呼叫 bus2reg 將目標 transaction 轉換成 uvm_reg_item 時，其傳入的參數是 rsp，而不是 req。使用應答機制的操作流程為：
-* 參考模型呼叫暫存器模型的讀取任務
-* 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
-* 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
-* 將 bus_req 交給 bus_sequencer
-* driver 得到 bus_req，驅動它，得到讀取的值，並將讀取值放入 rsp 中，呼叫 item_done
-* 暫存器模型呼叫 adapter.bus2reg（rsp，rw）將 rsp 中的讀取值傳遞給 rw
-* 將 rw 中的讀取資料回傳參考模型
+1. 參考模型呼叫暫存器模型的讀取任務
+2. 暫存器模型產生 sequence，並產生 uvm_reg_item：rw
+3. 產生 driver 能夠接受的 transaction：bus_req=adapter.reg2bus（rw）
+4. 將 bus_req 交給 bus_sequencer
+5. driver 得到 bus_req，驅動它，得到讀取的值，並將讀取值放入 rsp 中，呼叫 item_done
+6. 暫存器模型呼叫 adapter.bus2reg（rsp，rw）將 rsp 中的讀取值傳遞給 rw
+7. 將 rw 中的讀取資料回傳參考模型
 
 * **後門存取操作的定義**
-為了講述後門存取操作，從本節開始，將在 7.1.1 節的 DUT 的基礎上引入一個新的 DUT，如附錄 B 的程式碼清單 B-3 所示。這個 DUT 中加入了暫存器 counter。它的功能就是統計 rx_dv 為高電位的時脈數。在通訊系統中，有大量計數器用於統計各種包裹的數量，如超長封包、長封包、中封包、短封包、超短封包等。這些計數器的一個共同的特點是它們是唯讀的，DUT 的匯流排介面無法透過前門存取操作對其進行寫入操作。除了是唯讀外，這些暫存器的位寬一般都比較寬，如32位、48位或64位等，它們的位寬超過了設計中對加法器寬度的上限限制。計數器在計數過程中需要使用加法器，對於加法器來說，在同等製程下，位寬越寬則其時序越差，因此在設計上一般會規定加法器的最大位寬。在上述DUT中，加法器的位寬被限制在16位。要實現 32 位元的 counter 的加法操作，需要使用兩個疊加的16位元加法器。為 counter 指派 16‘h5 和 16’h6 的位址，採用大端格式將高位元資料存放在低位址。此計數器是可讀的，另外可以對其進行寫入 1 清 0 操作。如果對其寫入其他數值，則不會起作用。後門存取是與前門存取相對的操作，從廣義上來說，所有不透過 DUT 的匯流排而對 DUT 內部的暫存器或記憶體進行存取的操作都是後門訪問操作。如在 top_tb 中可以使用下列方式對 counter 賦初值：
+為了講述後門存取操作，從本節開始，將在 7.1.1 節的 DUT 的基礎上引入一個新的 DUT，如附錄 B 的程式碼清單 B-3 所示。這個 **DUT 中加入了暫存器 counter。它的功能就是統計 rx_dv 為高電位的時脈數**。在通訊系統中，有大量計數器用於統計各種包裹的數量，如超長封包、長封包、中封包、短封包、超短封包等。**這些計數器的一個共同的特點是它們是唯讀的，DUT 的匯流排介面無法透過前門存取操作對其進行寫入操作**。除了是唯讀外，這些暫存器的位寬一般都比較寬，如32位、48 位或 64 位等，它們的位寬超過了設計中對加法器寬度的上限限制。計數器在計數過程中需要使用加法器，對於加法器來說，在同等製程下，位寬越寬則其時序越差，因此在設計上一般會規定加法器的最大位寬。在上述 DUT 中，加法器的位寬被限制在 16 位。要實現 32 位元的 counter 的加法操作，需要使用兩個疊加的16位元加法器。為 counter 指派 16‘h5 和 16’h6 的位址，**採用大端格式將高位元資料存放在低位址**。此計數器是可讀的，另外可以對其進行寫入 1 清 0 操作。如果對其寫入其他數值，則不會起作用。後門存取是與前門存取相對的操作，**從廣義上來說，所有不透過 DUT 的匯流排而對 DUT 內部的暫存器或記憶體進行存取的操作都是後門訪問操作**。如在 top_tb 中可以使用下列方式對 counter 賦初值：
 src/ch7/section7.3/7.3.2/top_tb.sv
   
 ```
@@ -632,13 +824,13 @@ initial begin
 end
 ```
   
-所有後門存取操作都是不消耗模擬時間（即 $time 列印的時間）而只消耗運行時間的。這是後門訪問操作的最大優勢。既然有了前門訪問操作，那麼為什麼還需要後門訪問操作呢？後門訪問操作存在的意義在於：
-* 後門訪問操作能夠更好地完成前門訪問操作所做的事情。**後門存取不消耗模擬時間**，與前門存取操作相比，它消耗的運行時間要遠小於前門訪問操作的運行時間。在一個大型晶片的驗證中，在其正常工作前需要配置眾多的暫存器，配置時間可能要達到一個或幾個小時，而如果使用後門訪問操作，則時間可能會縮短為原來的1/100
-* **後門訪問操作能夠完成前門訪問操作不能完成的事情**。如在網路通訊系統中，計數器通常都是唯讀的（有些會附加清零功能），無法對其指定一個非零的初值。而大部分計數器都是多個加法器的疊加，需要測試它們的進位操作。本節 DUT 的 counter 使用了兩個疊加的 16 位元加法器，需要測試當計數到 32‘hFFFF 時能否順利進位成為 32’h1_0000，這可以透過延長模擬時間使其計數到 32‘hFFFF，這在本節的 DUT 中是可以的，因為計數器每個時脈都加 1。但是在實際應用中，可能要幾萬個或更多的時鐘才會加 1，因此需要大量的運行時間，如幾天。這只是 32 位元加法器的情況，如果是 48 位元的計數器，情況則會更糟。這種情況下，後閘存取操作能夠完成前門存取作業完成的事情，給唯讀的暫存器一個初值  
+**所有後門存取操作都是不消耗模擬時間（即 $time 列印的時間）而只消耗運行時間的**。這是後門訪問操作的最大優勢。既然有了前門訪問操作，那麼為什麼還需要後門訪問操作呢？後門訪問操作存在的意義在於：
+* 後門訪問操作能夠更好地完成前門訪問操作所做的事情。**後門存取不消耗模擬時間**，與前門存取操作相比，它消耗的運行時間要遠小於前門訪問操作的運行時間。**在一個大型晶片的驗證中，在其正常工作前需要配置眾多的暫存器，配置時間可能要達到一個或幾個小時**，而如果使用後門訪問操作，則時間可能會縮短為原來的 1/100
+* **後門訪問操作能夠完成前門訪問操作不能完成的事情**。如在網路通訊系統中，計數器通常都是唯讀的（有些會附加清零功能），無法對其指定一個非零的初值。而大部分計數器都是多個加法器的疊加，需要測試它們的進位操作。本節 DUT 的 counter 使用了兩個疊加的 16 位元加法器，需要測試當計數到 32‘hFFFF 時能否順利進位成為 32’h1_0000，這可以透過延長模擬時間使其計數到 32‘hFFFF，這在本節的 DUT 中是可以的，因為計數器每個時脈都加 1。但是在實際應用中，可能要幾萬個或更多的時鐘才會加 1，因此需要大量的運行時間，如幾天。這只是 32 位元加法器的情況，如果是 48 位元的計數器，情況則會更糟。這種情況下，後閘存取操作能夠完成前門存取作業完成的事情，**給唯讀的暫存器一個初值**  
 當然，與前門訪問操作相比，後門訪問操作也有其劣勢。如所有的前門存取操作都可以在波形檔案中找到匯流排訊號變化的波形及所有操作的記錄。但是**後門存取操作則無法在波形檔案中找到操作痕跡**。**其操作記錄只能仰仗驗證平台編寫者在進行後門訪問操作時輸出的列印訊息**，這樣便增加了調試的難度
 
 * **使用 interface 進行後門存取操作**
-上一節中提到在 top_tb 中使用絕對路徑對暫存器進行後門存取操作，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以新建一個後門 interface：
+上一節中提到**在 top_tb 中使用絕對路徑對暫存器進行後門存取操作**，這需要更改 top_tb.sv 文件，但是這個文件一般是固定的，不會因測試案例的不同而變化，所以這種方式的可操作性不強。在 driver 等元件中也可以使用這種絕對路徑的方式來進行後門訪問操作，但強烈建議不要在 driver 等驗證平台的元件中使用絕對路徑。這種方式的可移植性不強。如果想在 driver 或 monitor 中使用後門訪問，一種方法是使用介面。可以**新建一個後門 interface**：
 src/ch7/section7.3/7.3.3/backdoor_if.sv
   
 ```
@@ -655,7 +847,7 @@ interface backdoor_if(input clk, input rst_n);
 endinterface
 ```
   
-poke_counter 為後門寫，而 peek_counter 為後門讀。在測試用例（或 drvier、scoreboard ）中，若要對暫存器賦初值可以直接呼叫此函數：
+poke_counter 為後門寫，而 peek_counter 為後門讀。在測試用例（或 drvier、scoreboard）中，若要對暫存器賦初值可以直接呼叫此函數：
   
 ```
 task my_case0::configure_phase(uvm_phase phase);
