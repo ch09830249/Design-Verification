@@ -1296,3 +1296,10 @@ class case0_cfg_vseq extends uvm_sequence;
   * get&set     操作：set 操作會更新期望值，但是鏡像值不會改變。 get 操作會傳回暫存器模型中目前暫存器的期望值。
   * update      操作：這個操作會檢查暫存器的期望值和鏡像值是否一致，如果不一致，那麼就會將期望值寫入 DUT 中，並且更新鏡像值，使其與期望值一致。每個由 uvm_reg 派生來的類別都會有 update 操作，其使用方式在上一節中已經介紹過。每個由 uvm_reg_block 派生來的類別也有 update 操作，它會遞歸地呼叫所有加入此 reg_block 的暫存器的 update 任務。
   * randomize   操作：暫存器模型提供 randomize 介面。 randomize 之後，期望值會變成隨機出的數值，而鏡像值不會改變。但是並不是暫存器模型中所有暫存器都支援此函數。如果不支持，則 randomize 呼叫後其期望值不變。若要關閉隨機化功能，如7.2.1節所示，在 reg_invert 的 build 中呼叫 reg_data.configure 時將其第八個參數設為 0 即可。一般的，randomize 不會單獨使用而是和 update 一起。如在 DUT 上電重設後，需要配置一些暫存器的值。這些暫存器的值透過 randomize 獲得，並使用 update 任務配置到 DUT 中。關於 randomize 和 update，請參考7.7.3節。
+# 暫存器模型的高階用法
+* 使用 reg_predictor
+在7.2.2節講述讀取操作的回傳值時，介紹了圖7-9中的左圖的方式，這種方式要依賴 driver。當 driver 將讀取值傳回後，暫存器模型會更新暫存器的鏡像值和期望值。這個函數被稱為暫存器模型的 auto predict 功能。在建立暫存器模型時使用如下的語句打開此功能：
+```
+rm.default_map.set_auto_predict(1);
+```
+除了左圖使用 driver 的回傳值更新暫存器模型外，還有另一種形式，如圖7-9的右圖所示。在這種形式中，就是由 monitor 將從總線上收集到的 transaction 交給暫存器模型，後者更新對應暫存器的值。要使用這種方式更新數據，需要實例化一個 reg_predictor，並為這個 reg_predictor 實例化一個 adapter：
