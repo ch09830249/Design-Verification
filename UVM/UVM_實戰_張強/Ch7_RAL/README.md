@@ -1059,4 +1059,93 @@ endclass
 * 第三步是呼叫子 reg_block 的 build 函數
 * 第四步是呼叫子 reg_block 的 lock_model 函式
 * 第五步則是將子 reg_block 的 default_map 以子 map 的形式加入到父 reg_block 的 default_map 中  
-這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道暫存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。因此，一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
+這是可以理解的，因為一般在子 reg_block 中定義暫存器時，給定的都是暫存器的偏移位址，其實際物理位址還要再加上一個基底位址。暫存器前門存取的讀寫操作最終都要透過 default_map 來完成。很顯然，子 reg_block 的 default_map 並不知道暫存器的基底位址，它只知道暫存器的偏移位址，只有將其加入父 reg_block 的 default_map，並在加入的同時告知子 map 的偏移位址，這樣父 reg_block 的 default_map 就可以完成前門訪問操作了。因此，**一般將具有相同基底位址的暫存器作為整體加入一個 uvm_reg_block 中，而不同的基底位址對應不同的 uvm_reg_block**。每個 uvm_reg_block 一般都有與其對應的實體位址空間。對於本節介紹的子 reg_block，其裡面還可以加入小的 reg_block，這相當於將地址空間再次細化。
+
+* **reg_file 的作用**
+到目前為止，引入了 uvm_reg_field、uvm_reg、uvm_reg_block 的概念，這三者的組合已經能夠組成一個可以使用的暫存器模型。然而，UVM 的暫存器模型中還有一個稱為 uvm_reg_file 的概念。這個類別的引入主要是用來區分不同的 hdl 路徑。
+假設有兩個暫存器 regA 和 regB，它們的 hdl 路徑分別為 top_tb.mac_reg.fileA.regA 和 top_tb.mac_reg.fileB.regB，延續上一節的例子，設 top_tb.mac_reg 下面所有暫存器的基底位址為0x2000，這樣，在最頂層的 reg_block 中加入 mac 模組時，其 hdl 路徑要寫成：
+```
+mb_ins.configure(this, "mac_reg");
+```
+對應的，在 mac_blk 的 build 中，要透過以下方式將 regA 和 regB 的路徑告知暫存器模型：
+```
+regA.configure(this, null, "fileA.regA");
+…
+regB.configure(this, null, "fileB.regB");
+```
+當 fileA 中的暫存器只有一個 regA 時，這種寫法是沒有問題的，但是假如fileA中有幾十個暫存器時，那麼很顯然，fileA.* 會幾十次地出現在這幾十個暫存器的 configure 函數裡。假如有一天，fileA 的名字突然變成 filea_inst，那就需要把這幾十行所有 fileA 替換成 filea_inst，這個過程很容易出錯。
+為了適應這種情況，在 UVM 的暫存器模型中引入了 uvm_reg_file 的概念。 uvm_reg_file 同 uvm_reg 相同是純虛類，不能直接使用，而必須使用其衍生類別：
+```
+class regfile extends uvm_reg_file;
+  function new(string name = "regfile");
+    super.new(name);
+  endfunction
+  `uvm_object_utils(regfile)
+endclass
+…
+class mac_blk extends uvm_reg_block;
+  rand regfile file_a;
+  rand regfile file_b;
+  rand reg_regA regA;
+  rand reg_regB regB;
+  rand reg_vlan vlan;
+  
+  virtual function void build();
+    default_map = create_map("default_map", 0, 2, UVM_BIG_ENDIAN, 0);
+    
+    file_a = regfile::type_id::create("file_a", , get_full_name());
+    file_a.configure(this, null, "fileA");
+    file_b = regfile::type_id::create("file_b", , get_full_name());
+    file_b.configure(this, null, "fileB");
+    …
+    regA.configure(this, file_a, "regA");
+    …
+    regB.configure(this, file_b, "regB");
+    …
+  endfunction
+  …
+endclass
+```
+如上所示，先從 uvm_reg_file 衍生一個類，然後在 my_blk 中實例化此類，之後調用其 configure 函數，此函數的第一個參數是其所在的 reg_block 的指針，第二個參數是假設此 reg_file 是另一個 reg_file 的父文件，那麼這裡就填寫其父 reg_file的指針。由於這裡只有這一級 reg_file，因此填入 null。第三個參數則是此 reg_file 的 hdl 路徑。當把 reg_file 定義好後，在呼叫暫存器的 configure 參數時，就可以將其第二個參數設為 reg_file 的指標。
+加入 reg_file 的概念後，當 fileA 變成 filea_inst 時，只需要將 file_a 的 configure 參數值改變一下即可，其他則不需要做任何改變。這大大減少了出錯的機率。
+
+* **多個欄位的暫存器**
+前面所有例子中的暫存器都是只有一個域的，如果一個暫存器有多個域時，那麼在建立模型時會稍微改變。設某個暫存器有三個域，其中最低兩位為 filedA，接著三位為 filedB，接著四位為 filedC，其餘位未使用。
+這個暫存器從邏輯上來看是一個暫存器，但是從物理上來看，即它的 DUT 實作中是三個暫存器，因此這一個暫存器實際上對應著三個不同的 hdl 路徑：fieldA、fieldB、fieldC。對於這種情況，前面介紹的模型建立方法已經不適用了。
+```
+class three_field_reg extends uvm_reg;
+  rand uvm_reg_field fieldA;
+  rand uvm_reg_field fieldB;
+  rand uvm_reg_field fieldC;
+  
+  virtual function void build();
+    fieldA = uvm_reg_field::type_id::create("fieldA");
+    fieldB = uvm_reg_field::type_id::create("fieldB");
+    fieldC = uvm_reg_field::type_id::create("fieldC");
+  endfunction
+  …
+endclass
+
+class mac_blk extends uvm_reg_block;
+  …
+  rand three_field_reg tf_reg;
+  
+  virtual function void build();
+    …
+    tf_reg = three_field_reg::type_id::create("tf_reg", , get_full_name());
+    tf_reg.configure(this, null, "");
+    tf_reg.build();
+    tf_reg.fieldA.configure(tf_reg, 2, 0, "RW", 1, 0, 1, 1, 1);
+    tf_reg.add_hdl_path_slice("fieldA", 0, 2);
+    tf_reg.fieldB.configure(tf_reg, 3, 2, "RW", 1, 0, 1, 1, 1);
+    tf_reg.add_hdl_path_slice("fieldA", 2, 3);
+    tf_reg.fieldC.configure(tf_reg, 4, 5, "RW", 1, 0, 1, 1, 1);
+    tf_reg.add_hdl_path_slice("fieldA", 5, 4);
+    default_map.add_reg(tf_reg, 'h41, "RW");
+  endfunction
+  …
+endclass
+```
+這裡要先從 uvm_reg 派生一個類，在此類中加入 3 個 uvm_reg_field。在 reg_block 中將此類實例化後，呼叫 tf_reg.configure 時要注意，最後一個代表 hdl 路徑的參數已經變成空的字串，在呼叫 tf_reg.build 之後要呼叫 tf_reg.fieldA 的 configure 函數。
+調用完 fieldA 的 configure 函數後，需要將 fieldA 的 hdl 路徑加入 tf_reg 中，此時使用的函數是 add_hdl_path_slice。這個函數的第一個參數是要加入的路徑，第二個參數則是此路徑對應的域在此暫存器中的起始位數，如 fieldA 是從 0 開始的，而 fieldB 是從 2 開始的，第三個參數則是此路徑對應的域的位寬。
+上述 fieldA.configure 和 tf_reg.add_hdl_path_slice 其實也可以如7.2.1節那樣在 three_field_reg 的 build 中被呼叫。這兩者有什麼區別呢？如果是在所定義的 uvm_reg 類別中調用，那麼此 uvm_reg 其實就已經定型了，不能更改了。例如7.2.1節中定義了具有一個域的 uvm_reg 派生類，現在假如有一個新的暫存器，它也是只有一個域，但是這個域並不是如7.2.1節那樣佔據了 1 bit，而只佔據了 8 bit，那麼此時就需要重新從 uvm_reg 衍生一個類，然後再重新定義。如果7.2.1節中的 reg_invert 在定義時並沒有在其 build 中調用 reg_data 的 configure 函數，那就不必重新定義。因為沒有呼叫 configure 之前，這個域是不確定的。
