@@ -1205,8 +1205,9 @@ endclass
 例如，一個 DUT 的功能是接收一種數據，它經過一些相當複雜的處理（操作A）後將數據儲存在記憶體中，這塊記憶體是 DUT 內部的記憶體，並沒有為其分配位址。當記憶體中的資料達到一定量時，將它們讀出，並再另外做一些複雜處理（如封裝成
 另外一種形式的幀，操作B）後送出去。在驗證平台中如果只是將 DUT 輸出介面的資料與期望值比較，當資料不符情況出現時，則無法確定問題是出在操作A還是操作B中，如圖7-8a所示。此時，如果在輸出介面之前再增加一級比較，就可以快速地定
 位元問題所在了，如圖7-8b所示。
-<img width="866" height="812" alt="image" src="https://github.com/user-attachments/assets/820481d2-fcda-4b56-b89b-25fc6ca208e6" />
-要在暫存器模型中加入記憶體非常容易。在一個16位元的系統中加入一塊1024×16（深度為1024，寬度為16）的記憶體的程式碼如下：
+<img width="866" height="812" alt="image" src="https://github.com/user-attachments/assets/820481d2-fcda-4b56-b89b-25fc6ca208e6" />  
+要在暫存器模型中加入記憶體非常容易。在一個16位元的系統中加入一塊1024×16（深度為1024，寬度為16）的記憶體的程式碼如下：  
+
 ```
 class my_memory extends uvm_mem;
   function new(string name="my_memory");
