@@ -1263,3 +1263,30 @@ class my_memory extends uvm_mem;
 endclass
 ```
 在衍生 my_memory 時，就要在其 new 函數中指明其寬度為 32bit，在 my_block 中加入此 memory 的方法與前面的相同。很明顯，這裡加入的記憶體的一個單元佔據兩個實體位址，共佔據 1024 個位址。那麼當使用 read、write、peek、poke 時，輸入的參數 offset 代表實際的物理位址偏移還是某一個儲存單元偏移呢？答案是儲存單元偏移。在存取這塊 512×32 的記憶體時，offset 的最大值是 511，而不是 1023。當指定一個 offset，使用前門存取操作讀寫時，由於一個 offset 對應的是兩個物理位址，所以暫存器模型會在總線上進行兩次讀寫操作。
+# 暫存器模型對DUT的模擬
+* **期望值與鏡像值**
+由於 DUT 中暫存器的值可能是即時變更的，因此暫存器模型並不能即時知道這種變更，因此，暫存器模型中的暫存器的值有時與 DUT 中相關暫存器的值並不一致。對於任意一個暫存器，暫存器模型中都會有一個專門的變數用於最大可能地與 DUT 保持同步，這個變數在暫存器模型中稱為 DUT 的鏡像值（mirrored value）。
+除了 DUT 的鏡像值外，暫存器模型中還有期望值（desired value）。如目前 DUT 中 invert 的值為 'h0，暫存器模型中的鏡像值也為'h0，但希望在此暫存器中寫入一個'h1，此時一種方法是直接呼叫前面介紹的 write 任務，將'h1寫入，期望值與鏡像值都更新為'h1；另一種方法是透過 set 函數將期望值設為'h1（此時鏡像值仍然為0），之後呼叫 update 任務，update 任務會檢查期望值和鏡像值是否一致，如果不一致，那麼將會把期望值寫入 DUT 中，並且更新鏡像值。
+```
+class case0_cfg_vseq extends uvm_sequence;
+…
+  virtual task body();
+    …
+    p_sequencer.p_rm.invert.set(16'h1);
+    value = p_sequencer.p_rm.invert.get();
+    `uvm_info("case0_cfg_vseq", $sformatf("invert's desired value is %0h ", value), UVM_LOW)
+    value = p_sequencer.p_rm.invert.get_mirrored_value();
+    `uvm_info("case0_cfg_vseq", $sformatf("invert's mirrored value is %0h ", value), UVM_LOW)
+    p_sequencer.p_rm.invert.update(status, UVM_FRONTDOOR);
+    value = p_sequencer.p_rm.invert.get();
+    `uvm_info("case0_cfg_vseq", $sformatf("invert's desired value is %0h ", value), UVM_LOW)
+    value = p_sequencer.p_rm.invert.get_mirrored_value();
+    `uvm_info("case0_cfg_vseq", $sformatf("invert's mirrored value is %0h ", value), UVM_LOW)
+    p_sequencer.p_rm.invert.peek(status, value);
+    `uvm_info("case0_cfg_vseq", $sformatf("invert's actual value is %0h", value), UVM_LOW)
+    if(starting_phase != null)
+      starting_phase.drop_objection(this);
+  endtask
+…
+```
+透過 get 函數可以得到暫存器的期望值，透過 get_mirrored_value 可以得到鏡像值。其使用方式分別見上述程式碼。對於記憶體來說，並不存在期望值和鏡像值。暫存器模型不對記憶體進行任何模擬。若要得到記憶體中某個儲存單元的值，只能使用7.4.5節中的四種操作。
