@@ -1149,3 +1149,116 @@ endclass
 這裡要先從 uvm_reg 派生一個類，在此類中加入 3 個 uvm_reg_field。在 reg_block 中將此類實例化後，呼叫 tf_reg.configure 時要注意，最後一個代表 hdl 路徑的參數已經變成空的字串，在呼叫 tf_reg.build 之後要呼叫 tf_reg.fieldA 的 configure 函數。
 調用完 fieldA 的 configure 函數後，需要將 fieldA 的 hdl 路徑加入 tf_reg 中，此時使用的函數是 add_hdl_path_slice。這個函數的第一個參數是要加入的路徑，第二個參數則是此路徑對應的域在此暫存器中的起始位數，如 fieldA 是從 0 開始的，而 fieldB 是從 2 開始的，第三個參數則是此路徑對應的域的位寬。
 上述 fieldA.configure 和 tf_reg.add_hdl_path_slice 其實也可以如7.2.1節那樣在 three_field_reg 的 build 中被呼叫。這兩者有什麼區別呢？如果是在所定義的 uvm_reg 類別中調用，那麼此 uvm_reg 其實就已經定型了，不能更改了。例如7.2.1節中定義了具有一個域的 uvm_reg 派生類，現在假如有一個新的暫存器，它也是只有一個域，但是這個域並不是如7.2.1節那樣佔據了 1 bit，而只佔據了 8 bit，那麼此時就需要重新從 uvm_reg 衍生一個類，然後再重新定義。如果7.2.1節中的 reg_invert 在定義時並沒有在其 build 中調用 reg_data 的 configure 函數，那就不必重新定義。因為沒有呼叫 configure 之前，這個域是不確定的。
+* **多個位址的暫存器**
+在實際的 DUT 中，有些暫存器會同時佔據多個位址。如7.3.2節 DUT 中的 counter 是 32bit 的，而系統的資料位寬是 16 位元的，所以就佔據了兩個地址。
+在7.3.5節中，是以程式碼清單7-28的方式將一個暫存器分割成兩個暫存器的方式加入暫存器模型中的。因其每次要讀取 counter 的值時，都需要對 counter_low 和 counter_high 各進行一次讀取操作，然後再將兩次讀取的值合成一個 counter 的值，所以這種方式使用起來非常不方便。UVM 提供另外一種方式，可以使一個暫存器佔據多個位址：
+```
+class reg_counter extends uvm_reg;
+  rand uvm_reg_field reg_data;
+
+  virtual function void build();
+    reg_data = uvm_reg_field::type_id::create("reg_data");
+    // parameter: parent, size, lsb_pos, access, volatile, reset value, has_reset, is_rand, individually 29 reg_data.configure(this, 32, 0, "W1C", 1, 0, 1, 1, 0);
+  endfunction
+  
+  `uvm_object_utils(reg_counter)
+
+  function new(input string name="reg_counter");
+    //parameter: name, size, has_coverage
+    super.new(name, 32, UVM_NO_COVERAGE);
+  endfunction
+endclass
+  
+class reg_model extends uvm_reg_block;
+  rand reg_invert invert;
+  rand reg_counter counter;
+  
+  virtual function void build();
+    …
+    counter= reg_counter::type_id::create("counter", , get_full_name());
+    counter.configure(this, null, "counter");
+    counter.build();
+    default_map.add_reg(counter, 'h5, "RW");
+  endfunction
+  …
+endclass
+```
+這種方法相對簡單，可以定義一個 reg_counter，並在其建構函式中指明此暫存器的大小為 32 位，此暫存器中只有一個域，此域的寬度也是 32bit，之後在 reg_model 中將其實例化即可。在呼叫 default_map 的 add_reg 函數時，要指定暫存器的位址，這裡只需要指明最小的一個位址即可。這是因為在前面實例化 default_map 時，已經指明了它使用 UVM_LITTLE_ENDIAN 形式，同時總線的寬度為 2byte，即 16bit，UVM 會自動根據這些資訊計算出此暫存器佔據兩個位址。當使用前門存取的形式讀寫此暫存器時，寄存器模型會進行兩次讀寫操作，即發出兩個 transaction，這兩個 transaction 對應的讀寫操作的位址從 0x05 一直遞增到 0x06。
+當將 counter 作為一個整體時，可以一次性地存取它：
+```
+class case0_cfg_vseq extends uvm_sequence;
+…
+  virtual task body();
+    …
+    p_sequencer.p_rm.counter.read(status, value, UVM_FRONTDOOR);
+    `uvm_info("case0_cfg_vseq", $sformatf("counter's initial value(FRONT DOOR) is %0h", value), UVM_40 p_sequencer.p_rm.counter.poke(status, 32'h1FFFD);
+    p_sequencer.p_rm.counter.read(status, value, UVM_FRONTDOOR);
+    `uvm_info("case0_cfg_vseq", $sformatf("after poke, counter's value(F RONTDOOR) is %0h", value), 43 p_sequencer.p_rm.counter.peek(status, value);
+    `uvm_info("case0_cfg_vseq", $sformatf("after poke, counter's value(B ACKDOOR) is %0h", value),
+    …
+  endtask
+
+endclass
+```
+* **加入記憶體**
+除了暫存器外，DUT 中還存在大量的記憶體。這些記憶體有些被分配了位址空間，有些則沒有。驗證人員有時需要在模擬過程中得到存放在這些記憶體中資料的值，從而與期望的值比較並給出結果。
+例如，一個 DUT 的功能是接收一種數據，它經過一些相當複雜的處理（操作A）後將數據儲存在記憶體中，這塊記憶體是 DUT 內部的記憶體，並沒有為其分配位址。當記憶體中的資料達到一定量時，將它們讀出，並再另外做一些複雜處理（如封裝成
+另外一種形式的幀，操作B）後送出去。在驗證平台中如果只是將 DUT 輸出介面的資料與期望值比較，當資料不符情況出現時，則無法確定問題是出在操作A還是操作B中，如圖7-8a所示。此時，如果在輸出介面之前再增加一級比較，就可以快速地定
+位元問題所在了，如圖7-8b所示。
+<img width="866" height="812" alt="image" src="https://github.com/user-attachments/assets/820481d2-fcda-4b56-b89b-25fc6ca208e6" />
+要在暫存器模型中加入記憶體非常容易。在一個16位元的系統中加入一塊1024×16（深度為1024，寬度為16）的記憶體的程式碼如下：
+```
+class my_memory extends uvm_mem;
+  function new(string name="my_memory");
+    super.new(name, 1024, 16);
+  endfunction
+  
+  `uvm_object_utils(my_memory)
+endclass
+
+class reg_model extends uvm_reg_block;
+…
+  rand my_memory mm;
+
+  virtual function void build();
+    …
+    mm = my_memory::type_id::create("mm", , get_full_name());
+    mm.configure(this, "stat_blk.ram1024x16_inst.array");
+    default_map.add_mem(mm, 'h100);
+  endfunction
+…
+endclass
+```
+首先由 uvm_mem 衍生一個類別 my_memory，在其 new 函數中呼叫 super.new 函數。這個函數有三個參數，第一個是名字，第二個是記憶體的深度，第三個是寬度。在 reg_model 的 build 函數中，將記憶體實例化，呼叫其 configure 函數，第一個參數是所在 reg_block 的指針，第二個參數是此區塊記憶體的 hdl 路徑。最後呼叫 default_map.add_mem 函數，將此區塊記憶體加入 default_map 中，從而可以對其進行前門訪問操作。如果沒有對此區塊記憶體分配位址空間，那麼這裡可以不將其加入 default_map 中。在這種情況下，只能使用後門存取的方式對其進行存取。
+若要對此記憶體進行讀寫，可以透過呼叫 read、write、peek、poke 來實現。相比 uvm_reg 來說，這四個任務/函數在呼叫的時候需要額外加入一個 offset 的參數，說明讀取此記憶體的哪個位址。
+```
+task uvm_mem::read(output uvm_status_e status,
+                    input uvm_reg_addr_t offset,
+                    output uvm_reg_data_t value,
+                    input uvm_path_e path = UVM_DEFAULT_PATH,
+…);
+task uvm_mem::write(output uvm_status_e status,
+                    input uvm_reg_addr_t offset,
+                    input uvm_reg_data_t value,
+                    input uvm_path_e path = UVM_DEFAULT_PATH,
+…);
+task uvm_mem::peek(output uvm_status_e status,
+                    input uvm_reg_addr_t offset,
+                    output uvm_reg_data_t value,
+…);
+task uvm_mem::poke(output uvm_status_e status,
+                    input uvm_reg_addr_t offset,
+                    input uvm_reg_data_t value,
+…);
+```
+上面記憶體的寬度與系統匯流排位寬恰好相同。當記憶體的寬度大於系統匯流排位寬時，情況會略有不同。如在一個 16 位的系統中加入 512×32 的記憶體：
+```
+class my_memory extends uvm_mem;
+  function new(string name="my_memory");
+    super.new(name, 512, 32);
+  endfunction
+  
+  `uvm_object_utils(my_memory)
+endclass
+```
+在衍生 my_memory 時，就要在其 new 函數中指明其寬度為 32bit，在 my_block 中加入此 memory 的方法與前面的相同。很明顯，這裡加入的記憶體的一個單元佔據兩個實體位址，共佔據 1024 個位址。那麼當使用 read、write、peek、poke 時，輸入的參數 offset 代表實際的物理位址偏移還是某一個儲存單元偏移呢？答案是儲存單元偏移。在存取這塊 512×32 的記憶體時，offset 的最大值是 511，而不是 1023。當指定一個 offset，使用前門存取操作讀寫時，由於一個 offset 對應的是兩個物理位址，所以暫存器模型會在總線上進行兩次讀寫操作。
